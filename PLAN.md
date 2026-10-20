@@ -216,7 +216,7 @@ Upgrade:    Welcome → Review → Prepare
    - **Prepare for Plasma X.Y**: only when `pacman -Qu` shows a Plasma feature upgrade that the version pin blocks.
    - **Uninstall**: always the last choice. It's grayed out ("nothing installed") and skipped by the cursor when there's nothing to remove.
 2. **Colors.** The accent color for Protea Dark, from a list of presets, each shown with a swatch and its hex value:
-   - Teal `#5ba9ae` (default), Protea pink `#e0577f`, Orange `#f28a3b`, Amber `#e8b44a`, Sage `#8fb573`, Lavender `#9b8cd9`, Breeze blue `#3daee9`
+   - Teal `#5ba9ae` (default), then Sage `#8fb573`, Camel `#c4a07a`, Rose `#d0879a` and Lavender `#9b8cd9`
    - A preview line shows a selected item and a link in the chosen accent.
    - For an existing install, it starts on the installed accent.
    - If Protea Dark is in use and the accent changes, it notes that the theme must be applied again to show it. Plasma copies a color scheme's colors when it's applied.

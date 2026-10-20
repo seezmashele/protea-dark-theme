@@ -19,12 +19,10 @@ type Accent struct {
 // Accents are the installer's accent colors. The first is the default.
 var Accents = []Accent{
 	{"Teal", "#5ba9ae"},
-	{"Protea pink", "#e0577f"},
-	{"Orange", "#f28a3b"},
-	{"Amber", "#e8b44a"},
 	{"Sage", "#8fb573"},
+	{"Camel", "#c4a07a"},
+	{"Rose", "#d0879a"},
 	{"Lavender", "#9b8cd9"},
-	{"Breeze blue", "#3daee9"},
 }
 
 // DefaultAccent is Protea Dark's accent color.

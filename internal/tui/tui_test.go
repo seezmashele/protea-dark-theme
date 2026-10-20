@@ -166,8 +166,9 @@ func TestInstallDefaults(t *testing.T) {
 	m := start(t, fresh)
 	press(m, "enter")
 	expect(t, m, "✓ Welcome", "● Colors", "▍Choose an accent color", "selections, focus rings, hover highlights and links",
-		"› (•) ██ Teal #5ba9ae · default", "( ) ██ Protea pink #e0577f", "( ) ██ Breeze blue #3daee9",
+		"› (•) ██ Teal #5ba9ae · default ( ) ██ Sage #8fb573 ( ) ██ Camel #c4a07a ( ) ██ Rose #d0879a ( ) ██ Lavender #9b8cd9",
 		"Preview Selected item a link")
+	expectNot(t, m, "Breeze blue", "Amber", "Protea pink", "██ Pink", "Orange", "Plum")
 	if len(labels(m)) != len(system.Accents) {
 		t.Errorf("%d accent rows, want %d", len(labels(m)), len(system.Accents))
 	}
@@ -186,25 +187,32 @@ func TestInstallDefaults(t *testing.T) {
 func TestColorsPage(t *testing.T) {
 	m := start(t, fresh)
 	press(m, "enter", "down")
-	expect(t, m, "› (•) ██ Protea pink", "( ) ██ Teal")
+	expect(t, m, "› (•) ██ Sage", "( ) ██ Teal")
 	press(m, "enter", "esc")
-	expect(t, m, "(•) ██ Protea pink")
+	expect(t, m, "(•) ██ Sage")
 	press(m, "enter", "enter")
-	expect(t, m, "with the Protea pink accent")
+	expect(t, m, "with the Sage accent")
 
 	// An installed accent is pre-selected.
 	st := everything
-	st.Accent = "#f28a3b"
+	st.Accent = "#c4a07a"
 	m = start(t, st)
 	press(m, "enter")
-	expect(t, m, "› (•) ██ Orange")
+	expect(t, m, "› (•) ██ Camel")
 	expectNot(t, m, "apply it again")
 
 	// Changing the accent of a theme that's in use needs re-applying it.
-	press(m, "up")
+	press(m, "down")
 	expect(t, m, "Protea Dark is in use: after installing, apply it again in System Settings to see the new accent.")
 	press(m, "enter", "enter")
-	expect(t, m, "with the Protea pink accent", "Protea Dark is in use: apply it again in System Settings afterwards to see the new accent.")
+	expect(t, m, "with the Rose accent", "Protea Dark is in use: apply it again in System Settings afterwards to see the new accent.")
+
+	// An installed accent that isn't a preset, like Breeze's blue from an
+	// install before accents existed, starts on the default.
+	st.Accent = "#3daee9"
+	m = start(t, st)
+	press(m, "enter")
+	expect(t, m, "› (•) ██ Teal")
 }
 
 func TestBackKeepsChoices(t *testing.T) {
