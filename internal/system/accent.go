@@ -205,7 +205,8 @@ func ApplyAccent(text, accentHex string) (string, error) {
 			return readableOn(accent, background(g)), true
 		case selection && (key == "BackgroundNormal" || key == "BackgroundAlternate"):
 			return selectionBg, true
-		case selection && (key == "ForegroundNormal" || key == "ForegroundInactive"):
+		case selection && key == "ForegroundNormal":
+			// The inactive text on a selection keeps Protea Dark's own grey.
 			return selectionFg, true
 		case key == "BackgroundAlternate" && (g == "[Colors:Button]" || g == "[Colors:Complementary]"):
 			return accentBackground(accent, background(g)), true

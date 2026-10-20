@@ -257,7 +257,7 @@ The installer writes the chosen accent into the installed color files, following
 
 - **Focus, hover and "active" text:** become the accent in every color group. On selections, active text becomes the selection's readable text color instead.
 - **Links:** become the accent, lightened or darkened until their contrast with the group's background reaches 5:1. Links on selections keep their own color.
-- **Selections:** the background (and its alternate) is the accent at 70% over the view background. The text on it is white or black, whichever reaches 4.5:1.
+- **Selections:** the background (and its alternate) is the accent at 70% over the view background. The text on it is white or black, whichever reaches 4.5:1. The inactive (secondary) text on it isn't touched: it stays Protea Dark's own grey, `#a1a1a2`.
 - **Buttons' and Complementary's alternate background:** the accent at 70% over their own background. Breeze uses a darker accent there.
 
 **The Plasma Style's own `colors` file only has its existing keys rewritten.** Plasma reads that file on top of the system colors, so keys it leaves out, like the focus colors and selection background, keep following the system color scheme. That includes an accent picked in System Settings.
@@ -298,13 +298,13 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 
 - **Sidebars** have no key of their own. Qt apps draw them with the window color.
 - **Plasma's tooltips:** the panel's tooltips use the window colors (`DefaultToolTip.qml` in libplasma 6.8 sets the Window color set). So the Plasma Style's tooltip SVGs, `widgets/tooltip.svg` and its `translucent/`, `opaque/` and `solid/` versions, fill their background with `ColorScheme-TooltipBackground` instead of `ColorScheme-Background`.
-- **Accent:** over the new view color, the Teal selection is `#487e82` with black text, because white on it falls just short of 4.5:1.
+- **Accent:** over the new view color, the Teal selection is `#487e82` with black text, because white on it falls just short of 4.5:1. Secondary text on a selection is `#a1a1a2` for every accent (1.6 to 1.9:1 on the selections; Breeze's was 1.05:1).
 - **Links on window and header backgrounds** are `#73b5ba`, a lighter Teal: plain Teal on `#2e2e2f` falls just short of the 5:1 links need. Links everywhere else stay `#5ba9ae`.
 - **Not changed yet:** buttons (`#292c30`), Complementary (`#202326`), the other alternate backgrounds, and secondary text (`#a1a9b1`) are still Breeze's blue-tinted values.
 
 ### Window outline
 
-The thin line around each window is `#2e2e2f`, on focused and unfocused windows alike: the focused title bar color, so on focused windows it blends into the title bar and borders. This needs the Protea decoration ([proteadecoration.cpp](cpp/kdecoration/proteadecoration.cpp), `recalculateBorders`). Breeze mixes the outline from the title bar toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
+The thin line around each window is `#343435`, on focused and unfocused windows alike. This needs the Protea decoration: it's a fixed color, `Outline_Color` in [kdecoration/protea.h](cpp/kdecoration/protea.h), so change it by hand along with the title bar colors. Breeze mixes the outline from the title bar color toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
 
 ### Corners
 

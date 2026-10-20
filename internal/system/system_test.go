@@ -301,7 +301,7 @@ func TestApplyAccentToColorScheme(t *testing.T) {
 		t.Fatalf("line count changed: %d → %d", len(before), len(after))
 	}
 	accentKeys := []string{"DecorationFocus", "DecorationHover", "ForegroundActive", "ForegroundLink",
-		"BackgroundNormal", "BackgroundAlternate", "ForegroundNormal", "ForegroundInactive"}
+		"BackgroundNormal", "BackgroundAlternate", "ForegroundNormal"}
 	changed := 0
 	for i := range before {
 		if before[i] != after[i] {

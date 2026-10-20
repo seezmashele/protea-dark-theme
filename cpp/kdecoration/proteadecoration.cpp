@@ -475,9 +475,7 @@ void Decoration::recalculateBorders()
     if (isMaximized() || !outlinesEnabled()) {
         setBorderOutline(KDecoration3::BorderOutline());
     } else {
-        // the outline is the focused title bar color on every window, so
-        // unfocused windows with a darker title bar keep the same border
-        const auto color = window()->color(ColorGroup::Active, ColorRole::Frame);
+        const QColor color = Metrics::Outline_Color;
         const qreal thickness = std::max(KDecoration3::pixelSize(window()->nextScale()), KDecoration3::snapToPixelGrid(1, window()->nextScale()));
 
         qreal topLeftRightRadius = 0;

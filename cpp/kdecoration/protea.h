@@ -8,6 +8,7 @@
 
 #include "proteasettings.h"
 
+#include <QColor>
 #include <QList>
 #include <QSharedPointer>
 
@@ -43,6 +44,11 @@ static constexpr int Shadow_Overlap = 3;
 // Keep this value in sync with Bias_Default in
 // kstyle/proteametrics.h
 static constexpr qreal Bias_Default = 0.20;
+
+// window outline color, on focused and unfocused windows alike. It's fixed,
+// so change it along with the title bar colors (Header in the color scheme);
+// Breeze mixes it from the title bar color instead.
+static constexpr QColor Outline_Color(0x34, 0x34, 0x35);
 }
 
 //* standard pen widths
