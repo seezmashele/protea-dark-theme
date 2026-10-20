@@ -1,0 +1,42 @@
+# Never commit compiled output. Source assets that look binary
+# (.svgz icons, .png/.jpg previews, .po translations, the printing
+# test page PDF) are deliberately NOT ignored.
+
+# CMake build trees (C++ part)
+/build*/
+/cpp/build*/
+/cmake-build*/
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+
+# Compiled objects, libraries and Qt/KDE build products
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.qm
+*.mo
+*.qsb
+*_autogen/
+moc_*.cpp
+ui_*.h
+
+# makepkg output (packaging/arch)
+/packaging/arch/src/
+/packaging/arch/pkg/
+/packaging/arch/*.pkg.tar*
+/packaging/arch/*.tar.gz
+/packaging/arch/*.tar.xz
+/packaging/arch/*.tar.zst
+
+# Go installer binaries
+/installer/protea-installer
+/installer/bin/
+/dist/
+*.test
+*.exe
+
+# Locally staged installs
+/stage*/

@@ -1,0 +1,20 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Protea Desktop"
+            },
+            {
+                "Name": "KDE Visual Design Group"
+            }
+        ],
+        "Category": "",
+        "Description": "Protea Dark, based on Breeze Dark by the KDE VDG",
+        "EnabledByDefault": true,
+        "Id": "protea-dark",
+        "License": "LGPL",
+        "Name": "Protea Dark",
+        "Version": "0.1.0"
+    },
+    "X-Plasma-API": "5.0"
+}

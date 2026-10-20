@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "Protea Desktop"
+            },
+            {
+                "Name": "KDE Visual Design Group"
+            }
+        ],
+        "Category": "",
+        "Description": "Protea Dark, based on Breeze Dark by the KDE VDG",
+        "Id": "org.proteadesktop.protea-dark",
+        "License": "GPLv2+",
+        "Name": "Protea Dark",
+        "Version": "0.1.0"
+    }
+}

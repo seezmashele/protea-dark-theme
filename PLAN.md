@@ -169,11 +169,11 @@ protea-theme/
 | 1 | Install build tools (`cmake`, `extra-cmake-modules`) | Done |
 | 2 | Import pristine Breeze Dark from `v6.8.1` | Done |
 | 3 | Baseline build of unmodified C++: builds clean, installs the same files as Arch's `breeze` package (minus cursors, wallpapers, translations) | Done |
-| 4 | Commit the pristine import (repo owner) | Pending |
-| 5 | Rename to Protea: all IDs above, the C++ namespace, installed file names. Merge the two Plasma Style folders into `protea-dark`. Resolve the `metadata.json.cmake` templates. Remove `cpp/colors/` and upstream CI files. | Next |
-| 6 | Verify Breeze and Protea both appear in System Settings (Application Style, Window Decorations, Colors, Plasma Style, Global Theme) | |
-| 7 | Point the Global Theme defaults at Protea's color scheme and Plasma Style | |
-| 8 | Add the `WITH_STYLE` CMake option; write the PKGBUILD | |
+| 4 | Commit the pristine import (repo owner) | Done |
+| 5 | Rename the core theme to Protea: merge the two Plasma Style folders into `protea-dark` with a plain `metadata.json`, rename the color scheme to `ProteaDark`, rename the Global Theme to `org.proteadesktop.protea-dark`, and point its defaults at Protea's color scheme and Plasma Style | Done |
+| 6 | Verify the core theme: install it into `~/.local/share/`, check it appears next to Breeze under Global Theme, Plasma Style and Colors, and apply it | Next |
+| 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names. Remove `cpp/colors/` and upstream CI files. Decide what to do with translations. Check no installed file collides with `pacman -Ql breeze`. | |
+| 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install with `makepkg -si`, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | |
 | 9 | Build the Go installer | |
 | 10 | Design work: colors, SVGs, style metrics (`kstyle/breezemetrics.h`), decoration drawing | |
 
@@ -202,6 +202,8 @@ Protea keeps Breeze's licenses and copyright headers.
 - Register `proteadesktop.org` before the first public release. The `org.proteadesktop` IDs imply ownership of that domain.
 - Decide what to do with `cpp/po/` translations. The rename changes the translation domains.
 - Light variant later. IDs are already shaped for it (`protea-light`, `ProteaLight`).
+- Replace the Global Theme previews (`contents/previews/`). They are still Breeze Dark screenshots.
+- Colors live in two files: the color scheme (`ProteaDark.colors`) and the Plasma Style's own `colors`. Color changes need making in both, or the panels won't match the apps.
 - Verify the exact commands the installer uses to switch style and decoration and to reconfigure KWin.
 
 ## Project conventions

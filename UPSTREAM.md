@@ -11,10 +11,24 @@ Imported with `scripts/import-upstream.sh v6.8.1`.
 | `theme/desktoptheme/breeze-dark/` | [plasma/libplasma](https://invent.kde.org/plasma/libplasma) | `src/desktoptheme/breeze-dark/` | `f46c05f2174e8cf35c8d46f4e8cd8fe7d595874e` |
 | `theme/look-and-feel/org.kde.breezedark/` | [plasma/plasma-workspace](https://invent.kde.org/plasma/plasma-workspace) | `lookandfeel/org.kde.breezedark/` | `fb9b679a99078e68164b05b9cb3f5aaa6020222f` |
 
+The paths above are where each piece was first imported. The core theme was then renamed:
+
+| Imported as | Now at |
+|---|---|
+| `theme/color-schemes/BreezeDark.colors` | `theme/color-schemes/ProteaDark.colors` |
+| `theme/desktoptheme/breeze/` (SVGs) and `breeze-dark/` (`colors`, `plasmarc`) | `theme/desktoptheme/protea-dark/` |
+| `theme/look-and-feel/org.kde.breezedark/` | `theme/look-and-feel/org.proteadesktop.protea-dark/` |
+
+The rename also dropped files that only upstream's CMake build used:
+
+- the Plasma Style's `CMakeLists.txt` files and `.gitignore`
+- its `metadata.json.cmake` templates, replaced by a plain `metadata.json`
+- an unused `widgets/.png`
+
 ## Licenses
 
 - `cpp/`: GPL-2.0-or-later and others; see `cpp/LICENSES/` and the SPDX headers in each file.
-- Plasma Style (libplasma): LGPL, per its `metadata.json.cmake`.
+- Plasma Style (libplasma): LGPL, per its `metadata.json`.
 - Global Theme (plasma-workspace): GPL-2.0-or-later, per its `metadata.json`.
 - Color scheme: see the SPDX headers in the `.colors` file.
 
