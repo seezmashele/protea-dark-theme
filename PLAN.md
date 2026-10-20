@@ -155,34 +155,72 @@ Breeze also changes in each feature release, so each one means rebasing onto the
 
 ## Installer
 
-A single Go binary that embeds `theme/` and `cpp/`.
+A single Go binary that embeds the core theme, the C++ sources and the PKGBUILD, so it works on its own, without the repo.
+
+```sh
+go build -o dist/protea-installer ./installer   # dist/ is ignored by git
+./dist/protea-installer             # the interface
+./dist/protea-installer --dry-run   # same, but only shows what it would change
+./dist/protea-installer --uninstall # remove everything without the interface (also takes --dry-run)
+go test ./...
+```
 
 - **Libraries:**
   - Bubble Tea v2.1.0 (`charm.land/bubbletea/v2`)
-  - Bubbles v2.2.1
+  - Bubbles v2.2.1 (spinner)
   - Lip Gloss v2.0.6
 - **Toolchain:** Go 1.27.
-- **Module path:** `proteadesktop.org/protea-theme/installer`. This doesn't need to resolve anywhere while users build from source.
+- **Module:** `proteadesktop.org/protea-theme`, at the repo root. It doesn't need to resolve anywhere while users build from source.
+  - `go:embed` can only include files at or below its own package, so the embedding lives in [assets.go](assets.go) at the root.
+  - `cpp/` is embedded folder by folder, so local `cpp/build*` folders never end up in the binary.
+- **Code:**
+  - [installer/main.go](installer/main.go): flags, and `--uninstall`.
+  - [installer/internal/system](installer/internal/system): reads the setup and makes every change.
+  - [installer/internal/tui](installer/internal/tui): the Bubble Tea screens.
 - **Future scope:** it may later grow into a shared installer for all Protea Desktop themes.
 
 ### Pages
 
-1. **Welcome.** Shows the detected Plasma version (`plasmashell --version`) and the status of each part: installed or not, which Plasma version the C++ was built for, out of date or current.
-2. **Theme.** Installs or uninstalls the core theme into `~/.local/share/`, and optionally applies it with `plasma-apply-lookandfeel`.
-3. **Optional components.** Holds the C++ part:
-   - A checkbox each for the application style and window decoration, with their current status.
-   - The status of the build tools, offering the `pacman -S --needed cmake extra-cmake-modules` command if they are missing.
-   - A warning that a rebuild is needed after each Plasma feature update.
-   - Actions: **Build & install**, **Rebuild**, **Revert to Breeze**, **Remove**.
-   - Builds run through `makepkg -Ci`, with `PROTEA_WITH_STYLE` and `PROTEA_WITH_DECORATIONS` set from the checkboxes. `tea.ExecProcess` hands over the terminal so sudo can prompt for a password.
-   - After building, it switches the active style and decoration: `widgetStyle=Protea` in `kdeglobals`, and the decoration `library=` in `kwinrc`, then reconfigures KWin. The exact commands are still to be verified.
-   - It reads `/usr/share/protea/build-info` to see which Qt and KDecoration versions the build used.
-   - It walks the user through Plasma feature upgrades, since the version pin blocks them: when a new feature release is available (`pacman -Qu`), it offers to revert to Breeze and remove Protea, and after the upgrade to rebuild.
-   - If the installed Plasma somehow differs from the build's anyway, it offers Rebuild or Revert to Breeze instead of switching.
-4. **Progress.** A live build log, with a spinner per step.
-5. **Summary.**
+1. **Home.** The Plasma version (with a warning if it isn't 6.8), and whether the theme and the components are installed and in use.
+2. **Theme.**
+   - Install or update the theme files in `~/.local/share/` (or `$XDG_DATA_HOME`).
+   - **Use Protea colors and Plasma Style**: keeps icons, cursors, app style and title bars.
+   - **Use the full Global Theme**: also switches those to Breeze's.
+   - **Uninstall**: switches back first, then removes the files.
+3. **Optional components.**
+   - Checkboxes for the application style and window decoration.
+   - Status: package version, what it was built for (from `build-info`), what's in use, and whether the build tools are installed.
+   - Actions:
+     - **Build and install**: runs `makepkg --cleanbuild --install` on a temporary copy of the embedded sources, with `PROTEA_WITH_STYLE`/`PROTEA_WITH_DECORATIONS` set from the checkboxes.
+     - **Use Protea for the selected components**
+     - **Switch back**
+     - **Remove the package**
+     - **Install build tools**: only shown when some are missing.
+   - **Plasma feature upgrades:** when `pacman -Qu` shows one pending, **Remove** becomes **Prepare for Plasma X.Y** (switch back, remove, then rebuild after `pacman -Syu`), with a note explaining the pin.
+   - **Mismatch guard:** it refuses to switch to a decoration built for a different Plasma feature release.
+4. **Progress.** A spinner per step.
+   - Steps that need sudo or show their own output (makepkg, pacman) hand the terminal over with `tea.ExecProcess`, then wait for Enter so the output can be read.
+   - Cleanup steps, like removing the temporary build folder, run even after a failure.
+5. **Summary.** Each step's result, errors, and in dry-run mode what would have run.
 
-`--uninstall` is also available as a flag, for scripting.
+### How it switches settings
+
+These were checked against KDE's own sources (plasma-workspace and KWin v6.8.1):
+
+| Setting | Command |
+|---|---|
+| Color scheme | `plasma-apply-colorscheme` |
+| Plasma Style | `plasma-apply-desktoptheme` |
+| Full Global Theme | `plasma-apply-lookandfeel --apply` |
+| Icons | `/usr/lib/plasma-changeicons` |
+| Cursors | `plasma-apply-cursortheme` |
+| Application style | `kwriteconfig6` writes `widgetStyle`, then the D-Bus signal System Settings sends: `org.kde.KGlobalSettings.notifyChange` with type 2 (style changed) |
+| Window decoration | `/usr/lib/kwin-applywindowdecoration Protea`, KWin's own tool, which checks the theme exists, saves it and reloads KWin. A C++ decoration's theme name is its display name. |
+
+**Switching back restores the user's own choice, not just Breeze.**
+- Before changing a setting, the installer saves its current value in `~/.local/state/protea/saved-settings`.
+- Switching back restores the saved value, but only while Protea's value is still in place. If the user has since picked something else themselves, it's left alone.
+- With nothing saved, it falls back to Breeze Dark's values.
 
 ## Distribution
 
@@ -208,7 +246,13 @@ protea-theme/
 │   └── LICENSES/               license texts from libplasma + plasma-workspace
 ├── cpp/                        forked breeze repo (kstyle, kdecoration, libproteacommon)
 ├── packaging/arch/             PKGBUILD for the C++ part
-└── installer/                  Go + Bubble Tea installer            (planned)
+├── go.mod, go.sum              Go module proteadesktop.org/protea-theme
+├── assets.go                   embeds theme/, cpp/ and the PKGBUILD into the installer
+└── installer/                  Go + Bubble Tea installer
+    ├── main.go
+    └── internal/
+        ├── system/             reads the setup and makes the changes
+        └── tui/                the screens
 ```
 
 ## Roadmap
@@ -223,7 +267,7 @@ protea-theme/
 | 6 | Verify the core theme: install it into `~/.local/share/`, check it appears next to Breeze under Global Theme, Plasma Style and Colors, and apply it | Done |
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
-| 9 | Build the Go installer | |
+| 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
 | 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | |
 
 Commit after each step.
@@ -254,7 +298,7 @@ Protea keeps Breeze's licenses and copyright headers.
 - Light variant later. IDs are already shaped for it (`protea-light`, `ProteaLight`).
 - Replace the Global Theme previews (`contents/previews/`). They are still Breeze Dark screenshots.
 - Colors live in two files: the color scheme (`ProteaDark.colors`) and the Plasma Style's own `colors`. Color changes need making in both, or the panels won't match the apps.
-- Verify the exact commands the installer uses to switch style and decoration and to reconfigure KWin.
+- The Plasma Style may need its SVG cache cleared after updating the theme files, so changes show without logging out. Check this during the design work.
 
 ## Project conventions
 
