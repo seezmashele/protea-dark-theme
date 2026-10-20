@@ -34,6 +34,7 @@ include(KDEClangFormat)
 option(BUILD_QT5 "Build Qt5 style" OFF)
 option(BUILD_QT6 "Build with Qt6" ON)
 option(BUILD_WITH_QTQUICK "Build with Qt Quick features enabled" ON)
+option(WITH_STYLE "Build the Protea application style" ON)
 
 set(QT_NO_CREATE_VERSIONLESS_TARGETS ON)
 set(QT_NO_CREATE_VERSIONLESS_FUNCTIONS ON)
@@ -79,7 +80,9 @@ function(build_Qt5)
     set(PROTEA_HAVE_KSTYLE ${KF5FrameworkIntegration_FOUND})
     set(PROTEA_HAVE_QTQUICK ${Qt5Quick_FOUND})
 
-    add_subdirectory(kstyle kstyle5)
+    if(WITH_STYLE)
+        add_subdirectory(kstyle kstyle5)
+    endif()
     add_subdirectory(libproteacommon libproteacommon5)
 
     unset(QUERY_EXECUTABLE CACHE)
@@ -134,7 +137,13 @@ function(build_Qt6)
     set(PROTEA_HAVE_KSTYLE ${KF6FrameworkIntegration_FOUND})
     set(PROTEA_HAVE_QTQUICK ${Qt6Quick_FOUND})
 
-    add_subdirectory(kstyle kstyle6)
+    if(NOT WITH_STYLE AND NOT WITH_DECORATIONS)
+        message(FATAL_ERROR "Nothing to build: both WITH_STYLE and WITH_DECORATIONS are OFF")
+    endif()
+
+    if(WITH_STYLE)
+        add_subdirectory(kstyle kstyle6)
+    endif()
     add_subdirectory(libproteacommon libproteacommon6)
 
     if(WITH_DECORATIONS)
@@ -143,6 +152,11 @@ function(build_Qt6)
     endif()
 
     ki18n_install(po)
+
+    # Record what this build was compiled against, so the installer can
+    # tell when a Plasma or Qt update needs a rebuild.
+    configure_file(build-info.in ${CMAKE_CURRENT_BINARY_DIR}/build-info @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/build-info DESTINATION ${KDE_INSTALL_DATADIR}/protea)
 
     unset(QUERY_EXECUTABLE CACHE)
 endfunction()

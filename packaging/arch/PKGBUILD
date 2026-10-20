@@ -1,0 +1,82 @@
+# Maintainer: Protea Desktop
+#
+# Builds Protea's optional C++ components (application style and window
+# decoration) from this repo's cpp/ folder. Run from packaging/arch/:
+#
+#   makepkg -C       build the package from a clean build folder
+#   makepkg -Ci      build and install it (asks for your sudo password)
+#   pacman -R protea remove it again
+#
+# To build only one component, set PROTEA_WITH_STYLE or
+# PROTEA_WITH_DECORATIONS to OFF, for example: PROTEA_WITH_STYLE=OFF makepkg -C
+#
+# The window decoration is pinned to the Plasma feature release it was built
+# against (see below). Before upgrading Plasma to the next feature release:
+# pacman -R protea, upgrade, then build and install again. See PLAN.md.
+
+pkgname=protea
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Protea application style and window decoration for KDE Plasma, forked from Breeze'
+arch=(x86_64)
+license=('GPL-2.0-or-later'
+         'MIT'
+         'GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL'
+         'LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only')
+depends=(frameworkintegration
+         glibc
+         kcmutils
+         kcolorscheme
+         kconfig
+         kconfigwidgets
+         kcoreaddons
+         kguiaddons
+         ki18n
+         kiconthemes
+         kwidgetsaddons
+         kwindowsystem
+         libgcc
+         libglvnd
+         libstdc++
+         libx11
+         qt6-base
+         qt6-declarative)
+makedepends=(cmake extra-cmake-modules)
+options=(!debug)
+
+# The window decoration runs inside KWin and is only binary compatible with
+# the Plasma feature release it was built against. Pin kdecoration and kwin
+# to that release's bugfix versions (e.g. 6.8.0 to 6.8.79), so pacman refuses
+# to upgrade Plasma to 6.9 (or its 6.8.80/6.8.90 pre-releases) while this
+# build is installed. That can block `pacman -Syu`: remove protea, upgrade,
+# then rebuild. The application style needs no pin.
+if [[ ${PROTEA_WITH_DECORATIONS:-ON} == ON ]]; then
+  _plasma=$(pacman -Q kdecoration 2>/dev/null | sed -nE 's/^kdecoration ([0-9]+\.[0-9]+)\..*/\1/p')
+  if [[ -n $_plasma ]]; then
+    depends+=("kdecoration>=$_plasma" "kdecoration<$_plasma.80"
+              "kwin>=$_plasma" "kwin<$_plasma.80")
+  else
+    # Not installed: makepkg reports them as missing dependencies.
+    depends+=(kdecoration kwin)
+  fi
+fi
+
+_cpp="$startdir/../../cpp"
+
+pkgver() {
+  sed -n 's/^set(PROJECT_VERSION "\(.*\)")$/\1/p' "$_cpp/CMakeLists.txt"
+}
+
+build() {
+  cmake -B build -S "$_cpp" \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_TESTING=OFF \
+    -DWITH_STYLE="${PROTEA_WITH_STYLE:-ON}" \
+    -DWITH_DECORATIONS="${PROTEA_WITH_DECORATIONS:-ON}"
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname" "$_cpp"/LICENSES/*
+}

@@ -105,9 +105,16 @@ Removed from upstream (neither built nor needed):
 Build configuration:
 
 - **Options:** defaults are Qt6 only (`BUILD_QT5=OFF`). Qt5 apps keep using Breeze. Pass `-DBUILD_TESTING=OFF` for normal builds.
-- **New `WITH_STYLE` option:** upstream can already skip the decoration (`WITH_DECORATIONS`) but always builds the application style. With `WITH_STYLE` added, either component can be built alone.
+- **Component options:** `WITH_STYLE` (added by Protea) and `WITH_DECORATIONS` (upstream). Both default to ON, and either can be turned off. Turning both off stops with an error.
+- **Build record:** every build installs `/usr/share/protea/build-info`. It lists the Protea, Qt and KDecoration versions it was compiled against, and which components it built. The installer reads it to detect when a Plasma or Qt update needs a rebuild.
 - **Build dependencies on Arch:** `cmake` and `extra-cmake-modules`. Everything else is already installed as a dependency of Breeze.
-- **Packaging:** a PKGBUILD in `packaging/arch/`, built with `makepkg -si`. pacman tracks the files, and `pacman -R` removes them cleanly.
+- **Packaging:** [packaging/arch/PKGBUILD](packaging/arch/PKGBUILD) builds package `protea` straight from `cpp/`.
+  - Build with `makepkg -C`; build and install with `makepkg -Ci`.
+  - `PROTEA_WITH_STYLE=OFF` or `PROTEA_WITH_DECORATIONS=OFF` builds a single component.
+  - The version comes from `PROJECT_VERSION` in `cpp/CMakeLists.txt`.
+  - No debug package is built.
+  - pacman tracks the files, and `pacman -R protea` removes them cleanly.
+  - **Version pin.** When the window decoration is built, the package depends on `kdecoration` and `kwin` being within the Plasma feature release it was built against: `>=6.8` and `<6.8.80` for a 6.8 build. That allows 6.8.x bugfix releases and blocks 6.9, including its 6.8.80/6.8.90 pre-releases. The release is read from the installed `kdecoration` at build time, so a rebuild on 6.9 pins to 6.9. A style-only build has no pin.
 
 #### Rebuild policy
 
@@ -118,6 +125,31 @@ Build configuration:
 | Qt minor (6.12 → 6.13) | No | Breeze uses only public Qt APIs. Qt will not load a plugin built against a newer Qt than the one installed, so build against the oldest supported Qt. |
 | Plasma feature (6.8 → 6.9) | **Yes** | KDecoration has no binary-compatibility promise, and its soname stays `.so.6` across Plasma 6. A mismatched decoration runs inside KWin, so it can crash the session instead of failing cleanly. |
 | Plasma 7 / Qt 7 / KF7 | Yes, plus porting | New APIs. |
+
+**Protea never lets KWin load a mismatched decoration.** The package's version pin makes pacman refuse a Plasma feature upgrade while a decoration build is installed:
+
+```
+error: failed to prepare transaction (could not satisfy dependencies)
+:: installing kdecoration (6.9.0-1) breaks dependency 'kdecoration<6.8.80' required by protea
+```
+
+This also stops `pacman -Syu` from updating anything else, so a new Plasma feature release needs this workflow:
+
+1. `sudo pacman -R protea`. Apps and title bars fall back to Breeze.
+2. `sudo pacman -Syu`.
+3. Build and install Protea again, against the new Plasma.
+
+Never get around the block with `--ignore` or a partial upgrade. That's exactly the mismatch the pin exists to prevent.
+
+The pin was checked in a simulated pacman database:
+
+| Upgrade attempted | Result |
+|---|---|
+| `kdecoration` 6.9.0 | Blocked |
+| `kdecoration` 6.8.90 | Blocked |
+| `kwin` 6.9.0 | Blocked |
+| `kdecoration` 6.8.5 | Allowed |
+| `kdecoration` 6.9.0 after removing protea | Allowed |
 
 Breeze also changes in each feature release, so each one means rebasing onto the new upstream tag (see [Upgrading upstream](#upgrading-upstream)).
 
@@ -142,9 +174,11 @@ A single Go binary that embeds `theme/` and `cpp/`.
    - The status of the build tools, offering the `pacman -S --needed cmake extra-cmake-modules` command if they are missing.
    - A warning that a rebuild is needed after each Plasma feature update.
    - Actions: **Build & install**, **Rebuild**, **Revert to Breeze**, **Remove**.
-   - Builds run through `makepkg -si`. `tea.ExecProcess` hands over the terminal so sudo can prompt for a password.
+   - Builds run through `makepkg -Ci`, with `PROTEA_WITH_STYLE` and `PROTEA_WITH_DECORATIONS` set from the checkboxes. `tea.ExecProcess` hands over the terminal so sudo can prompt for a password.
    - After building, it switches the active style and decoration: `widgetStyle=Protea` in `kdeglobals`, and the decoration `library=` in `kwinrc`, then reconfigures KWin. The exact commands are still to be verified.
-   - It records the Plasma version used for the build. If that doesn't match the running Plasma, it offers Rebuild or Revert to Breeze instead of switching.
+   - It reads `/usr/share/protea/build-info` to see which Qt and KDecoration versions the build used.
+   - It walks the user through Plasma feature upgrades, since the version pin blocks them: when a new feature release is available (`pacman -Qu`), it offers to revert to Breeze and remove Protea, and after the upgrade to rebuild.
+   - If the installed Plasma somehow differs from the build's anyway, it offers Rebuild or Revert to Breeze instead of switching.
 4. **Progress.** A live build log, with a spinner per step.
 5. **Summary.**
 
@@ -173,7 +207,7 @@ protea-theme/
 │   ├── look-and-feel/
 │   └── LICENSES/               license texts from libplasma + plasma-workspace
 ├── cpp/                        forked breeze repo (kstyle, kdecoration, libproteacommon)
-├── packaging/arch/             PKGBUILD for the C++ part            (planned)
+├── packaging/arch/             PKGBUILD for the C++ part
 └── installer/                  Go + Bubble Tea installer            (planned)
 ```
 
@@ -188,7 +222,7 @@ protea-theme/
 | 5 | Rename the core theme to Protea: merge the two Plasma Style folders into `protea-dark` with a plain `metadata.json`, rename the color scheme to `ProteaDark`, rename the Global Theme to `org.proteadesktop.protea-dark`, and point its defaults at Protea's color scheme and Plasma Style | Done |
 | 6 | Verify the core theme: install it into `~/.local/share/`, check it appears next to Breeze under Global Theme, Plasma Style and Colors, and apply it | Done |
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
-| 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install with `makepkg -si`, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | |
+| 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | |
 | 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | |
 

@@ -17,6 +17,8 @@ cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DB
 cmake --build build -j"$(nproc)"
 ```
 
+To build only one component, add `-DWITH_STYLE=OFF` or `-DWITH_DECORATIONS=OFF`. Each build installs `/usr/share/protea/build-info`, which records the Qt and KDecoration versions it was compiled against. On Arch, build a package with [../packaging/arch/PKGBUILD](../packaging/arch/PKGBUILD) instead.
+
 The plugins must be rebuilt after each Plasma feature release (for example 6.8 → 6.9). See [../PLAN.md](../PLAN.md).
 
 ## Compatibility with Breeze
