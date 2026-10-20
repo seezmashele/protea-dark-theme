@@ -73,27 +73,41 @@ A fork of the breeze repo's compiled plugins. Both take their colors from the ac
 | Settings app | `protea-settings6` | `breeze-settings6` |
 | C++ namespace | `Protea::` | `Breeze::` |
 
-The rename must also cover these installed files, so they don't collide with Breeze's:
+Every installed file has a Protea name: the `.kcfg` schema files (`protea.kcfg`, `protea-decoration.kcfg`), `protea.themerc`, the `protea-settings` icon, the settings pages' `.desktop` files, and the translations (`protea_style_config`, `protea_kwin_deco`). None of them collides with a file already on the system.
 
-- `.kcfg` schema files
-- `breeze.themerc`
-- `breeze-settings.svgz` icon
-- `.desktop` files for the settings pages
-- `Breeze.qtcurve` preset
-- CMake package config (`BreezeConfig.cmake`)
+What deliberately keeps a Breeze name:
+
+- **Widget properties** that KDE apps set to talk to the style, such as `_breeze_force_frame` and `_breeze_borders_sides`. Renaming them would make Protea ignore those requests.
+- **The Global Theme defaults:** they still select Breeze's style and decoration until the C++ is installed.
+
+How the rename was done:
+
+- **Mechanical part:** [scripts/rebrand-cpp.py](scripts/rebrand-cpp.py), which is reusable on a fresh upstream import.
+  - Removes the unused upstream pieces.
+  - Renames files and text.
+  - Moves D-Bus to `org.proteadesktop.Protea.Style`.
+  - Strips translated plugin names and keywords, since they name "Breeze" in translation.
+  - Keeps translated descriptions that don't mention Breeze.
+- **Manual part:** edits to the root `CMakeLists.txt`.
+  - Removed the cursors, wallpapers, colors, `misc` and CMake-package sections, KDE's CI switch and the git pre-commit hook.
+  - Made Qt5 off by default.
+  - Set the version to 0.1.0.
+
+Removed from upstream (neither built nor needed):
+
+- `colors/`
+- `misc/`: QtCurve preset and a Breeze → BreezeLight migration tool
+- `printing/`
+- `cmake/`
+- `BreezeConfig.cmake.in`
+- KDE's CI files
 
 Build configuration:
 
-- **Options:** `-DBUILD_QT5=OFF -DBUILD_CURSOR=OFF -DWITH_WALLPAPERS=OFF -DBUILD_TESTING=OFF`. Qt5 apps keep using Breeze.
+- **Options:** defaults are Qt6 only (`BUILD_QT5=OFF`). Qt5 apps keep using Breeze. Pass `-DBUILD_TESTING=OFF` for normal builds.
 - **New `WITH_STYLE` option:** upstream can already skip the decoration (`WITH_DECORATIONS`) but always builds the application style. With `WITH_STYLE` added, either component can be built alone.
 - **Build dependencies on Arch:** `cmake` and `extra-cmake-modules`. Everything else is already installed as a dependency of Breeze.
 - **Packaging:** a PKGBUILD in `packaging/arch/`, built with `makepkg -si`. pacman tracks the files, and `pacman -R` removes them cleanly.
-
-Files to remove from `cpp/`:
-
-- `colors/`: the core theme ships the color scheme.
-- KDE's CI files: `.gitlab-ci.yml` and `.kde-ci.yml`.
-- `kde_configure_git_pre_commit_hook` in `CMakeLists.txt`.
 
 #### Rebuild policy
 
@@ -151,13 +165,14 @@ protea-theme/
 ├── PLAN.md                     this file
 ├── UPSTREAM.md                 upstream repos, tag and commit for each imported piece
 ├── scripts/
-│   └── import-upstream.sh      imports pristine Breeze sources at a given tag
+│   ├── import-upstream.sh      imports pristine Breeze sources at a given tag
+│   └── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
 ├── theme/                      core theme
 │   ├── color-schemes/
 │   ├── desktoptheme/
 │   ├── look-and-feel/
 │   └── LICENSES/               license texts from libplasma + plasma-workspace
-├── cpp/                        forked breeze repo (kstyle, kdecoration, libbreezecommon)
+├── cpp/                        forked breeze repo (kstyle, kdecoration, libproteacommon)
 ├── packaging/arch/             PKGBUILD for the C++ part            (planned)
 └── installer/                  Go + Bubble Tea installer            (planned)
 ```
@@ -172,10 +187,10 @@ protea-theme/
 | 4 | Commit the pristine import (repo owner) | Done |
 | 5 | Rename the core theme to Protea: merge the two Plasma Style folders into `protea-dark` with a plain `metadata.json`, rename the color scheme to `ProteaDark`, rename the Global Theme to `org.proteadesktop.protea-dark`, and point its defaults at Protea's color scheme and Plasma Style | Done |
 | 6 | Verify the core theme: install it into `~/.local/share/`, check it appears next to Breeze under Global Theme, Plasma Style and Colors, and apply it | Done |
-| 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names. Remove `cpp/colors/` and upstream CI files. Decide what to do with translations. Check no installed file collides with `pacman -Ql breeze`. | |
+| 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install with `makepkg -si`, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | |
 | 9 | Build the Go installer | |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/breezemetrics.h`), decoration drawing | |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | |
 
 Commit after each step.
 
@@ -183,10 +198,12 @@ Commit after each step.
 
 When Plasma ships a new feature release:
 
-1. Import the new tag into a separate cache with `scripts/import-upstream.sh`.
-2. Diff the old upstream tag against the new one, and apply those changes to Protea.
+1. Clone the old and new upstream tags. `scripts/import-upstream.sh` keeps clones in `~/.cache/protea-theme/upstream/<TAG>`.
+2. Copy each tag's breeze repo to a scratch folder, and run `scripts/rebrand-cpp.py` on both copies.
+3. Diff the renamed old tree against the renamed new tree, and apply that patch to `cpp/`. Resolve any conflicts by hand, and redo the manual `CMakeLists.txt` edits if upstream changed those sections.
+4. For `theme/`, diff the old and new upstream files directly, and apply the changes by hand. There are only a few files, and the names differ.
 
-The script refuses to run over an existing `cpp/` or `theme/`, so it never overwrites Protea changes. The pristine import commit is the baseline for these diffs.
+`import-upstream.sh` refuses to run over an existing `cpp/` or `theme/`, so it never overwrites Protea changes.
 
 ## Licensing
 
@@ -200,7 +217,6 @@ Protea keeps Breeze's licenses and copyright headers.
 ## Open items
 
 - Register `proteadesktop.org` before the first public release. The `org.proteadesktop` IDs imply ownership of that domain.
-- Decide what to do with `cpp/po/` translations. The rename changes the translation domains.
 - Light variant later. IDs are already shaped for it (`protea-light`, `ProteaLight`).
 - Replace the Global Theme previews (`contents/previews/`). They are still Breeze Dark screenshots.
 - Colors live in two files: the color scheme (`ProteaDark.colors`) and the Plasma Style's own `colors`. Color changes need making in both, or the panels won't match the apps.

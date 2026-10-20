@@ -1,31 +1,31 @@
-add_definitions(-DTRANSLATION_DOMAIN="breeze_kwin_deco")
+add_definitions(-DTRANSLATION_DOMAIN="protea_kwin_deco")
 
 ################# includes #################
-include_directories(${CMAKE_SOURCE_DIR}/libbreezecommon)
-include_directories(${CMAKE_BINARY_DIR}/libbreezecommon)
+include_directories(${CMAKE_SOURCE_DIR}/libproteacommon)
+include_directories(${CMAKE_BINARY_DIR}/libproteacommon)
 
 ################# newt target #################
 ### plugin classes
-set(breezedecoration_SRCS
-    breezebutton.cpp
-    breezedecoration.cpp
-    breezesettingsprovider.cpp
-    breezeexceptionlist.cpp
+set(proteadecoration_SRCS
+    proteabutton.cpp
+    proteadecoration.cpp
+    proteasettingsprovider.cpp
+    proteaexceptionlist.cpp
 )
 
 ### build library
-kconfig_add_kcfg_files(breezedecoration_SRCS breezesettings.kcfgc)
-add_library(breezedecoration MODULE
-    ${breezedecoration_SRCS}
-    ${breezedecoration_config_PART_FORMS_HEADERS})
+kconfig_add_kcfg_files(proteadecoration_SRCS proteasettings.kcfgc)
+add_library(proteadecoration MODULE
+    ${proteadecoration_SRCS}
+    ${proteadecoration_config_PART_FORMS_HEADERS})
 
-set_target_properties(breezedecoration PROPERTIES
-    OUTPUT_NAME org.kde.breeze
+set_target_properties(proteadecoration PROPERTIES
+    OUTPUT_NAME org.proteadesktop.protea
 )
 
-target_link_libraries(breezedecoration
+target_link_libraries(proteadecoration
     PRIVATE
-        breezecommon6
+        proteacommon6
         Qt6::DBus
         KF6::CoreAddons
         KF6::ConfigGui
@@ -36,8 +36,8 @@ target_link_libraries(breezedecoration
         KF6::ColorScheme
 )
 
-install(TARGETS breezedecoration DESTINATION ${KDE_INSTALL_PLUGINDIR}/${KDECORATION_PLUGIN_DIR})
-install(FILES breezesettingsdata.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME breeze-decoration.kcfg)
+install(TARGETS proteadecoration DESTINATION ${KDE_INSTALL_PLUGINDIR}/${KDECORATION_PLUGIN_DIR})
+install(FILES proteasettingsdata.kcfg DESTINATION ${KDE_INSTALL_KCFGDIR} RENAME protea-decoration.kcfg)
 
 add_subdirectory(config)
 

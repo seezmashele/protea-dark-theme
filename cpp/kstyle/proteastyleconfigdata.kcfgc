@@ -1,0 +1,6 @@
+File=protea.kcfg
+ClassName=StyleConfigData
+NameSpace=Protea
+Singleton=true
+Mutators=true
+GlobalEnums=true

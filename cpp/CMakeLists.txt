@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-project(breeze)
-set(PROJECT_VERSION "6.8.1")
+project(protea)
+set(PROJECT_VERSION "0.1.0")
 
 set(KF5_MIN_VERSION "5.102.0")
 set(KF6_MIN_VERSION "6.30.0")
@@ -9,11 +9,10 @@ set(QT5_MIN_VERSION "5.15.2")
 set(QT_MIN_VERSION "6.11.0")
 
 include(GenerateExportHeader)
-include(WriteBasicConfigVersionFile)
 include(FeatureSummary)
 
 find_package(ECM ${KF5_MIN_VERSION} REQUIRED NO_MODULE)
-set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH}  ${CMAKE_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,32 +25,18 @@ if(BUILD_TESTING)
     enable_testing()
 endif()
 
-include(CMakePackageConfigHelpers)
 include(ECMInstallIcons)
 include(ECMQtDeclareLoggingCategory)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 include(KDEClangFormat)
-include(KDEGitCommitHooks)
-
-include(GtkUpdateIconCache)
 
 
-option(BUILD_QT5 "Build Qt5 style" ON)
+option(BUILD_QT5 "Build Qt5 style" OFF)
 option(BUILD_QT6 "Build with Qt6" ON)
-option(BUILD_CURSOR "Build Breeze Cursor" ON)
 option(BUILD_WITH_QTQUICK "Build with Qt Quick features enabled" ON)
 
 set(QT_NO_CREATE_VERSIONLESS_TARGETS ON)
 set(QT_NO_CREATE_VERSIONLESS_FUNCTIONS ON)
-
-# For KDE CI only. As the current infrastructure doesn't allow us to set CMAKE options per build variant
-if($ENV{CI_JOB_NAME_SLUG} MATCHES "qt5")
-    set(BUILD_QT5 ON)
-    set(BUILD_QT6 OFF)
-elseif($ENV{CI_JOB_NAME_SLUG} MATCHES "qt6")
-    set(BUILD_QT5 OFF)
-    set(BUILD_QT6 ON)
-endif()
 
 function(build_Qt5)
     set(QT_MAJOR_VERSION 5)
@@ -91,11 +76,11 @@ function(build_Qt5)
         find_package(Qt5 ${QT5_MIN_VERSION} REQUIRED COMPONENTS Quick)
     endif()
 
-    set(BREEZE_HAVE_KSTYLE ${KF5FrameworkIntegration_FOUND})
-    set(BREEZE_HAVE_QTQUICK ${Qt5Quick_FOUND})
+    set(PROTEA_HAVE_KSTYLE ${KF5FrameworkIntegration_FOUND})
+    set(PROTEA_HAVE_QTQUICK ${Qt5Quick_FOUND})
 
     add_subdirectory(kstyle kstyle5)
-    add_subdirectory(libbreezecommon libbreezecommon5)
+    add_subdirectory(libproteacommon libproteacommon5)
 
     unset(QUERY_EXECUTABLE CACHE)
 endfunction()
@@ -112,8 +97,7 @@ function(build_Qt6)
         find_package(Qt6 ${REQUIRED_QT_VERSION} CONFIG REQUIRED DBus)
         set(HAVE_QTDBUS ${Qt6DBus_FOUND})
 
-        option(WITH_DECORATIONS "Build Breeze window decorations for KWin" ON)
-        option(WITH_WALLPAPERS "Install Breeze default wallpapers" ON)
+        option(WITH_DECORATIONS "Build Protea window decorations for KWin" ON)
 
         find_package(KF6FrameworkIntegration ${KF6_MIN_VERSION} CONFIG )
         set_package_properties(KF${QT_MAJOR_VERSION}FrameworkIntegration PROPERTIES
@@ -130,7 +114,6 @@ function(build_Qt6)
         )
     else()
         set(WITH_DECORATIONS OFF)
-        set(WITH_WALLPAPERS OFF)
     endif()
 
     find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets Core Svg)
@@ -148,40 +131,18 @@ function(build_Qt6)
         find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS Quick)
     endif()
 
-    set(BREEZE_HAVE_KSTYLE ${KF6FrameworkIntegration_FOUND})
-    set(BREEZE_HAVE_QTQUICK ${Qt6Quick_FOUND})
+    set(PROTEA_HAVE_KSTYLE ${KF6FrameworkIntegration_FOUND})
+    set(PROTEA_HAVE_QTQUICK ${Qt6Quick_FOUND})
 
     add_subdirectory(kstyle kstyle6)
-    add_subdirectory(libbreezecommon libbreezecommon6)
-    add_subdirectory(misc)
+    add_subdirectory(libproteacommon libproteacommon6)
 
     if(WITH_DECORATIONS)
         find_package(KDecoration3 REQUIRED)
         add_subdirectory(kdecoration)
     endif()
-    if (WITH_WALLPAPERS)
-        add_subdirectory(wallpapers)
-    endif()
 
     ki18n_install(po)
-
-    # create a Config.cmake and a ConfigVersion.cmake file and install them
-    include(ECMSetupVersion)
-    ecm_setup_version(${PROJECT_VERSION} VARIABLE_PREFIX BREEZE
-        PACKAGE_VERSION_FILE "${CMAKE_CURRENT_BINARY_DIR}/BreezeConfigVersion.cmake"
-    )
-    set(CMAKECONFIG_INSTALL_DIR "${KDE_INSTALL_CMAKEPACKAGEDIR}/Breeze")
-
-    configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/BreezeConfig.cmake.in"
-                                  "${CMAKE_CURRENT_BINARY_DIR}/BreezeConfig.cmake"
-                                  PATH_VARS KDE_INSTALL_FULL_DATADIR
-                                  INSTALL_DESTINATION  ${CMAKECONFIG_INSTALL_DIR}
-    )
-    install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/BreezeConfig.cmake"
-                   "${CMAKE_CURRENT_BINARY_DIR}/BreezeConfigVersion.cmake"
-            DESTINATION "${CMAKECONFIG_INSTALL_DIR}"
-            COMPONENT Devel
-    )
 
     unset(QUERY_EXECUTABLE CACHE)
 endfunction()
@@ -189,23 +150,8 @@ if(BUILD_QT6)
     build_Qt6()
 endif()
 
-function(build_colors_and_cursors)
-    # While it is technically not 100% correct to use versionless
-    # KDEInstallDirs while (maybe) building for both Qt versions,
-    # it doesn't really matter at the end, because colors and cursors
-    # only use ICONDIR and DATADIR which both do not depend on the version
-    include(KDEInstallDirs)
-    add_subdirectory(colors)
-    if(BUILD_CURSOR)
-        add_subdirectory(cursors)
-    endif()
-endfunction()
-
-build_colors_and_cursors()
-
 # add clang-format target for all our real source files
 file(GLOB_RECURSE ALL_CLANG_FORMAT_SOURCE_FILES *.cpp *.h)
 kde_clang_format(${ALL_CLANG_FORMAT_SOURCE_FILES})
-kde_configure_git_pre_commit_hook(CHECKS CLANG_FORMAT)
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)

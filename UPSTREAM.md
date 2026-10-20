@@ -25,6 +25,17 @@ The rename also dropped files that only upstream's CMake build used:
 - its `metadata.json.cmake` templates, replaced by a plain `metadata.json`
 - an unused `widgets/.png`
 
+`cpp/` was then renamed from Breeze to Protea with `scripts/rebrand-cpp.py`, plus manual edits to `cpp/CMakeLists.txt`. That step removed these upstream pieces, which aren't needed:
+
+- `colors/`
+- `misc/`
+- `printing/`
+- `cmake/`
+- `BreezeConfig.cmake.in`
+- `.gitlab-ci.yml`, `.kde-ci.yml` and `.git-blame-ignore-revs`
+
+`cpp/README.md` was rewritten. See [PLAN.md](PLAN.md) for details.
+
 ## Licenses
 
 - `cpp/`: GPL-2.0-or-later and others; see `cpp/LICENSES/` and the SPDX headers in each file.

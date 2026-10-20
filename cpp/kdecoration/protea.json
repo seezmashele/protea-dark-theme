@@ -1,0 +1,16 @@
+{
+    "KPlugin": {
+        "Description": "Window decoration using the Protea visual style for the Plasma Desktop",
+        "EnabledByDefault": true,
+        "Name": "Protea"
+    },
+    "X-KDE-ConfigModule": "kcm_proteadecoration",
+    "org.kde.kdecoration3": {
+        "blur": false,
+        "recommendedBorderSize": "None",
+        "styles": [
+            "shadow",
+            "titled"
+        ]
+    }
+}

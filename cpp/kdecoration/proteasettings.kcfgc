@@ -1,0 +1,7 @@
+File=proteasettingsdata.kcfg
+ClassName=InternalSettings
+NameSpace=Protea
+Singleton=false
+Mutators=true
+GlobalEnums=true
+Notifiers=OutlineCloseButton
