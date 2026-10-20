@@ -847,9 +847,9 @@ func (m *Model) viewDone(b *strings.Builder) {
 		b.WriteString(setting("Colors", "Protea Dark"))
 		b.WriteString(setting("Plasma Style", "Protea Dark"))
 		if m.status.Package != "" {
-			b.WriteString(dim.Render("  and for the C++ components:") + "\n")
-			b.WriteString(setting("Application Style", "Protea"))
+			b.WriteString("\n" + m.wrap("Then pick Protea's window decoration and application style. The Global Theme sets Breeze's, so do this after applying it, and again whenever you reapply it:", warning) + "\n")
 			b.WriteString(setting("Window Decorations", "Protea"))
+			b.WriteString(setting("Application Style", "Protea"))
 		}
 		if m.reapply {
 			b.WriteString("\n" + m.wrap("Protea Dark is already in use: apply it again to see the new accent.", warning) + "\n")

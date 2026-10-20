@@ -243,7 +243,7 @@ Upgrade:    Welcome → Review → Prepare
 6. **Done.** Each step's result, errors, and in dry-run mode what would have run. After installing, it shows where to apply Protea in System Settings → Colors & Themes:
    - **Global Theme** → Protea Dark
    - or, to keep icons and title bars, only **Colors** and **Plasma Style** → Protea Dark
-   - **Application Style** and **Window Decorations** → Protea, when the C++ components are installed
+   - **Window Decorations** and **Application Style** → Protea, when the C++ components are installed. A reminder in the warning color says to do this after applying the Global Theme, and again whenever it's reapplied, because the Global Theme sets Breeze's.
 
    Enter starts over.
 
@@ -398,6 +398,7 @@ Protea keeps Breeze's licenses and copyright headers.
 - Replace the Global Theme previews (`contents/previews/`). They are still Breeze Dark screenshots.
 - Colors live in two files: the color scheme (`ProteaDark.colors`) and the Plasma Style's own `colors`. The installer keeps the accent in sync in both, but other color changes need making in both by hand, or the panels won't match the apps.
 - The Plasma Style may need its SVG cache cleared after updating the theme files, so changes show without logging out. Check this during the design work.
+- **Global Theme and the C++ components (deferred).** The Global Theme names Breeze's window decoration and app style, so people without the C++ components never get a setting pointing at a missing plugin. When the components are installed, users pick Protea's by hand (the Done page reminds them). A possible fix: the installer rewrites the *installed* Global Theme's defaults to name Protea's decoration and style when it builds the components, and back to Breeze when it removes them, like it does for the accent. That follows KDE's own Oxygen Global Theme, which ships in the same package as the decoration and style it names. Checked in Plasma 6.8.1: if a Global Theme names a missing app style, System Settings skips it. If it names a missing decoration, System Settings writes it anyway, and KWin keeps the current decoration, falling back to Breeze at the next login.
 
 ## Project conventions
 

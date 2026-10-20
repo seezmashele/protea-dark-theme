@@ -259,15 +259,18 @@ func TestRunInstallDryRun(t *testing.T) {
 		"▍Installed", "Protea is ready. Apply it yourself in System Settings → Colors & Themes:",
 		"Global Theme → Protea Dark", "Colors → Protea Dark", "Plasma Style → Protea Dark",
 		"enter start over")
-	expectNot(t, m, "Application Style", "apply it again")
+	expectNot(t, m, "Window Decorations", "Application Style", "apply it again")
 	press(m, "enter")
 	expect(t, m, "● Welcome", "○ Colors")
 
-	// With the C++ components installed, the reminder covers them too.
+	// With the C++ components installed, it reminds you to pick them after
+	// the Global Theme, which sets Breeze's.
 	m = start(t, everything)
 	press(m, "enter", "enter", "enter")
 	choose(t, m, "Install")
-	expect(t, m, "Application Style → Protea", "Window Decorations → Protea")
+	expect(t, m, "Plasma Style → Protea Dark Then pick Protea's window decoration and application style. "+
+		"The Global Theme sets Breeze's, so do this after applying it, and again whenever you reapply it: "+
+		"Window Decorations → Protea Application Style → Protea")
 }
 
 func TestChangingExistingInstall(t *testing.T) {
