@@ -31,9 +31,9 @@ ui_*.h
 /packaging/arch/*.tar.xz
 /packaging/arch/*.tar.zst
 
-# Go installer binaries
-/installer/protea-installer
-/installer/bin/
+# Go installer binaries (a plain `go build` names it after the module)
+/protea-theme
+/protea-installer
 /dist/
 *.test
 *.exe

@@ -158,7 +158,7 @@ Breeze also changes in each feature release, so each one means rebasing onto the
 A single Go binary that embeds the core theme, the C++ sources and the PKGBUILD, so it works on its own, without the repo.
 
 ```sh
-go build -o dist/protea-installer ./installer   # dist/ is ignored by git
+go build -o dist/protea-installer .   # dist/ is ignored by git
 ./dist/protea-installer             # the interface
 ./dist/protea-installer --dry-run   # same, but only shows what it would change
 ./dist/protea-installer --uninstall # remove everything without the interface (also takes --dry-run)
@@ -171,37 +171,59 @@ go test ./...
   - Lip Gloss v2.0.6
 - **Toolchain:** Go 1.27.
 - **Module:** `proteadesktop.org/protea-theme`, at the repo root. It doesn't need to resolve anywhere while users build from source.
-  - `go:embed` can only include files at or below its own package, so the embedding lives in [assets.go](assets.go) at the root.
+  - The program's `main` package is at the root.
+  - `go:embed` can only include files at or below its own package, so [main.go](main.go) at the root embeds `theme/`, `cpp/` and the PKGBUILD. The embedding is in `main.go` itself, so `go run main.go` works as well as `go run .`.
   - `cpp/` is embedded folder by folder, so local `cpp/build*` folders never end up in the binary.
+  - A plain `go build` names the binary `protea-theme`, after the module; git ignores it.
 - **Code:**
-  - [installer/main.go](installer/main.go): flags, and `--uninstall`.
-  - [installer/internal/system](installer/internal/system): reads the setup and makes every change.
-  - [installer/internal/tui](installer/internal/tui): the Bubble Tea screens.
+  - [main.go](main.go): the embedded files, flags, and `--uninstall`.
+  - [internal/system](internal/system): reads the setup and makes every change.
+  - [internal/tui](internal/tui): the Bubble Tea screens.
+  - Tests in `internal/` read the same files from the repo; [main_test.go](main_test.go) checks what's embedded.
 - **Future scope:** it may later grow into a shared installer for all Protea Desktop themes.
 
-### Pages
+### Flow
 
-1. **Home.** The Plasma version (with a warning if it isn't 6.8), and whether the theme and the components are installed and in use.
-2. **Theme.**
-   - Install or update the theme files in `~/.local/share/` (or `$XDG_DATA_HOME`).
-   - **Use Protea colors and Plasma Style**: keeps icons, cursors, app style and title bars.
-   - **Use the full Global Theme**: also switches those to Breeze's.
-   - **Uninstall**: switches back first, then removes the files.
-3. **Optional components.**
-   - Checkboxes for the application style and window decoration.
-   - Status: package version, what it was built for (from `build-info`), what's in use, and whether the build tools are installed.
-   - Actions:
-     - **Build and install**: runs `makepkg --cleanbuild --install` on a temporary copy of the embedded sources, with `PROTEA_WITH_STYLE`/`PROTEA_WITH_DECORATIONS` set from the checkboxes.
-     - **Use Protea for the selected components**
-     - **Switch back**
-     - **Remove the package**
-     - **Install build tools**: only shown when some are missing.
-   - **Plasma feature upgrades:** when `pacman -Qu` shows one pending, **Remove** becomes **Prepare for Plasma X.Y** (switch back, remove, then rebuild after `pacman -Syu`), with a note explaining the pin.
-   - **Mismatch guard:** it refuses to switch to a decoration built for a different Plasma feature release.
-4. **Progress.** A spinner per step.
+The installer goes page by page. Each page offers only the choices relevant to it, and **nothing changes until the last page confirms**.
+
+- **Navigation:** a progress line at the top shows where you are. Enter goes forward, Esc goes back, and choices are kept when going back.
+- **The plan:** the pages fill in a plan. The Review page turns it into the exact steps that will run, so what you confirm is what happens.
+
+```
+Install:    Welcome → Theme → Components → Review → Install
+Uninstall:  Welcome → Remove → Review → Uninstall
+Upgrade:    Welcome → Review → Prepare
+```
+
+1. **Welcome.** Your system: Plasma version (with a warning if it isn't 6.8), and whether the theme and the components are installed and in use. Then the choices:
+   - **Install Protea Dark**, or **Update or change Protea Dark** when something is installed.
+   - **Prepare for Plasma X.Y**: only when `pacman -Qu` shows a Plasma feature upgrade that the version pin blocks.
+   - **Uninstall**: always the last choice, shown only when something is installed.
+2. **Theme.** The theme files always go into `~/.local/share/` (or `$XDG_DATA_HOME`). The choice is how to use them:
+   - **Full Global Theme** (default): also switches icons, cursors, app style and title bars to Breeze's. Your panel layout is left alone.
+   - **Colors and Plasma Style**: keeps your icons, cursors, app style and title bars. Pre-selected when that's what's in use.
+   - **Install only**: changes nothing on the desktop.
+3. **Components.** The optional C++ parts:
+   - **Application style** and **Window decoration** checkboxes, unticked by default.
+   - **Use them once installed**, ticked by default.
+   - **Build again**: only shown when the package is installed, for rebuilding after changing the C++.
+   - Notes explain the pin, and say that missing build tools will be installed first.
+   - For an existing install, the boxes start as what's built and in use.
+4. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
+   - **Only what changes:** a package that's already built for your Plasma isn't rebuilt, and settings already in use aren't re-applied.
+   - **Unticking a component** switches back from it. With both unticked, the package is removed.
+   - **A mismatched build** (built for another Plasma) is always rebuilt.
+   - **Builds** run `makepkg --cleanbuild --install` on a temporary copy of the embedded sources, with `PROTEA_WITH_STYLE`/`PROTEA_WITH_DECORATIONS` from the checkboxes.
+5. **Install / Uninstall / Prepare.** A spinner per step.
    - Steps that need sudo or show their own output (makepkg, pacman) hand the terminal over with `tea.ExecProcess`, then wait for Enter so the output can be read.
-   - Cleanup steps, like removing the temporary build folder, run even after a failure.
-5. **Summary.** Each step's result, errors, and in dry-run mode what would have run.
+   - Cleanup steps, like removing the temporary build folder, run even after a failure. Everything else after a failed step is skipped.
+6. **Done.** Each step's result, errors, in dry-run mode what would have run, and what to do next. Enter starts over.
+
+**Remove page (uninstall).** Checkboxes for the theme and for the C++ package, ticked for whatever is installed.
+- **Theme:** switches back to your previous look, then removes the files.
+- **Package:** switches back from the components, then runs `pacman -R`.
+
+**Prepare (Plasma upgrade).** Switches back from the components and removes the package, so `pacman -Syu` can upgrade Plasma. Then run the installer again to build for the new Plasma.
 
 ### How it switches settings
 
@@ -247,12 +269,11 @@ protea-theme/
 ├── cpp/                        forked breeze repo (kstyle, kdecoration, libproteacommon)
 ├── packaging/arch/             PKGBUILD for the C++ part
 ├── go.mod, go.sum              Go module proteadesktop.org/protea-theme
-├── assets.go                   embeds theme/, cpp/ and the PKGBUILD into the installer
-└── installer/                  Go + Bubble Tea installer
-    ├── main.go
-    └── internal/
-        ├── system/             reads the setup and makes the changes
-        └── tui/                the screens
+├── main.go                     the installer program (Go + Bubble Tea); embeds theme/, cpp/ and the PKGBUILD
+├── main_test.go                checks what's embedded
+└── internal/
+    ├── system/                 reads the setup and makes the changes
+    └── tui/                    the installer's screens
 ```
 
 ## Roadmap

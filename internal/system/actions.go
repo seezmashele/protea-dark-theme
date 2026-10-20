@@ -93,13 +93,18 @@ func (r *Runner) UseStyle() error { return r.set(&widgetStyle, WidgetStyleID) }
 // UseDecoration switches the window decoration to Protea.
 func (r *Runner) UseDecoration() error { return r.set(&decoration, DecorationID) }
 
+// RevertStyle switches the application style back to the user's previous
+// choice, if Protea's is in use.
+func (r *Runner) RevertStyle() error { return r.restore(&widgetStyle, false, WidgetStyleID) }
+
+// RevertDecoration switches the window decoration back to the user's
+// previous choice, if Protea's is in use.
+func (r *Runner) RevertDecoration() error { return r.restore(&decoration, false, DecorationID) }
+
 // RevertComponents switches the application style and window decoration
 // back to the user's previous choice, where Protea's are in use.
 func (r *Runner) RevertComponents() error {
-	return errors.Join(
-		r.restore(&widgetStyle, false, WidgetStyleID),
-		r.restore(&decoration, false, DecorationID),
-	)
+	return errors.Join(r.RevertStyle(), r.RevertDecoration())
 }
 
 // PrepareBuild copies the C++ sources and PKGBUILD into a new temporary

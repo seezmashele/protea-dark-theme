@@ -3,16 +3,28 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
 	"os"
 
 	tea "charm.land/bubbletea/v2"
 
-	protea "proteadesktop.org/protea-theme"
-	"proteadesktop.org/protea-theme/installer/internal/system"
-	"proteadesktop.org/protea-theme/installer/internal/tui"
+	"proteadesktop.org/protea-theme/internal/system"
+	"proteadesktop.org/protea-theme/internal/tui"
 )
+
+// files holds the theme files, the C++ sources and the Arch PKGBUILD at
+// their paths in this repo, so the installer works without the repo.
+//
+// cpp/ is listed folder by folder so local CMake build folders inside it
+// (cpp/build*, ignored by git) never end up in the binary.
+//
+//go:embed all:theme
+//go:embed cpp/CMakeLists.txt cpp/build-info.in cpp/README.md cpp/AUTHORS
+//go:embed all:cpp/kstyle all:cpp/kdecoration all:cpp/libproteacommon all:cpp/po all:cpp/LICENSES
+//go:embed packaging/arch/PKGBUILD
+var files embed.FS
 
 func main() {
 	uninstall := flag.Bool("uninstall", false, "switch back to your previous settings and remove Protea Dark and the protea package, without the interface")
@@ -26,7 +38,7 @@ func main() {
 		}
 		return
 	}
-	if _, err := tea.NewProgram(tui.New(protea.Files, runner, system.ReadStatus)).Run(); err != nil {
+	if _, err := tea.NewProgram(tui.New(files, runner, system.ReadStatus)).Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

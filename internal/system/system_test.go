@@ -2,16 +2,16 @@ package system
 
 import (
 	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
-
-	protea "proteadesktop.org/protea-theme"
 )
+
+// repoFiles are this repo's files, which the installer embeds.
+var repoFiles = os.DirFS("../..")
 
 func TestFeature(t *testing.T) {
 	for in, want := range map[string]string{"6.8.0-1": "6.8", "6.8.90-1": "6.8", "6.10.2": "6.10", "6": "6"} {
@@ -41,32 +41,13 @@ func TestStatusChecks(t *testing.T) {
 	}
 }
 
-func TestEmbeddedFiles(t *testing.T) {
-	for _, c := range coreFiles {
-		if _, err := fs.Stat(protea.Files, c.src); err != nil {
-			t.Errorf("missing core file: %v", err)
-		}
-	}
-	for _, p := range []string{"cpp/CMakeLists.txt", "cpp/build-info.in", "cpp/kstyle/proteastyle.cpp", "packaging/arch/PKGBUILD"} {
-		if _, err := fs.Stat(protea.Files, p); err != nil {
-			t.Errorf("missing build file: %v", err)
-		}
-	}
-	entries, _ := fs.ReadDir(protea.Files, "cpp")
-	for _, e := range entries {
-		if strings.HasPrefix(e.Name(), "build") && e.IsDir() {
-			t.Errorf("a local build folder was embedded: cpp/%s", e.Name())
-		}
-	}
-}
-
 func TestInstallAndUninstallCore(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	r := &Runner{}
 	if coreInstalled() {
 		t.Fatal("installed before installing")
 	}
-	if err := r.InstallCore(protea.Files); err != nil {
+	if err := r.InstallCore(repoFiles); err != nil {
 		t.Fatal(err)
 	}
 	if !coreInstalled() {
@@ -77,7 +58,7 @@ func TestInstallAndUninstallCore(t *testing.T) {
 		t.Errorf("Global Theme not copied: %v", err)
 	}
 	// Installing again replaces the files.
-	if err := r.InstallCore(protea.Files); err != nil {
+	if err := r.InstallCore(repoFiles); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.UninstallCore(); err != nil {
@@ -91,7 +72,7 @@ func TestInstallAndUninstallCore(t *testing.T) {
 func TestPrepareBuild(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
 	r := &Runner{}
-	dir, err := r.PrepareBuild(protea.Files)
+	dir, err := r.PrepareBuild(repoFiles)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -279,7 +260,7 @@ func TestDryRunChangesNothing(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	_, _ = fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=Nordic\n"})
 	r := &Runner{DryRun: true}
-	if err := errors.Join(r.InstallCore(protea.Files), r.ApplyColors(), r.UseStyle()); err != nil {
+	if err := errors.Join(r.InstallCore(repoFiles), r.ApplyColors(), r.UseStyle()); err != nil {
 		t.Fatal(err)
 	}
 	if coreInstalled() {
