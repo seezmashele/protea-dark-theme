@@ -184,17 +184,25 @@ go test ./...
 
 ### Look
 
-The installer looks like a groovebox front panel: dusty print on a dark case, bright keys and small status lights. Colors and the logo live in [internal/tui/style.go](internal/tui/style.go).
+The installer uses the **Base16** palette: the terminal's own 16 ANSI colors, mapped the way Charm's Huh Base16 theme maps them. It follows whatever theme the terminal uses instead of fixing its own colors. Colors and the logo live in [internal/tui/style.go](internal/tui/style.go).
 
-| Role | Color |
+| Role | ANSI color |
 |---|---|
-| Body text | dusty rose-sand `#D9B3A6` |
-| Hints, secondary text | faded `#8E7F7A` |
-| Page titles, cursor, current step | orange `#F28A3B` |
-| Selected option, logo | protea pink `#E0577F` |
-| Done, warnings, failures | LED green `#86C7A5`, amber `#E8B44A`, red `#E5534B` |
+| Body text | white (7) |
+| Hints, secondary text, end of the logo | bright black (8) |
+| Page titles, start of the logo | cyan (6) |
+| Cursor, current step, warnings | yellow (3) |
+| Selected option, done | green (2) |
+| Page title marker | magenta (5) |
+| Failures | bright red (9) |
 
-- **Header:** "PROTEA THEME" in a 5-pixel-tall font drawn with half blocks, like an LED matrix, shaded from orange to pink. A test pins its shape.
+- **Exception, in true color:** the accent swatches and preview on the Colors page, since they show the exact theme colors being installed.
+- **Header:** "PROTEA THEME" in a 5-pixel-tall font drawn with half blocks, like an LED matrix, colored by letter:
+  - "PRO" in the terminal's cyan
+  - "TEA" in faint cyan
+  - "THEME" in bright black, the faded hint color
+
+  The faint text attribute gives the in-between shade, since the terminal's palette has nothing between cyan and gray. A test pins the logo's shape and the color of every column.
 - **Progress line** under the header.
 - **Page heading:** a colored title, with the page's description underneath.
 
@@ -216,7 +224,7 @@ Upgrade:    Welcome → Review → Prepare
    - **Prepare for Plasma X.Y**: only when `pacman -Qu` shows a Plasma feature upgrade that the version pin blocks.
    - **Uninstall**: always the last choice. It's grayed out ("nothing installed") and skipped by the cursor when there's nothing to remove.
 2. **Colors.** The accent color for Protea Dark, from a list of presets, each shown with a swatch and its hex value:
-   - Teal `#5ba9ae` (default), then Sage `#8fb573`, Camel `#c4a07a`, Rose `#d0879a` and Lavender `#9b8cd9`
+   - Teal `#5ba9ae` (the default: listed first and pre-selected, without a label), then Sage `#8fb573`, Camel `#c4a07a`, Rose `#d0879a` and Lavender `#9b8cd9`
    - A preview line shows a selected item and a link in the chosen accent.
    - For an existing install, it starts on the installed accent.
    - If Protea Dark is in use and the accent changes, it notes that the theme must be applied again to show it. Plasma copies a color scheme's colors when it's applied.

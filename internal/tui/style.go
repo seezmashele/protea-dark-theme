@@ -6,28 +6,29 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// The palette is a groovebox front panel: dusty print on a dark case,
-// orange and pink keys, small status LEDs.
+// The palette is Base16: the terminal's own 16 ANSI colors, mapped as in
+// Charm's Huh Base16 theme, so the installer follows the terminal's theme.
 var (
-	dusty  = lipgloss.Color("#D9B3A6") // body text
-	faded  = lipgloss.Color("#8E7F7A") // hints and secondary text
-	orange = lipgloss.Color("#F28A3B") // page titles, cursor, current step
-	pink   = lipgloss.Color("#E0577F") // selected option, logo
-	led    = lipgloss.Color("#86C7A5") // done
-	amber  = lipgloss.Color("#E8B44A") // warnings, sudo
-	red    = lipgloss.Color("#E5534B") // failures
+	white       = lipgloss.Color("7") // body text
+	brightBlack = lipgloss.Color("8") // hints and secondary text, end of the logo
+	cyan        = lipgloss.Color("6") // page titles, logo
+	yellow      = lipgloss.Color("3") // cursor, current step, warnings
+	green       = lipgloss.Color("2") // selected option, done
+	magenta     = lipgloss.Color("5") // page title marker
+	brightRed   = lipgloss.Color("9") // failures
 )
 
 var (
-	text      = lipgloss.NewStyle().Foreground(dusty)
+	text      = lipgloss.NewStyle().Foreground(white)
 	strong    = text.Bold(true)
-	dim       = lipgloss.NewStyle().Foreground(faded)
-	accent    = lipgloss.NewStyle().Foreground(orange)
-	selected  = lipgloss.NewStyle().Foreground(pink).Bold(true)
-	pageTitle = lipgloss.NewStyle().Foreground(orange).Bold(true)
-	good      = lipgloss.NewStyle().Foreground(led)
-	bad       = lipgloss.NewStyle().Foreground(red)
-	warning   = lipgloss.NewStyle().Foreground(amber)
+	dim       = lipgloss.NewStyle().Foreground(brightBlack)
+	accent    = lipgloss.NewStyle().Foreground(yellow)
+	selected  = lipgloss.NewStyle().Foreground(green).Bold(true)
+	pageTitle = lipgloss.NewStyle().Foreground(cyan).Bold(true)
+	marker    = lipgloss.NewStyle().Foreground(magenta)
+	good      = lipgloss.NewStyle().Foreground(green)
+	bad       = lipgloss.NewStyle().Foreground(brightRed)
+	warning   = lipgloss.NewStyle().Foreground(yellow)
 )
 
 // glyphs is a 5-pixel-tall font for the logo; '#' is a lit pixel.
@@ -43,36 +44,62 @@ var glyphs = map[rune][5]string{
 	' ': {"..", "..", "..", "..", ".."},
 }
 
-// logo is the header: "PROTEA THEME" lit like a groovebox's LED matrix,
-// two pixel rows per line of half blocks, shaded from orange to pink.
+// logoColors color the logo's letters in order: "PRO" in the terminal's
+// cyan, "TEA" in faint cyan, and the space and "THEME" in the faded hint
+// color.
+var logoColors = []struct {
+	letters int
+	style   lipgloss.Style
+}{
+	{3, lipgloss.NewStyle().Foreground(cyan)},
+	{3, lipgloss.NewStyle().Foreground(cyan).Faint(true)},
+	{6, lipgloss.NewStyle().Foreground(brightBlack)},
+}
+
+// logo is the header: "PROTEA THEME" lit like an LED matrix, two pixel
+// rows per line of half blocks, colored letter by letter by logoColors.
 var logo = drawLogo("PROTEA THEME")
 
 func drawLogo(word string) string {
 	var pixels [5]string
+	var styles []lipgloss.Style // each pixel column's color
+	group, left := 0, logoColors[0].letters
 	for i, r := range word {
-		for y, row := range glyphs[r] {
+		if left == 0 {
+			group++
+			left = logoColors[group].letters
+		}
+		left--
+		glyph := glyphs[r]
+		columns := len(glyph[0])
+		for y, row := range glyph {
 			if i > 0 {
 				pixels[y] += "."
 			}
 			pixels[y] += row
 		}
+		if i > 0 {
+			columns++ // the gap before the letter
+		}
+		for range columns {
+			styles = append(styles, logoColors[group].style)
+		}
 	}
-	width := len(pixels[0])
-	shades := lipgloss.Blend1D(width, orange, pink)
 
 	var lines []string
 	for y := 0; y < len(pixels); y += 2 {
 		var line strings.Builder
-		for x := range width {
+		for x := range len(pixels[0]) {
+			lit := styles[x]
 			top := pixels[y][x] == '#'
 			bottom := y+1 < len(pixels) && pixels[y+1][x] == '#'
 			switch {
 			case top && bottom:
-				line.WriteString(lipgloss.NewStyle().Foreground(shades[x]).Render("█"))
+				line.WriteString(lit.Render("█"))
 			case top:
-				line.WriteString(lipgloss.NewStyle().Foreground(shades[x]).Render("▀"))
+				line.WriteString(lit.Render("▀"))
 			case bottom:
-				line.WriteString(lipgloss.NewStyle().Foreground(shades[x]).Render("▄"))
+				line.WriteString(lit.Render("▄"))
 			default:
 				line.WriteString(" ")
 			}

@@ -318,12 +318,8 @@ func (m *Model) rows() []row {
 		return append(rows, uninstall)
 	case pageColors:
 		var rows []row
-		for i, a := range system.Accents {
-			r := row{label: a.Name, detail: a.Hex, swatch: a.Hex, radio: true}
-			if i == 0 {
-				r.detail += " · default"
-			}
-			rows = append(rows, r)
+		for _, a := range system.Accents {
+			rows = append(rows, row{label: a.Name, detail: a.Hex, swatch: a.Hex, radio: true})
 		}
 		return rows
 	case pageOptions:
@@ -553,7 +549,7 @@ func (m *Model) View() tea.View {
 		b.WriteString(dim.Render("Checking your system…"))
 	} else {
 		heading, description := m.heading()
-		b.WriteString(selected.Render("▍") + pageTitle.Render(heading) + "\n")
+		b.WriteString(marker.Render("▍") + pageTitle.Render(heading) + "\n")
 		b.WriteString(m.wrap(description, text) + "\n\n")
 		switch m.page {
 		case pageWelcome:

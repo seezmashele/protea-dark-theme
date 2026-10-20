@@ -2,8 +2,10 @@ package tui
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
@@ -166,9 +168,9 @@ func TestInstallDefaults(t *testing.T) {
 	m := start(t, fresh)
 	press(m, "enter")
 	expect(t, m, "✓ Welcome", "● Colors", "▍Choose an accent color", "selections, focus rings, hover highlights and links",
-		"› (•) ██ Teal #5ba9ae · default ( ) ██ Sage #8fb573 ( ) ██ Camel #c4a07a ( ) ██ Rose #d0879a ( ) ██ Lavender #9b8cd9",
+		"› (•) ██ Teal #5ba9ae ( ) ██ Sage #8fb573 ( ) ██ Camel #c4a07a ( ) ██ Rose #d0879a ( ) ██ Lavender #9b8cd9",
 		"Preview Selected item a link")
-	expectNot(t, m, "Breeze blue", "Amber", "Protea pink", "██ Pink", "Orange", "Plum")
+	expectNot(t, m, "Breeze blue", "Amber", "Protea pink", "██ Pink", "Orange", "Plum", "default")
 	if len(labels(m)) != len(system.Accents) {
 		t.Errorf("%d accent rows, want %d", len(labels(m)), len(system.Accents))
 	}
@@ -349,5 +351,35 @@ func TestLogo(t *testing.T) {
 	}, "\n")
 	if got := ansi.Strip(logo); got != want {
 		t.Errorf("logo:\n%s\nwant:\n%s", got, want)
+	}
+
+	// Each lit pixel's color, by column: "PRO" in cyan, "TEA" in faint cyan,
+	// "THEME" in bright black.
+	sgr := regexp.MustCompile(`\x1b\[([0-9;]*)m`)
+	for _, line := range strings.Split(logo, "\n") {
+		code, col := "", 0
+		for len(line) > 0 {
+			if m := sgr.FindStringSubmatchIndex(line); m != nil && m[0] == 0 {
+				code, line = line[m[2]:m[3]], line[m[1]:]
+				continue
+			}
+			r, size := utf8.DecodeRuneInString(line)
+			line = line[size:]
+			if r != ' ' {
+				var want string
+				switch {
+				case col <= 13:
+					want = "36"
+				case col >= 15 && col <= 27:
+					want = "2;36"
+				case col >= 32:
+					want = "90"
+				}
+				if code != want {
+					t.Errorf("logo column %d is colored %q, want %q", col, code, want)
+				}
+			}
+			col++
+		}
 	}
 }
