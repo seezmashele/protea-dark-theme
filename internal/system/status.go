@@ -11,6 +11,7 @@ type Status struct {
 	Plasma string // running Plasma version, e.g. "6.8.0"
 
 	CoreInstalled     bool
+	Accent            string // the installed color scheme's accent, #rrggbb
 	GlobalThemeActive bool
 	ColorsActive      bool
 	PlasmaStyleActive bool
@@ -83,7 +84,7 @@ func pacmanVersion(pkg string) string {
 
 // ReadStatus inspects the system. It only reads.
 func ReadStatus() Status {
-	s := Status{CoreInstalled: coreInstalled()}
+	s := Status{CoreInstalled: coreInstalled(), Accent: installedAccent()}
 
 	if out, err := query("plasmashell", "--version"); err == nil {
 		s.Plasma = strings.TrimPrefix(out, "plasmashell ")

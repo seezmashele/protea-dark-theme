@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -47,7 +48,7 @@ func TestInstallAndUninstallCore(t *testing.T) {
 	if coreInstalled() {
 		t.Fatal("installed before installing")
 	}
-	if err := r.InstallCore(repoFiles); err != nil {
+	if err := r.InstallCore(repoFiles, DefaultAccent); err != nil {
 		t.Fatal(err)
 	}
 	if !coreInstalled() {
@@ -58,7 +59,7 @@ func TestInstallAndUninstallCore(t *testing.T) {
 		t.Errorf("Global Theme not copied: %v", err)
 	}
 	// Installing again replaces the files.
-	if err := r.InstallCore(repoFiles); err != nil {
+	if err := r.InstallCore(repoFiles, DefaultAccent); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.UninstallCore(); err != nil {
@@ -209,7 +210,7 @@ func TestDryRunChangesNothing(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	_, _ = fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=ProteaDark\n"})
 	r := &Runner{DryRun: true}
-	if err := errors.Join(r.InstallCore(repoFiles), r.RevertCore()); err != nil {
+	if err := errors.Join(r.InstallCore(repoFiles, DefaultAccent), r.RevertCore()); err != nil {
 		t.Fatal(err)
 	}
 	if coreInstalled() {
@@ -220,5 +221,154 @@ func TestDryRunChangesNothing(t *testing.T) {
 		if !strings.Contains(log, want) {
 			t.Errorf("dry-run log missing %q:\n%s", want, log)
 		}
+	}
+}
+
+// groups parses a KDE color file into group → key → value.
+func groups(text string) map[string]map[string]string {
+	out := map[string]map[string]string{}
+	group := ""
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(line, "[") {
+			group = line
+			out[group] = map[string]string{}
+		} else if k, v, ok := strings.Cut(line, "="); ok && group != "" {
+			out[group][k] = v
+		}
+	}
+	return out
+}
+
+func readRepo(t *testing.T, path string) string {
+	t.Helper()
+	data, err := fs.ReadFile(repoFiles, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
+func apply(t *testing.T, text, accent string) string {
+	t.Helper()
+	out, err := ApplyAccent(text, accent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
+}
+
+func TestApplyAccentToColorScheme(t *testing.T) {
+	// The repo's scheme has the default accent.
+	teal := readRepo(t, "theme/color-schemes/ProteaDark.colors")
+	if apply(t, teal, DefaultAccent) != teal {
+		t.Error("the repo's color scheme doesn't have the default accent, or applying it twice changes the file")
+	}
+	for _, breeze := range []string{"61,174,233", "30,87,116"} {
+		if strings.Contains(teal, "="+breeze+"\n") {
+			t.Errorf("Breeze's accent %s is still in the scheme", breeze)
+		}
+	}
+
+	pink := apply(t, teal, "#e0577f")
+	g := groups(pink)
+	for name, keys := range g {
+		if !strings.HasPrefix(name, "[Colors:") {
+			continue
+		}
+		for _, k := range []string{"DecorationFocus", "DecorationHover"} {
+			if keys[k] != "224,87,127" {
+				t.Errorf("%s %s = %s, want the accent", name, k, keys[k])
+			}
+		}
+		if link, ok := keys["ForegroundLink"]; ok && name != "[Colors:Selection]" {
+			l, _ := parseKDE(link)
+			bg, _ := parseKDE(keys["BackgroundNormal"])
+			if c := contrast(l, bg); c < 5 {
+				t.Errorf("%s link contrast %.1f, want at least 5", name, c)
+			}
+		}
+	}
+	sel := g["[Colors:Selection]"]
+	selBg, _ := parseKDE(sel["BackgroundNormal"])
+	selFg, _ := parseKDE(sel["ForegroundNormal"])
+	if c := contrast(selBg, selFg); c < 4.5 {
+		t.Errorf("selection text contrast %.1f, want at least 4.5", c)
+	}
+
+	// Only accent keys change: the other lines are untouched.
+	before, after := strings.Split(teal, "\n"), strings.Split(pink, "\n")
+	if len(before) != len(after) {
+		t.Fatalf("line count changed: %d → %d", len(before), len(after))
+	}
+	accentKeys := []string{"DecorationFocus", "DecorationHover", "ForegroundActive", "ForegroundLink",
+		"BackgroundNormal", "BackgroundAlternate", "ForegroundNormal", "ForegroundInactive"}
+	changed := 0
+	for i := range before {
+		if before[i] != after[i] {
+			changed++
+			if k, _, _ := strings.Cut(before[i], "="); !slices.Contains(accentKeys, k) {
+				t.Errorf("unexpected change: %q → %q", before[i], after[i])
+			}
+		}
+	}
+	if changed == 0 {
+		t.Error("changing the accent changed nothing")
+	}
+
+	// Switching back leaves no trace of the other accent.
+	if apply(t, pink, DefaultAccent) != teal {
+		t.Error("switching accents leaves traces of the previous one")
+	}
+}
+
+func TestApplyAccentToPlasmaStyle(t *testing.T) {
+	original := readRepo(t, "theme/desktoptheme/protea-dark/colors")
+	teal := apply(t, original, "#5ba9ae")
+	if strings.Contains(teal, "DecorationFocus") || strings.Contains(teal, "[Colors:Selection]\nBackgroundNormal") {
+		t.Error("keys the Plasma Style leaves out (to follow the system colors) were added")
+	}
+	if strings.Contains(teal, "=30,87,116\n") {
+		t.Error("Breeze's darker accent is still in the Plasma Style")
+	}
+	if g := groups(teal); g["[Colors:Selection]"]["ForegroundLink"] != groups(original)["[Colors:Selection]"]["ForegroundLink"] {
+		t.Error("the link color on selections changed")
+	}
+}
+
+func TestAccentPresetsAndPreview(t *testing.T) {
+	if DefaultAccent != "#5ba9ae" || AccentName("#5BA9AE") != "Teal" || AccentName("#123456") != "#123456" {
+		t.Errorf("default %s, names %q %q", DefaultAccent, AccentName("#5BA9AE"), AccentName("#123456"))
+	}
+	for _, a := range Accents {
+		sel, fg, link, err := AccentPreview(a.Hex)
+		if err != nil {
+			t.Fatal(err)
+		}
+		s, _ := parseHex(sel)
+		f, _ := parseHex(fg)
+		l, _ := parseHex(link)
+		if contrast(s, f) < 4.5 || contrast(l, viewBackground) < 5 {
+			t.Errorf("%s: unreadable selection (%s on %s) or link (%s)", a.Name, fg, sel, link)
+		}
+	}
+	if _, err := ApplyAccent("", "teal"); err == nil {
+		t.Error("a bad color was accepted")
+	}
+}
+
+func TestInstallWritesAccent(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	r := &Runner{}
+	if err := r.InstallCore(repoFiles, "#5ba9ae"); err != nil {
+		t.Fatal(err)
+	}
+	if got := installedAccent(); got != "#5ba9ae" {
+		t.Errorf("installed accent %q, want #5ba9ae", got)
+	}
+	if err := r.InstallCore(repoFiles, "#e0577f"); err != nil {
+		t.Fatal(err)
+	}
+	if got := installedAccent(); got != "#e0577f" {
+		t.Errorf("installed accent after changing it: %q, want #e0577f", got)
 	}
 }

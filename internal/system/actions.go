@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 )
 
-// InstallCore copies the core theme into DataHome, replacing any older copy.
-func (r *Runner) InstallCore(files fs.FS) error {
+// InstallCore copies the core theme into DataHome, replacing any older
+// copy, and writes the accent color (#rrggbb) into its color files.
+func (r *Runner) InstallCore(files fs.FS, accent string) error {
 	for _, c := range coreFiles {
 		dest := filepath.Join(DataHome(), c.dest)
 		if r.DryRun {
@@ -29,7 +30,7 @@ func (r *Runner) InstallCore(files fs.FS) error {
 			return err
 		}
 	}
-	return nil
+	return r.writeAccent(accent)
 }
 
 // UninstallCore removes the core theme files. Call RevertCore first.

@@ -22,6 +22,7 @@ type page int
 
 const (
 	pageWelcome page = iota
+	pageColors
 	pageOptions
 	pageRemove
 	pageReview
@@ -41,8 +42,9 @@ const (
 type plan struct {
 	mode mode
 
-	components bool // have the C++ components installed
-	rebuild    bool // build again even if the installed package is current
+	accent     string // accent color for the theme, #rrggbb
+	components bool   // have the C++ components installed
+	rebuild    bool   // build again even if the installed package is current
 
 	removeTheme   bool
 	removePackage bool
@@ -51,6 +53,9 @@ type plan struct {
 // row is one line of a page's choices.
 type row struct {
 	label, hint string
+	detail      string         // shown faded after the label
+	swatch      string         // a color shown before the label, #rrggbb
+	radio       bool           // radio row: selected when the cursor is on it
 	check       *bool          // checkbox row
 	disabled    string         // why the row can't be chosen; grayed out and skipped
 	next        func() tea.Cmd // what enter does on this row, if not the page's default
@@ -104,6 +109,7 @@ type Model struct {
 
 	steps   []step
 	failed  bool
+	reapply bool // the run changed the accent of a theme that's in use
 	spinner spinner.Model
 }
 
@@ -208,21 +214,34 @@ func (m *Model) move(rows []row, by int) {
 	for i := m.cursor + by; i >= 0 && i < len(rows); i += by {
 		if rows[i].disabled == "" {
 			m.cursor = i
-			return
+			break
 		}
+	}
+	if m.page == pageColors {
+		m.plan.accent = system.Accents[m.cursor].Hex
 	}
 }
 
 func (m *Model) open(p page) {
 	m.page, m.cursor = p, 0
-	if p == pageWelcome {
+	switch p {
+	case pageWelcome:
 		m.plan = plan{}
+	case pageColors:
+		for i, a := range system.Accents {
+			if a.Hex == m.plan.accent {
+				m.cursor = i
+			}
+		}
 	}
 }
 
 // forward goes to the next page of the current mode.
 func (m *Model) forward() {
-	if m.page == pageOptions || m.page == pageRemove {
+	switch m.page {
+	case pageColors:
+		m.open(pageOptions)
+	case pageOptions, pageRemove:
 		m.open(pageReview)
 	}
 }
@@ -230,8 +249,10 @@ func (m *Model) forward() {
 // back goes to the previous page of the current mode.
 func (m *Model) back() {
 	switch m.page {
-	case pageOptions, pageRemove:
+	case pageColors, pageRemove:
 		m.open(pageWelcome)
+	case pageOptions:
+		m.open(pageColors)
 	case pageReview:
 		switch m.plan.mode {
 		case modeInstall:
@@ -245,8 +266,12 @@ func (m *Model) back() {
 }
 
 func (m *Model) startInstall() tea.Cmd {
-	m.plan = plan{mode: modeInstall, components: m.status.Package != ""}
-	m.open(pageOptions)
+	accent := system.DefaultAccent
+	if installed := m.status.Accent; system.AccentName(installed) != installed {
+		accent = installed // a preset: keep it
+	}
+	m.plan = plan{mode: modeInstall, accent: accent, components: m.status.Package != ""}
+	m.open(pageColors)
 	return nil
 }
 
@@ -291,6 +316,16 @@ func (m *Model) rows() []row {
 			uninstall.disabled = "nothing installed"
 		}
 		return append(rows, uninstall)
+	case pageColors:
+		var rows []row
+		for i, a := range system.Accents {
+			r := row{label: a.Name, detail: a.Hex, swatch: a.Hex, radio: true}
+			if i == 0 {
+				r.detail += " · default"
+			}
+			rows = append(rows, r)
+		}
+		return rows
 	case pageOptions:
 		rows := []row{{label: "C++ components", check: &m.plan.components,
 			hint: "Protea's application style and window decoration, compiled from source with makepkg. Takes about a minute and asks for your sudo password."}}
@@ -328,7 +363,7 @@ func (m *Model) flow() []string {
 	case modePrepare:
 		return []string{"Welcome", "Review", "Prepare"}
 	}
-	return []string{"Welcome", "Options", "Review", "Install"}
+	return []string{"Welcome", "Colors", "Options", "Review", "Install"}
 }
 
 func (m *Model) actionName() string { return m.flow()[len(m.flow())-1] }
@@ -339,8 +374,10 @@ func (m *Model) position() int {
 	switch m.page {
 	case pageWelcome:
 		return 0
-	case pageOptions, pageRemove:
+	case pageColors, pageRemove:
 		return 1
+	case pageOptions:
+		return 2
 	case pageReview:
 		return last - 1
 	case pageRun:
@@ -392,7 +429,8 @@ func (m *Model) installSteps() []step {
 	if st.CoreInstalled {
 		copyName = "Update Protea Dark in " + tildePath(system.DataHome())
 	}
-	steps = append(steps, step{name: copyName, run: func() error { return m.runner.InstallCore(m.files) }})
+	copyName += ", with the " + system.AccentName(p.accent) + " accent"
+	steps = append(steps, step{name: copyName, run: func() error { return m.runner.InstallCore(m.files, p.accent) }})
 
 	switch {
 	case build:
@@ -448,8 +486,18 @@ func (m *Model) removePackageSteps() []step {
 	return append(steps, step{name: "Remove the C++ components with pacman", exec: func() *exec.Cmd { return m.runner.RemoveCommand(true) }})
 }
 
+// accentNeedsReapply reports whether the plan changes the accent of a
+// Protea Dark that's in use. Plasma copies a color scheme's colors when
+// it's applied, so the new accent only shows after applying it again.
+func (m *Model) accentNeedsReapply() bool {
+	st := m.status
+	return m.plan.mode == modeInstall && st.CoreInstalled && (st.GlobalThemeActive || st.ColorsActive) &&
+		m.plan.accent != st.Accent
+}
+
 // run starts the plan's steps.
 func (m *Model) run() tea.Cmd {
+	m.reapply = m.accentNeedsReapply()
 	m.steps, m.failed = m.planSteps(), false
 	m.page = pageRun
 	return tea.Batch(m.spinner.Tick, m.runStep(0))
@@ -510,6 +558,8 @@ func (m *Model) View() tea.View {
 		switch m.page {
 		case pageWelcome:
 			m.viewWelcome(&b)
+		case pageColors:
+			m.viewColors(&b)
 		case pageOptions:
 			m.viewOptions(&b)
 		case pageRemove:
@@ -533,6 +583,8 @@ func (m *Model) heading() (string, string) {
 	switch m.page {
 	case pageWelcome:
 		return "Welcome", "Protea Dark is a dark theme for KDE Plasma, forked from Breeze. Here's what's on your system."
+	case pageColors:
+		return "Choose an accent color", "Protea Dark uses it for selections, focus rings, hover highlights and links, in apps, panels and the C++ components."
 	case pageOptions:
 		return "Choose what to install", "Protea Dark's Global Theme, Plasma Style and color scheme are always installed into " +
 			tildePath(system.DataHome()) + ". The C++ components are optional."
@@ -600,6 +652,15 @@ func (m *Model) viewRows(b *strings.Builder, help string, notes ...string) {
 				box = text.Render("[") + accent.Render("x") + text.Render("] ")
 			}
 		}
+		if r.radio {
+			box = text.Render("( ) ")
+			if i == m.cursor {
+				box = text.Render("(") + accent.Render("•") + text.Render(") ")
+			}
+		}
+		if r.swatch != "" {
+			box += lipgloss.NewStyle().Foreground(lipgloss.Color(r.swatch)).Render("██") + " "
+		}
 		var label string
 		switch {
 		case r.disabled != "":
@@ -608,6 +669,9 @@ func (m *Model) viewRows(b *strings.Builder, help string, notes ...string) {
 			label = selected.Render(r.label)
 		default:
 			label = text.Render(r.label)
+		}
+		if r.detail != "" {
+			label += "  " + dim.Render(r.detail)
 		}
 		cursor := "  "
 		if i == m.cursor {
@@ -691,6 +755,19 @@ func (m *Model) packageSummary() string {
 	return "installed · not in use"
 }
 
+func (m *Model) viewColors(b *strings.Builder) {
+	var notes []string
+	if selection, selectionText, link, err := system.AccentPreview(m.plan.accent); err == nil {
+		sample := lipgloss.NewStyle().Background(lipgloss.Color(selection)).Foreground(lipgloss.Color(selectionText)).Render(" Selected item ")
+		linkSample := lipgloss.NewStyle().Foreground(lipgloss.Color(link)).Underline(true).Render("a link")
+		notes = append(notes, dim.Render("Preview  ")+sample+"  "+linkSample)
+	}
+	if m.accentNeedsReapply() {
+		notes = append(notes, m.wrap("Protea Dark is in use: after installing, apply it again in System Settings to see the new accent.", warning))
+	}
+	m.viewRows(b, "↑/↓ choose · enter next · esc back · q quit", notes...)
+}
+
 func (m *Model) viewOptions(b *strings.Builder) {
 	st := m.status
 	var notes []string
@@ -727,7 +804,11 @@ func (m *Model) viewReview(b *strings.Builder) {
 	}
 	switch m.plan.mode {
 	case modeInstall:
-		b.WriteString("\n" + m.wrap("Your current look doesn't change. Apply Protea Dark yourself in System Settings afterwards.", dim) + "\n")
+		note := "Your current look doesn't change. Apply Protea Dark yourself in System Settings afterwards."
+		if m.accentNeedsReapply() {
+			note = "Protea Dark is in use: apply it again in System Settings afterwards to see the new accent."
+		}
+		b.WriteString("\n" + m.wrap(note, dim) + "\n")
 	case modePrepare:
 		b.WriteString("\n" + m.wrap("Afterwards, run sudo pacman -Syu, then run this installer again to build for the new Plasma.", dim) + "\n")
 	}
@@ -773,6 +854,9 @@ func (m *Model) viewDone(b *strings.Builder) {
 			b.WriteString(dim.Render("  and for the C++ components:") + "\n")
 			b.WriteString(setting("Application Style", "Protea"))
 			b.WriteString(setting("Window Decorations", "Protea"))
+		}
+		if m.reapply {
+			b.WriteString("\n" + m.wrap("Protea Dark is already in use: apply it again to see the new accent.", warning) + "\n")
 		}
 		b.WriteString("\n")
 	}

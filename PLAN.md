@@ -206,7 +206,7 @@ The installer **installs** Protea; it never changes your look. After installing,
 - **The plan:** the pages fill in a plan. The Review page turns it into the exact steps that will run, so what you confirm is what happens.
 
 ```
-Install:    Welcome → Options → Review → Install
+Install:    Welcome → Colors → Options → Review → Install
 Uninstall:  Welcome → Remove → Review → Uninstall
 Upgrade:    Welcome → Review → Prepare
 ```
@@ -215,19 +215,24 @@ Upgrade:    Welcome → Review → Prepare
    - **Install Protea Dark**, or **Update Protea Dark** when something is installed.
    - **Prepare for Plasma X.Y**: only when `pacman -Qu` shows a Plasma feature upgrade that the version pin blocks.
    - **Uninstall**: always the last choice. It's grayed out ("nothing installed") and skipped by the cursor when there's nothing to remove.
-2. **Options.** The theme files (Global Theme, Plasma Style, color scheme) always go into `~/.local/share/` (or `$XDG_DATA_HOME`). Optionally:
+2. **Colors.** The accent color for Protea Dark, from a list of presets, each shown with a swatch and its hex value:
+   - Teal `#5ba9ae` (default), Protea pink `#e0577f`, Orange `#f28a3b`, Amber `#e8b44a`, Sage `#8fb573`, Lavender `#9b8cd9`, Breeze blue `#3daee9`
+   - A preview line shows a selected item and a link in the chosen accent.
+   - For an existing install, it starts on the installed accent.
+   - If Protea Dark is in use and the accent changes, it notes that the theme must be applied again to show it. Plasma copies a color scheme's colors when it's applied.
+3. **Options.** The theme files (Global Theme, Plasma Style, color scheme) always go into `~/.local/share/` (or `$XDG_DATA_HOME`). Optionally:
    - **C++ components**: a single option, unticked by default, that installs both the application style and the window decoration. For an existing install it starts as installed or not.
    - **Build again**: only shown when the C++ components are installed, for rebuilding after changing the C++.
    - Notes explain the pin, and say that missing build tools will be installed first.
-3. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
+4. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
    - **Only what changes:** C++ components already built for your Plasma aren't rebuilt.
    - **A mismatched build** (built for another Plasma) is always rebuilt.
    - **Unticking the C++ components** removes them, switching the application style and window decoration back to Breeze first if Protea's are in use.
    - **Builds** run `makepkg --cleanbuild --install` on a temporary copy of the embedded sources.
-4. **Install / Uninstall / Prepare.** A spinner per step.
+5. **Install / Uninstall / Prepare.** A spinner per step.
    - Steps that need sudo or show their own output (makepkg, pacman) hand the terminal over with `tea.ExecProcess`, then wait for Enter so the output can be read.
    - Cleanup steps, like removing the temporary build folder, run even after a failure. Everything else after a failed step is skipped.
-5. **Done.** Each step's result, errors, and in dry-run mode what would have run. After installing, it shows where to apply Protea in System Settings → Colors & Themes:
+6. **Done.** Each step's result, errors, and in dry-run mode what would have run. After installing, it shows where to apply Protea in System Settings → Colors & Themes:
    - **Global Theme** → Protea Dark
    - or, to keep icons and title bars, only **Colors** and **Plasma Style** → Protea Dark
    - **Application Style** and **Window Decorations** → Protea, when the C++ components are installed
@@ -237,6 +242,19 @@ Upgrade:    Welcome → Review → Prepare
 **Remove page (uninstall).** Checkboxes for the theme and for the C++ components, ticked for whatever is installed.
 
 **Prepare (Plasma upgrade).** Switches the application style and window decoration back to Breeze if Protea's are in use, then removes the package so `pacman -Syu` can upgrade Plasma. Then run the installer again to build for the new Plasma.
+
+### Accent color
+
+The installer writes the chosen accent into the installed color files, following the same rules System Settings uses for accent colors (plasma-workspace `kcms/colors/colorsapplicator`), without tinting or accent-colored title bars. The code is in [internal/system/accent.go](internal/system/accent.go).
+
+- **Focus, hover and "active" text:** become the accent in every color group. On selections, active text becomes the selection's readable text color instead.
+- **Links:** become the accent, lightened or darkened until their contrast with the group's background reaches 5:1. Links on selections keep their own color.
+- **Selections:** the background (and its alternate) is the accent at 70% over the view background. The text on it is white or black, whichever reaches 4.5:1.
+- **Buttons' and Complementary's alternate background:** the accent at 70% over their own background. Breeze uses a darker accent there.
+
+**The Plasma Style's own `colors` file only has its existing keys rewritten.** Plasma reads that file on top of the system colors, so keys it leaves out, like the focus colors and selection background, keep following the system color scheme. That includes an accent picked in System Settings.
+
+**Defaults:** the repo's `ProteaDark.colors` and Plasma Style `colors` carry the default Teal accent, written with the same code. The result doesn't depend on the accent a file had before, so switching accents leaves no trace.
 
 ### Uninstalling: switching away from Protea first
 
@@ -327,7 +345,7 @@ Protea keeps Breeze's licenses and copyright headers.
 - Register `proteadesktop.org` before the first public release. The `org.proteadesktop` IDs imply ownership of that domain.
 - Light variant later. IDs are already shaped for it (`protea-light`, `ProteaLight`).
 - Replace the Global Theme previews (`contents/previews/`). They are still Breeze Dark screenshots.
-- Colors live in two files: the color scheme (`ProteaDark.colors`) and the Plasma Style's own `colors`. Color changes need making in both, or the panels won't match the apps.
+- Colors live in two files: the color scheme (`ProteaDark.colors`) and the Plasma Style's own `colors`. The installer keeps the accent in sync in both, but other color changes need making in both by hand, or the panels won't match the apps.
 - The Plasma Style may need its SVG cache cleared after updating the theme files, so changes show without logging out. Check this during the design work.
 
 ## Project conventions
