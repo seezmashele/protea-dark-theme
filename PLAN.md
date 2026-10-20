@@ -279,6 +279,33 @@ Removing files that Plasma is still using would leave it pointing at a missing t
 
 The installer doesn't remember what you had before Protea, because it never changes your settings. You make those changes in System Settings yourself.
 
+## Design
+
+Step 10 changes Breeze Dark's look one area at a time. Anything not listed here is still Breeze Dark.
+
+### Colors
+
+Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files, `ProteaDark.colors` and the Plasma Style's `colors`, carry the same values.
+
+| Area | Keys | Color |
+|---|---|---|
+| Window backgrounds, sidebars, panels and popups | `[Colors:Window] BackgroundNormal` | `#2e2e2f` |
+| Title bars and header bars | `[Colors:Header] BackgroundNormal`, `[WM] activeBackground` | `#2e2e2f` |
+| Title bars and header bars of unfocused windows | `[Colors:Header][Inactive] BackgroundNormal`, `[WM] inactiveBackground` | `#1a1a1b` |
+| Views: lists, text fields, editors | `[Colors:View] BackgroundNormal` | `#1a1a1b` |
+| Striped list rows | `[Colors:View] BackgroundAlternate` | `#282829` |
+| Tooltips | `[Colors:Tooltip] BackgroundNormal` | `#1a1a1b` |
+
+- **Sidebars** have no key of their own. Qt apps draw them with the window color.
+- **Plasma's tooltips:** the panel's tooltips use the window colors (`DefaultToolTip.qml` in libplasma 6.8 sets the Window color set). So the Plasma Style's tooltip SVGs, `widgets/tooltip.svg` and its `translucent/`, `opaque/` and `solid/` versions, fill their background with `ColorScheme-TooltipBackground` instead of `ColorScheme-Background`.
+- **Accent:** over the new view color, the Teal selection is `#487e82` with black text, because white on it falls just short of 4.5:1.
+- **Links on window and header backgrounds** are `#73b5ba`, a lighter Teal: plain Teal on `#2e2e2f` falls just short of the 5:1 links need. Links everywhere else stay `#5ba9ae`.
+- **Not changed yet:** buttons (`#292c30`), Complementary (`#202326`), the other alternate backgrounds, and secondary text (`#a1a9b1`) are still Breeze's blue-tinted values.
+
+### Window outline
+
+The thin line around each window is `#2e2e2f`, on focused and unfocused windows alike: the focused title bar color, so on focused windows it blends into the title bar and borders. This needs the Protea decoration ([proteadecoration.cpp](cpp/kdecoration/proteadecoration.cpp), `recalculateBorders`). Breeze mixes the outline from the title bar toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
+
 ## Distribution
 
 - **Now:** source only. Users run the installer, which builds the C++ part on their machine if they choose it.
@@ -324,7 +351,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips and the window outline are done (see Design). |
 
 Commit after each step.
 

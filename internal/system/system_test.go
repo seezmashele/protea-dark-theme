@@ -351,6 +351,11 @@ func TestAccentPresetsAndPreview(t *testing.T) {
 			t.Errorf("%s: unreadable selection (%s on %s) or link (%s)", a.Name, fg, sel, link)
 		}
 	}
+	// The preview blends over the color scheme's own view background.
+	scheme := groups(readRepo(t, "theme/color-schemes/ProteaDark.colors"))
+	if view, _ := parseKDE(scheme["[Colors:View]"]["BackgroundNormal"]); view != viewBackground {
+		t.Errorf("preview view background %s, the color scheme has %s", viewBackground.hex(), view.hex())
+	}
 	if _, err := ApplyAccent("", "teal"); err == nil {
 		t.Error("a bad color was accepted")
 	}

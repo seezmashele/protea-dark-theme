@@ -25,7 +25,7 @@
         color:#31363b;
         stop-color:#31363b;
       }
-      .ColorScheme-Background {
+      .ColorScheme-TooltipBackground {
         color:#eff0f1;
         stop-color:#eff0f1;
       }
@@ -146,7 +146,7 @@
          height="32"
          x="19.000004"
          y="916.36218"
-         class="ColorScheme-Background" />
+         class="ColorScheme-TooltipBackground" />
     </g>
     <rect
        style="fill:#ff00ff;fill-opacity:1;stroke:none"
@@ -185,7 +185,7 @@
          d="m 51,910.36218 0,1 0,4 0,1 1,0 1,0 3,0 1,0 0,-1 0,-4 -1,-2e-5 0,-0.99998 -3,0 -1,0 z"
          id="rect4177"
          inkscape:connector-curvature="0"
-         class="ColorScheme-Background"
+         class="ColorScheme-TooltipBackground"
          sodipodi:nodetypes="ccccccccccccccc" />
       <path
          sodipodi:nodetypes="ccccccccccccccccc"
@@ -313,7 +313,7 @@
          width="5.9999995"
          id="rect4140"
          style="fill:currentColor;fill-opacity:1;stroke:none"
-         class="ColorScheme-Background" />
+         class="ColorScheme-TooltipBackground" />
       <rect
          y="916.36218"
          x="56"
@@ -327,7 +327,7 @@
        id="top"
        transform="matrix(0,-1,1,0,-897.36218,967.36214)">
       <rect
-         class="ColorScheme-Background"
+         class="ColorScheme-TooltipBackground"
          style="fill:currentColor;fill-opacity:1;stroke:none"
          id="rect3146"
          width="5.9999995"
@@ -347,7 +347,7 @@
        id="bottom"
        transform="matrix(0,1,-1,0,967.36218,897.36216)">
       <rect
-         class="ColorScheme-Background"
+         class="ColorScheme-TooltipBackground"
          style="fill:currentColor;fill-opacity:1;stroke:none"
          id="rect3152"
          width="5.9999995"
@@ -373,7 +373,7 @@
          width="5.9999995"
          id="rect3164"
          style="fill:currentColor;fill-opacity:1;stroke:none"
-         class="ColorScheme-Background" />
+         class="ColorScheme-TooltipBackground" />
       <rect
          y="916.36218"
          x="56"
@@ -388,7 +388,7 @@
        transform="matrix(0,1,-1,0,967.36216,897.36216)">
       <path
          sodipodi:nodetypes="ccccccccccccccc"
-         class="ColorScheme-Background"
+         class="ColorScheme-TooltipBackground"
          inkscape:connector-curvature="0"
          id="path3176"
          d="m 51,910.36218 0,1 0,4 0,1 1,0 1,0 3,0 1,0 0,-1 0,-4 -1,-2e-5 0,-0.99998 -3,0 -1,0 z"
@@ -409,7 +409,7 @@
          d="m 51,910.36218 0,1 0,4 0,1 1,0 1,0 3,0 1,0 0,-1 0,-4 -1,-2e-5 0,-0.99998 -3,0 -1,0 z"
          id="path3182"
          inkscape:connector-curvature="0"
-         class="ColorScheme-Background"
+         class="ColorScheme-TooltipBackground"
          sodipodi:nodetypes="ccccccccccccccc" />
       <path
          sodipodi:nodetypes="ccccccccccccccccc"
@@ -424,7 +424,7 @@
        transform="matrix(0,-1,1,0,-897.36216,967.36216)">
       <path
          sodipodi:nodetypes="ccccccccccccccc"
-         class="ColorScheme-Background"
+         class="ColorScheme-TooltipBackground"
          inkscape:connector-curvature="0"
          id="path3188"
          d="m 51,910.36218 0,1 0,4 0,1 1,0 1,0 3,0 1,0 0,-1 0,-4 -1,-2e-5 0,-0.99998 -3,0 -1,0 z"

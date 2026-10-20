@@ -42,9 +42,9 @@ ForegroundVisited=155,89,182
 
 [Colors:Header]
 BackgroundAlternate=32,35,38
-BackgroundNormal=41,44,48
+BackgroundNormal=46,46,47
 ForegroundInactive=161,169,177
-ForegroundLink=91,169,174
+ForegroundLink=115,181,186
 ForegroundNegative=218,68,83
 ForegroundNeutral=246,116,0
 ForegroundNormal=252,252,252
@@ -53,7 +53,7 @@ ForegroundVisited=155,89,182
 
 [Colors:Header][Inactive]
 BackgroundAlternate=41,44,48
-BackgroundNormal=32,35,38
+BackgroundNormal=26,26,27
 ForegroundInactive=161,169,177
 ForegroundLink=91,169,174
 ForegroundNegative=218,68,83
@@ -63,19 +63,19 @@ ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [Colors:Selection]
-BackgroundAlternate=70,125,129
-ForegroundActive=252,252,252
-ForegroundInactive=252,252,252
+BackgroundAlternate=72,126,130
+ForegroundActive=0,0,0
+ForegroundInactive=0,0,0
 ForegroundLink=253,188,75
 ForegroundNegative=218,68,83
 ForegroundNeutral=246,116,0
-ForegroundNormal=252,252,252
+ForegroundNormal=0,0,0
 ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [Colors:Tooltip]
 BackgroundAlternate=32,35,38
-BackgroundNormal=41,44,48
+BackgroundNormal=26,26,27
 ForegroundInactive=161,169,177
 ForegroundLink=91,169,174
 ForegroundNegative=218,68,83
@@ -85,8 +85,8 @@ ForegroundPositive=39,174,96
 ForegroundVisited=155,89,182
 
 [Colors:View]
-BackgroundAlternate=29,31,34
-BackgroundNormal=20,22,24
+BackgroundAlternate=40,40,41
+BackgroundNormal=26,26,27
 ForegroundInactive=161,169,177
 ForegroundLink=91,169,174
 ForegroundNegative=218,68,83
@@ -97,9 +97,9 @@ ForegroundVisited=155,89,182
 
 [Colors:Window]
 BackgroundAlternate=41,44,48
-BackgroundNormal=32,35,38
+BackgroundNormal=46,46,47
 ForegroundInactive=161,169,177
-ForegroundLink=91,169,174
+ForegroundLink=115,181,186
 ForegroundNegative=218,68,83
 ForegroundNeutral=246,116,0
 ForegroundNormal=252,252,252
@@ -115,9 +115,9 @@ shadeSortColumn=true
 contrast=4
 
 [WM]
-activeBackground=39,44,49
+activeBackground=46,46,47
 activeBlend=252,252,252
 activeForeground=252,252,252
-inactiveBackground=32,36,40
+inactiveBackground=26,26,27
 inactiveBlend=161,169,177
 inactiveForeground=161,169,177

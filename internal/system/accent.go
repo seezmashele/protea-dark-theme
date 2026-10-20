@@ -137,7 +137,7 @@ func accentForeground(bg rgb) rgb {
 }
 
 // viewBackground is Protea Dark's view background, for previews.
-var viewBackground = rgb{20, 22, 24}
+var viewBackground = rgb{26, 26, 27}
 
 // AccentPreview returns, as #rrggbb, the selection background, the text on
 // it, and the link color the accent gives on Protea Dark's views.
