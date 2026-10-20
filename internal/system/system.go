@@ -132,8 +132,6 @@ func xdgDir(env, fallback string) string {
 // DataHome is where the core theme is installed (~/.local/share).
 func DataHome() string { return xdgDir("XDG_DATA_HOME", ".local/share") }
 
-func stateHome() string { return xdgDir("XDG_STATE_HOME", ".local/state") }
-
 // libexec finds a helper Plasma installs outside $PATH.
 func libexec(name string) string {
 	if p, err := exec.LookPath(name); err == nil {

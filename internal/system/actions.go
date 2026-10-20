@@ -47,64 +47,27 @@ func (r *Runner) UninstallCore() error {
 	return nil
 }
 
-// ApplyColors switches to Protea's color scheme and Plasma Style, leaving
-// everything else alone.
-func (r *Runner) ApplyColors() error {
-	return errors.Join(
-		r.set(&colorScheme, ColorSchemeID),
-		r.set(&plasmaStyle, PlasmaStyleID),
-	)
-}
-
-// ApplyGlobalTheme applies the whole Protea Dark Global Theme, which also
-// switches icons, cursors, application style and window decoration to the
-// values in its defaults.
-func (r *Runner) ApplyGlobalTheme() error {
-	saved := loadSaved()
-	for s, value := range themeValues {
-		remember(saved, s, value)
-	}
-	for s, value := range globalThemeDefaults {
-		remember(saved, s, value)
-	}
-	if err := r.storeSaved(saved); err != nil {
+// RevertCore switches away from Protea Dark before its files are removed.
+// If Protea Dark is the Global Theme, it applies the Breeze Dark Global
+// Theme, which covers every part. Otherwise it switches the color scheme
+// and Plasma Style back to Breeze Dark's where Protea Dark's are selected.
+// Call it before UninstallCore.
+func (r *Runner) RevertCore() error {
+	if switched, err := r.switchAway(&lookAndFeel, GlobalThemeID); switched || err != nil {
 		return err
 	}
-	return r.change("plasma-apply-lookandfeel", "--apply", GlobalThemeID)
+	_, colorsErr := r.switchAway(&colorScheme, ColorSchemeID)
+	_, styleErr := r.switchAway(&plasmaStyle, PlasmaStyleID)
+	return errors.Join(colorsErr, styleErr)
 }
-
-// RevertCore switches every setting Protea Dark's theme files provide back
-// to the user's previous choice, and undoes the Global Theme's other
-// changes where they are still in place.
-func (r *Runner) RevertCore() error {
-	var errs []error
-	for s, value := range themeValues {
-		errs = append(errs, r.restore(s, false, value))
-	}
-	for s, value := range globalThemeDefaults {
-		errs = append(errs, r.restore(s, true, value))
-	}
-	return errors.Join(errs...)
-}
-
-// UseStyle switches the application style to Protea.
-func (r *Runner) UseStyle() error { return r.set(&widgetStyle, WidgetStyleID) }
-
-// UseDecoration switches the window decoration to Protea.
-func (r *Runner) UseDecoration() error { return r.set(&decoration, DecorationID) }
-
-// RevertStyle switches the application style back to the user's previous
-// choice, if Protea's is in use.
-func (r *Runner) RevertStyle() error { return r.restore(&widgetStyle, false, WidgetStyleID) }
-
-// RevertDecoration switches the window decoration back to the user's
-// previous choice, if Protea's is in use.
-func (r *Runner) RevertDecoration() error { return r.restore(&decoration, false, DecorationID) }
 
 // RevertComponents switches the application style and window decoration
-// back to the user's previous choice, where Protea's are in use.
+// back to Breeze where Protea's are selected. Call it before removing the
+// package.
 func (r *Runner) RevertComponents() error {
-	return errors.Join(r.RevertStyle(), r.RevertDecoration())
+	_, styleErr := r.switchAway(&widgetStyle, WidgetStyleID)
+	_, decorationErr := r.switchAway(&decoration, DecorationID)
+	return errors.Join(styleErr, decorationErr)
 }
 
 // PrepareBuild copies the C++ sources and PKGBUILD into a new temporary
@@ -137,17 +100,10 @@ func (r *Runner) CleanBuild(dir string) error {
 	return os.RemoveAll(filepath.Dir(filepath.Dir(dir)))
 }
 
-func onOff(b bool) string {
-	if b {
-		return "ON"
-	}
-	return "OFF"
-}
-
-// BuildCommand builds the package in dir and installs it with sudo.
-func (r *Runner) BuildCommand(dir string, style, decoration bool) *exec.Cmd {
-	env := []string{"PROTEA_WITH_STYLE=" + onOff(style), "PROTEA_WITH_DECORATIONS=" + onOff(decoration)}
-	return r.Interactive(true, dir, env, "makepkg", "--cleanbuild", "--install")
+// BuildCommand builds the package in dir, with both the application style
+// and the window decoration, and installs it with sudo.
+func (r *Runner) BuildCommand(dir string) *exec.Cmd {
+	return r.Interactive(true, dir, nil, "makepkg", "--cleanbuild", "--install")
 }
 
 // RemoveCommand removes the package with sudo.

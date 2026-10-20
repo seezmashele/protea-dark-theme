@@ -182,67 +182,76 @@ go test ./...
   - Tests in `internal/` read the same files from the repo; [main_test.go](main_test.go) checks what's embedded.
 - **Future scope:** it may later grow into a shared installer for all Protea Desktop themes.
 
+### Look
+
+The installer looks like a groovebox front panel: dusty print on a dark case, bright keys and small status lights. Colors and the logo live in [internal/tui/style.go](internal/tui/style.go).
+
+| Role | Color |
+|---|---|
+| Body text | dusty rose-sand `#D9B3A6` |
+| Hints, secondary text | faded `#8E7F7A` |
+| Page titles, cursor, current step | orange `#F28A3B` |
+| Selected option, logo | protea pink `#E0577F` |
+| Done, warnings, failures | LED green `#86C7A5`, amber `#E8B44A`, red `#E5534B` |
+
+- **Header:** "PROTEA THEME" in a 5-pixel-tall font drawn with half blocks, like an LED matrix, shaded from orange to pink. A test pins its shape.
+- **Progress line** under the header.
+- **Page heading:** a colored title, with the page's description underneath.
+
 ### Flow
 
-The installer goes page by page. Each page offers only the choices relevant to it, and **nothing changes until the last page confirms**.
+The installer **installs** Protea; it never changes your look. After installing, it reminds you to apply Protea yourself in System Settings. It goes page by page, and nothing changes until the last page confirms.
 
 - **Navigation:** a progress line at the top shows where you are. Enter goes forward, Esc goes back, and choices are kept when going back.
 - **The plan:** the pages fill in a plan. The Review page turns it into the exact steps that will run, so what you confirm is what happens.
 
 ```
-Install:    Welcome → Theme → Components → Review → Install
+Install:    Welcome → Options → Review → Install
 Uninstall:  Welcome → Remove → Review → Uninstall
 Upgrade:    Welcome → Review → Prepare
 ```
 
-1. **Welcome.** Your system: Plasma version (with a warning if it isn't 6.8), and whether the theme and the components are installed and in use. Then the choices:
-   - **Install Protea Dark**, or **Update or change Protea Dark** when something is installed.
+1. **Welcome.** Your system: Plasma version (with a warning if it isn't 6.8), and whether the theme and the C++ components are installed and in use. Then the choices:
+   - **Install Protea Dark**, or **Update Protea Dark** when something is installed.
    - **Prepare for Plasma X.Y**: only when `pacman -Qu` shows a Plasma feature upgrade that the version pin blocks.
-   - **Uninstall**: always the last choice, shown only when something is installed.
-2. **Theme.** The theme files always go into `~/.local/share/` (or `$XDG_DATA_HOME`). The choice is how to use them:
-   - **Full Global Theme** (default): also switches icons, cursors, app style and title bars to Breeze's. Your panel layout is left alone.
-   - **Colors and Plasma Style**: keeps your icons, cursors, app style and title bars. Pre-selected when that's what's in use.
-   - **Install only**: changes nothing on the desktop.
-3. **Components.** The optional C++ parts:
-   - **Application style** and **Window decoration** checkboxes, unticked by default.
-   - **Use them once installed**, ticked by default.
-   - **Build again**: only shown when the package is installed, for rebuilding after changing the C++.
+   - **Uninstall**: always the last choice. It's grayed out ("nothing installed") and skipped by the cursor when there's nothing to remove.
+2. **Options.** The theme files (Global Theme, Plasma Style, color scheme) always go into `~/.local/share/` (or `$XDG_DATA_HOME`). Optionally:
+   - **C++ components**: a single option, unticked by default, that installs both the application style and the window decoration. For an existing install it starts as installed or not.
+   - **Build again**: only shown when the C++ components are installed, for rebuilding after changing the C++.
    - Notes explain the pin, and say that missing build tools will be installed first.
-   - For an existing install, the boxes start as what's built and in use.
-4. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
-   - **Only what changes:** a package that's already built for your Plasma isn't rebuilt, and settings already in use aren't re-applied.
-   - **Unticking a component** switches back from it. With both unticked, the package is removed.
+3. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
+   - **Only what changes:** C++ components already built for your Plasma aren't rebuilt.
    - **A mismatched build** (built for another Plasma) is always rebuilt.
-   - **Builds** run `makepkg --cleanbuild --install` on a temporary copy of the embedded sources, with `PROTEA_WITH_STYLE`/`PROTEA_WITH_DECORATIONS` from the checkboxes.
-5. **Install / Uninstall / Prepare.** A spinner per step.
+   - **Unticking the C++ components** removes them, switching the application style and window decoration back to Breeze first if Protea's are in use.
+   - **Builds** run `makepkg --cleanbuild --install` on a temporary copy of the embedded sources.
+4. **Install / Uninstall / Prepare.** A spinner per step.
    - Steps that need sudo or show their own output (makepkg, pacman) hand the terminal over with `tea.ExecProcess`, then wait for Enter so the output can be read.
    - Cleanup steps, like removing the temporary build folder, run even after a failure. Everything else after a failed step is skipped.
-6. **Done.** Each step's result, errors, in dry-run mode what would have run, and what to do next. Enter starts over.
+5. **Done.** Each step's result, errors, and in dry-run mode what would have run. After installing, it shows where to apply Protea in System Settings → Colors & Themes:
+   - **Global Theme** → Protea Dark
+   - or, to keep icons and title bars, only **Colors** and **Plasma Style** → Protea Dark
+   - **Application Style** and **Window Decorations** → Protea, when the C++ components are installed
 
-**Remove page (uninstall).** Checkboxes for the theme and for the C++ package, ticked for whatever is installed.
-- **Theme:** switches back to your previous look, then removes the files.
-- **Package:** switches back from the components, then runs `pacman -R`.
+   Enter starts over.
 
-**Prepare (Plasma upgrade).** Switches back from the components and removes the package, so `pacman -Syu` can upgrade Plasma. Then run the installer again to build for the new Plasma.
+**Remove page (uninstall).** Checkboxes for the theme and for the C++ components, ticked for whatever is installed.
 
-### How it switches settings
+**Prepare (Plasma upgrade).** Switches the application style and window decoration back to Breeze if Protea's are in use, then removes the package so `pacman -Syu` can upgrade Plasma. Then run the installer again to build for the new Plasma.
 
-These were checked against KDE's own sources (plasma-workspace and KWin v6.8.1):
+### Uninstalling: switching away from Protea first
 
-| Setting | Command |
+Removing files that Plasma is still using would leave it pointing at a missing theme. So uninstalling switches away first, using the same tools as System Settings and KWin (checked against plasma-workspace and KWin v6.8.1). Settings you've already changed to something else are left alone.
+
+| If this is selected | Uninstall runs |
 |---|---|
-| Color scheme | `plasma-apply-colorscheme` |
-| Plasma Style | `plasma-apply-desktoptheme` |
-| Full Global Theme | `plasma-apply-lookandfeel --apply` |
-| Icons | `/usr/lib/plasma-changeicons` |
-| Cursors | `plasma-apply-cursortheme` |
-| Application style | `kwriteconfig6` writes `widgetStyle`, then the D-Bus signal System Settings sends: `org.kde.KGlobalSettings.notifyChange` with type 2 (style changed) |
-| Window decoration | `/usr/lib/kwin-applywindowdecoration Protea`, KWin's own tool, which checks the theme exists, saves it and reloads KWin. A C++ decoration's theme name is its display name. |
+| Protea Dark as the **Global Theme** | `plasma-apply-lookandfeel --apply org.kde.breezedark.desktop` |
+| Only Protea Dark **colors** / **Plasma Style** | `plasma-apply-colorscheme BreezeDark` / `plasma-apply-desktoptheme default` |
+| Protea **application style** | `kwriteconfig6` writes `widgetStyle=Breeze`, then the D-Bus signal System Settings sends: `org.kde.KGlobalSettings.notifyChange` with type 2 (style changed) |
+| Protea **window decoration** | `/usr/lib/kwin-applywindowdecoration Breeze`, KWin's own tool, which saves the setting and reloads KWin |
 
-**Switching back restores the user's own choice, not just Breeze.**
-- Before changing a setting, the installer saves its current value in `~/.local/state/protea/saved-settings`.
-- Switching back restores the saved value, but only while Protea's value is still in place. If the user has since picked something else themselves, it's left alone.
-- With nothing saved, it falls back to Breeze Dark's values.
+**Why a whole Global Theme switch?** Applying a Global Theme makes Plasma (`KLookAndFeelManager`) write the theme's values into `~/.config/kdedefaults/`, and drop your own values for those settings so the defaults show through. Plasma adds `kdedefaults` to `XDG_CONFIG_DIRS`, and `kdedefaults/package` records which theme it was. Switching only the colors back would leave `kdedefaults` naming Protea Dark. Applying Breeze Dark's Global Theme, as System Settings would, replaces all of it. That also resets the other parts a Global Theme covers, like icons, app style and title bars, to Breeze Dark's.
+
+The installer doesn't remember what you had before Protea, because it never changes your settings. You make those changes in System Settings yourself.
 
 ## Distribution
 

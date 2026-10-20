@@ -2,7 +2,6 @@ package tui
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -118,8 +117,8 @@ func expectNot(t *testing.T, m *Model, unwanted ...string) {
 var (
 	fresh = system.Status{Plasma: "6.8.0", Kdecoration: "6.8.0-1"}
 
-	// The theme in use as a Global Theme, plus both components built for
-	// Plasma 6.8 and in use.
+	// Protea Dark applied as the Global Theme, plus the C++ components
+	// built for Plasma 6.8 and in use.
 	everything = system.Status{
 		Plasma: "6.8.0", Kdecoration: "6.8.0-1",
 		CoreInstalled: true, GlobalThemeActive: true, ColorsActive: true, PlasmaStyleActive: true,
@@ -131,23 +130,31 @@ var (
 
 func TestWelcome(t *testing.T) {
 	m := start(t, fresh)
-	expect(t, m, "● Welcome", "○ Theme", "Dry run", "Plasma 6.8.0 ✓", "Protea Dark not installed", "› Install Protea Dark")
-	if got := labels(m); len(got) != 1 {
-		t.Errorf("nothing installed should offer only installing, got %q", got)
+	expect(t, m, "● Welcome", "○ Options", "Dry run",
+		"▍Welcome", "Protea Dark is a dark theme for KDE Plasma, forked from Breeze.",
+		"Plasma 6.8.0 ✓", "Protea Dark not installed",
+		"› Install Protea Dark", "Uninstall · nothing installed")
+	press(m, "down")
+	if m.cursor != 0 {
+		t.Errorf("cursor moved onto the disabled Uninstall row")
 	}
+	press(m, "enter")
+	expect(t, m, "● Options")
 
 	m = start(t, everything)
 	expect(t, m, "installed · in use: Global Theme, colors, Plasma Style",
-		"application style and window decoration · in use: application style, window decoration")
-	if got := labels(m); got[0] != "Update or change Protea Dark" || got[len(got)-1] != "Uninstall" {
-		t.Errorf("rows = %q, want changing first and Uninstall last", got)
+		"installed · in use: application style, window decoration")
+	expectNot(t, m, "nothing installed")
+	press(m, "down")
+	if got := m.rows()[m.cursor].label; got != "Uninstall" {
+		t.Errorf("down from Update selected %q, want Uninstall", got)
 	}
 
 	st := everything
 	st.KdecorationUpgrade = "6.9.0-1"
 	m = start(t, st)
 	expect(t, m, "Plasma 6.9 is available")
-	if got := labels(m); strings.Join(got, "|") != "Update or change Protea Dark|Prepare for Plasma 6.9|Uninstall" {
+	if got := strings.Join(labels(m), "|"); got != "Update Protea Dark|Prepare for Plasma 6.9|Uninstall" {
 		t.Errorf("rows = %q", got)
 	}
 
@@ -158,24 +165,24 @@ func TestWelcome(t *testing.T) {
 func TestInstallDefaults(t *testing.T) {
 	m := start(t, fresh)
 	press(m, "enter")
-	expect(t, m, "✓ Welcome", "● Theme", "› (•) Full Global Theme", "( ) Colors and Plasma Style", "( ) Install only")
+	expect(t, m, "✓ Welcome", "● Options", "▍Choose what to install",
+		"Protea Dark's Global Theme, Plasma Style and color scheme are always installed into", "The C++ components are optional.",
+		"› [ ] C++ components")
+	expectNot(t, m, "Build again", "pinned", "Application style", "Use them")
 	press(m, "enter")
-	expect(t, m, "● Components", "[ ] Application style", "[ ] Window decoration", "[x] Use them once installed")
-	expectNot(t, m, "Build again", "pinned")
-	press(m, "enter")
-	expect(t, m, "● Review", "1 Copy Protea Dark into", "2 Apply the Protea Dark Global Theme", "› Install", "saved first")
-	expectNot(t, m, "makepkg", "needs sudo")
+	expect(t, m, "● Review", "▍Review the plan", "Nothing has changed yet. These steps run when you choose Install.",
+		"1 Install Protea Dark into", "› Install",
+		"Your current look doesn't change. Apply Protea Dark yourself in System Settings afterwards.")
+	expectNot(t, m, "2 ", "makepkg", "needs sudo", "Apply the")
 }
 
 func TestBackKeepsChoices(t *testing.T) {
 	m := start(t, fresh)
-	press(m, "enter", "down", "enter")
-	tick(t, m, "Window decoration")
-	press(m, "esc")
-	expect(t, m, "(•) Colors and Plasma Style")
 	press(m, "enter")
-	expect(t, m, "[x] Window decoration", "pinned to Plasma 6.8")
-	press(m, "esc", "esc")
+	tick(t, m, "C++ components")
+	press(m, "enter", "esc")
+	expect(t, m, "[x] C++ components", "pinned to Plasma 6.8")
+	press(m, "esc")
 	expect(t, m, "● Welcome")
 }
 
@@ -183,77 +190,64 @@ func TestInstallWithComponents(t *testing.T) {
 	st := fresh
 	st.MissingTools = []string{"cmake"}
 	m := start(t, st)
-	press(m, "enter", "enter")
-	tick(t, m, "Application style")
+	press(m, "enter")
+	tick(t, m, "C++ components")
 	expect(t, m, "Missing build tools (cmake) will be installed first.")
 	press(m, "enter")
 	expect(t, m,
 		"1 Install the build tools: cmake needs sudo",
-		"2 Copy Protea Dark into",
-		"3 Apply the Protea Dark Global Theme",
-		"4 Build and install the application style with makepkg needs sudo",
-		"5 Switch the application style to Protea",
-		"take over the terminal")
-	expectNot(t, m, "temporary")
+		"2 Install Protea Dark into",
+		"3 Build and install the C++ components with makepkg needs sudo")
+	expectNot(t, m, "temporary", "4 ", "Switch")
+
+	// The first step needs sudo: the terminal is handed over, which tests
+	// can't do, so the Install page waits on it.
+	choose(t, m, "Install")
+	expect(t, m, "● Install", "▍Installing", "Steps that need sudo take over the terminal. Press Enter afterwards to come back here.")
 }
 
 func TestRunInstallDryRun(t *testing.T) {
-	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	t.Setenv("XDG_STATE_HOME", t.TempDir())
-	if err := os.WriteFile(filepath.Join(os.Getenv("XDG_CONFIG_HOME"), "kdeglobals"), []byte("[General]\nColorScheme=Nordic\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
 	m := start(t, fresh)
-	press(m, "enter", "down", "enter", "enter")
+	press(m, "enter", "enter")
 	choose(t, m, "Install")
 	expect(t, m, "✓ Review", "✓ Install",
-		"✓ Copy Protea Dark into", "would copy theme/color-schemes/ProteaDark.colors",
-		"✓ Switch colors and Plasma Style to Protea Dark",
-		"would run: plasma-apply-colorscheme ProteaDark", "would run: plasma-apply-desktoptheme protea-dark",
-		"Done.", "enter start over")
+		"✓ Install Protea Dark into", "would copy theme/color-schemes/ProteaDark.colors",
+		"▍Installed", "Protea is ready. Apply it yourself in System Settings → Colors & Themes:",
+		"Global Theme → Protea Dark", "Colors → Protea Dark", "Plasma Style → Protea Dark",
+		"enter start over")
+	expectNot(t, m, "Application Style")
 	press(m, "enter")
-	expect(t, m, "● Welcome", "○ Theme")
+	expect(t, m, "● Welcome", "○ Options")
+
+	// With the C++ components installed, the reminder covers them too.
+	m = start(t, everything)
+	press(m, "enter", "enter")
+	choose(t, m, "Install")
+	expect(t, m, "Application Style → Protea", "Window Decorations → Protea")
 }
 
 func TestChangingExistingInstall(t *testing.T) {
 	m := start(t, everything)
-	press(m, "enter", "enter")
-	expect(t, m, "[x] Application style", "[x] Window decoration", "[x] Use them once installed", "[ ] Build again",
-		"Installed: protea 0.1.0-1, Qt 6.12.0, Plasma 6.8.")
 	press(m, "enter")
-	// Nothing to rebuild or switch: only the theme files are refreshed.
+	expect(t, m, "[x] C++ components", "[ ] Build again", "Installed: protea 0.1.0-1, built for Qt 6.12.0 and Plasma 6.8.")
+	press(m, "enter")
+	// Already built for this Plasma: only the theme files are refreshed.
 	expect(t, m, "1 Update Protea Dark in")
-	expectNot(t, m, "2 ", "makepkg", "Switch")
+	expectNot(t, m, "2 ", "makepkg")
 
 	press(m, "esc")
 	tick(t, m, "Build again")
 	press(m, "enter")
-	expect(t, m, "Build and install the application style and window decoration with makepkg")
+	expect(t, m, "2 Build and install the C++ components with makepkg")
 
 	press(m, "esc")
 	tick(t, m, "Build again")
-	tick(t, m, "Window decoration")
+	tick(t, m, "C++ components")
 	press(m, "enter")
-	expect(t, m, "Switch back to your previous window decoration", "Build and install the application style with makepkg")
-	expectNot(t, m, "Switch the window decoration to Protea")
-
-	press(m, "esc")
-	tick(t, m, "Application style")
-	press(m, "enter")
-	expect(t, m, "Switch back to your previous application style", "Remove the protea package with pacman needs sudo")
+	expect(t, m,
+		"2 Switch the application style and window decoration back to Breeze",
+		"3 Remove the C++ components with pacman needs sudo")
 	expectNot(t, m, "makepkg")
-}
-
-func TestColorsOverGlobalThemeKeepsComponents(t *testing.T) {
-	st := everything
-	st.GlobalThemeActive = false
-	m := start(t, st)
-	press(m, "enter")
-	expect(t, m, "(•) Colors and Plasma Style")
-	press(m, "up", "enter", "enter")
-	// The Global Theme resets style and decoration, so they're switched to
-	// Protea again afterwards.
-	expect(t, m, "Apply the Protea Dark Global Theme", "Switch the application style to Protea", "Switch the window decoration to Protea")
 }
 
 func TestMismatchForcesRebuild(t *testing.T) {
@@ -261,33 +255,37 @@ func TestMismatchForcesRebuild(t *testing.T) {
 	st.Kdecoration = "6.9.0-1"
 	m := start(t, st)
 	expect(t, m, "built for Plasma 6.8, but Plasma 6.9 is installed")
-	press(m, "enter", "enter", "enter")
-	expect(t, m, "Build and install the application style and window decoration with makepkg")
+	press(m, "enter", "enter")
+	expect(t, m, "Build and install the C++ components with makepkg")
 }
 
 func TestUninstall(t *testing.T) {
 	m := start(t, everything)
 	choose(t, m, "Uninstall")
-	expect(t, m, "● Remove", "[x] Protea Dark theme", "[x] Application style and window decoration")
+	expect(t, m, "● Remove", "▍Choose what to remove", "switched to Breeze Dark first", "[x] Protea Dark theme", "[x] C++ components")
 	press(m, "enter")
 	expect(t, m, "● Review",
-		"1 Switch back to your previous application style and window decoration",
-		"2 Remove the protea package with pacman needs sudo",
-		"3 Switch back to your previous theme settings",
+		"1 Switch the application style and window decoration back to Breeze",
+		"2 Remove the C++ components with pacman needs sudo",
+		"3 Switch to the Breeze Dark Global Theme",
 		"4 Remove the theme files",
-		"› Uninstall")
+		"These steps run when you choose Uninstall.", "› Uninstall")
 
 	press(m, "esc")
-	tick(t, m, "Application style and window decoration")
-	press(m, "enter")
-	expectNot(t, m, "pacman")
-
-	press(m, "esc")
+	tick(t, m, "C++ components")
 	tick(t, m, "Protea Dark theme")
 	press(m, "enter")
 	expect(t, m, "Nothing to change.", "› Back")
 	press(m, "enter")
 	expect(t, m, "● Remove")
+
+	// Only Protea's colors picked, not the whole Global Theme.
+	st := system.Status{Plasma: "6.8.0", CoreInstalled: true, ColorsActive: true}
+	m = start(t, st)
+	choose(t, m, "Uninstall")
+	press(m, "enter")
+	expect(t, m, "1 Switch colors and Plasma Style back to Breeze Dark's", "2 Remove the theme files")
+	expectNot(t, m, "Global Theme", "pacman")
 }
 
 func TestPrepareForUpgrade(t *testing.T) {
@@ -296,7 +294,18 @@ func TestPrepareForUpgrade(t *testing.T) {
 	m := start(t, st)
 	choose(t, m, "Prepare for Plasma 6.9")
 	expect(t, m, "✓ Welcome ─ ● Review ─ ○ Prepare",
-		"1 Switch back to your previous application style and window decoration",
-		"2 Remove the protea package with pacman needs sudo",
+		"1 Switch the application style and window decoration back to Breeze",
+		"2 Remove the C++ components with pacman needs sudo",
 		"run sudo pacman -Syu", "› Prepare")
+}
+
+func TestLogo(t *testing.T) {
+	want := strings.Join([]string{
+		"█▀▀▄ █▀▀▄ ▄▀▀▄ ▀█▀ █▀▀▀ ▄▀▀▄    ▀█▀ █  █ █▀▀▀ █▄ ▄█ █▀▀▀",
+		"█▀▀  █▀█  █  █  █  █▀▀  █▀▀█     █  █▀▀█ █▀▀  █ ▀ █ █▀▀ ",
+		"▀    ▀  ▀  ▀▀   ▀  ▀▀▀▀ ▀  ▀     ▀  ▀  ▀ ▀▀▀▀ ▀   ▀ ▀▀▀▀",
+	}, "\n")
+	if got := ansi.Strip(logo); got != want {
+		t.Errorf("logo:\n%s\nwant:\n%s", got, want)
+	}
 }

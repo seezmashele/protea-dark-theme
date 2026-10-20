@@ -1,6 +1,7 @@
 // Package tui is the installer's terminal interface: a step-by-step flow
 // that collects choices page by page, shows the resulting plan for review,
-// and only then makes changes.
+// and only then makes changes. It installs Protea; applying it is left to
+// the user, in System Settings.
 package tui
 
 import (
@@ -21,8 +22,7 @@ type page int
 
 const (
 	pageWelcome page = iota
-	pageTheme
-	pageComponents
+	pageOptions
 	pageRemove
 	pageReview
 	pageRun
@@ -37,22 +37,11 @@ const (
 	modePrepare // remove the package so pacman can upgrade Plasma
 )
 
-type themeChoice int
-
-const (
-	themeGlobal themeChoice = iota
-	themeColors
-	themeFilesOnly
-)
-
 // plan holds the choices made on the way to the Review page.
 type plan struct {
-	mode  mode
-	theme themeChoice
+	mode mode
 
-	style      bool // components to have installed
-	decoration bool
-	use        bool // switch to the components once installed
+	components bool // have the C++ components installed
 	rebuild    bool // build again even if the installed package is current
 
 	removeTheme   bool
@@ -63,7 +52,7 @@ type plan struct {
 type row struct {
 	label, hint string
 	check       *bool          // checkbox row
-	radio       bool           // radio row: selected when the cursor is on it
+	disabled    string         // why the row can't be chosen; grayed out and skipped
 	next        func() tea.Cmd // what enter does on this row, if not the page's default
 }
 
@@ -140,16 +129,6 @@ func dot() spinner.Spinner {
 	return s
 }
 
-var (
-	accent  = lipgloss.NewStyle().Foreground(lipgloss.Color("#E0457B"))
-	title   = accent.Bold(true)
-	bold    = lipgloss.NewStyle().Bold(true)
-	dim     = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-	good    = lipgloss.NewStyle().Foreground(lipgloss.Color("#5FB878"))
-	bad     = lipgloss.NewStyle().Foreground(lipgloss.Color("#E5534B"))
-	warning = lipgloss.NewStyle().Foreground(lipgloss.Color("#E0A33B"))
-)
-
 func (m *Model) Init() tea.Cmd { return m.refresh() }
 
 func (m *Model) refresh() tea.Cmd {
@@ -161,7 +140,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case statusMsg:
 		m.status, m.loaded = system.Status(msg), true
 		if m.page == pageWelcome {
-			m.cursor = min(m.cursor, max(len(m.rows())-1, 0))
+			m.cursor = 0
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -206,9 +185,9 @@ func (m *Model) key(k string) tea.Cmd {
 	}
 	switch k {
 	case "up", "k":
-		m.move(-1, len(rows))
+		m.move(rows, -1)
 	case "down", "j":
-		m.move(1, len(rows))
+		m.move(rows, 1)
 	case "space":
 		if r := rows[m.cursor]; r.check != nil {
 			*r.check = !*r.check
@@ -224,29 +203,26 @@ func (m *Model) key(k string) tea.Cmd {
 	return nil
 }
 
-func (m *Model) move(by, count int) {
-	m.cursor = min(max(m.cursor+by, 0), count-1)
-	if m.page == pageTheme {
-		m.plan.theme = themeChoice(m.cursor)
+// move steps the cursor by one row, skipping disabled rows.
+func (m *Model) move(rows []row, by int) {
+	for i := m.cursor + by; i >= 0 && i < len(rows); i += by {
+		if rows[i].disabled == "" {
+			m.cursor = i
+			return
+		}
 	}
 }
 
 func (m *Model) open(p page) {
 	m.page, m.cursor = p, 0
-	switch p {
-	case pageWelcome:
+	if p == pageWelcome {
 		m.plan = plan{}
-	case pageTheme:
-		m.cursor = int(m.plan.theme)
 	}
 }
 
 // forward goes to the next page of the current mode.
 func (m *Model) forward() {
-	switch m.page {
-	case pageTheme:
-		m.open(pageComponents)
-	case pageComponents, pageRemove:
+	if m.page == pageOptions || m.page == pageRemove {
 		m.open(pageReview)
 	}
 }
@@ -254,14 +230,12 @@ func (m *Model) forward() {
 // back goes to the previous page of the current mode.
 func (m *Model) back() {
 	switch m.page {
-	case pageTheme, pageRemove:
+	case pageOptions, pageRemove:
 		m.open(pageWelcome)
-	case pageComponents:
-		m.open(pageTheme)
 	case pageReview:
 		switch m.plan.mode {
 		case modeInstall:
-			m.open(pageComponents)
+			m.open(pageOptions)
 		case modeUninstall:
 			m.open(pageRemove)
 		default:
@@ -270,25 +244,14 @@ func (m *Model) back() {
 	}
 }
 
-// startInstall begins the install flow, pre-filled from what's installed.
 func (m *Model) startInstall() tea.Cmd {
-	st := m.status
-	p := plan{mode: modeInstall, theme: themeGlobal, use: true}
-	if !st.GlobalThemeActive && (st.ColorsActive || st.PlasmaStyleActive) {
-		p.theme = themeColors
-	}
-	if st.Package != "" {
-		p.style, p.decoration = st.BuiltStyle(), st.BuiltDecoration()
-		p.use = st.StyleActive || st.DecorationActive
-	}
-	m.plan = p
-	m.open(pageTheme)
+	m.plan = plan{mode: modeInstall, components: m.status.Package != ""}
+	m.open(pageOptions)
 	return nil
 }
 
 func (m *Model) startUninstall() tea.Cmd {
-	st := m.status
-	m.plan = plan{mode: modeUninstall, removeTheme: m.themePresent(), removePackage: st.Package != ""}
+	m.plan = plan{mode: modeUninstall, removeTheme: m.themePresent(), removePackage: m.status.Package != ""}
 	m.open(pageRemove)
 	return nil
 }
@@ -312,59 +275,47 @@ func (m *Model) rows() []row {
 	switch m.page {
 	case pageWelcome:
 		install := row{label: "Install Protea Dark", next: m.startInstall,
-			hint: "Choose how to use the theme and whether to build the optional components, then review before anything changes."}
+			hint: "Installs the theme and, if you choose, the C++ components. You apply them yourself afterwards in System Settings."}
 		if m.somethingInstalled() {
-			install.label = "Update or change Protea Dark"
+			install.label = "Update Protea Dark"
+			install.hint = "Updates the installed theme files, and adds, rebuilds or removes the C++ components."
 		}
 		rows := []row{install}
 		if st.UpgradeBlocked() {
 			rows = append(rows, row{label: "Prepare for Plasma " + system.Feature(st.KdecorationUpgrade), next: m.startPrepare,
-				hint: "Switches back from Protea's components and removes the package, so pacman can upgrade Plasma."})
+				hint: "Switches back from Protea's C++ components and removes them, so pacman can upgrade Plasma."})
 		}
-		if m.somethingInstalled() {
-			rows = append(rows, row{label: "Uninstall", next: m.startUninstall,
-				hint: "Switches back to your previous look and removes what Protea installed."})
+		uninstall := row{label: "Uninstall", next: m.startUninstall,
+			hint: "Switches back to Breeze Dark where Protea is in use, then removes what Protea installed."}
+		if !m.somethingInstalled() {
+			uninstall.disabled = "nothing installed"
 		}
-		return rows
-	case pageTheme:
-		return []row{
-			{label: "Full Global Theme", radio: true,
-				hint: "Protea Dark's colors and Plasma Style as a Global Theme. Also switches icons, cursors, application style and title bars to Breeze's; uninstalling switches them back. Your panel layout stays as it is."},
-			{label: "Colors and Plasma Style", radio: true,
-				hint: "Only Protea Dark's colors and Plasma Style. Keeps your icons, cursors, application style and title bars."},
-			{label: "Install only", radio: true,
-				hint: "Copies the theme files without changing your current look. Choose Protea Dark later in System Settings."},
-		}
-	case pageComponents:
-		rows := []row{
-			{label: "Application style", check: &m.plan.style, hint: "Protea's look for buttons, menus, scrollbars and other controls in Qt apps."},
-			{label: "Window decoration", check: &m.plan.decoration, hint: "Protea's title bars and window borders, drawn by KWin."},
-			{label: "Use them once installed", check: &m.plan.use, hint: "Switches your application style and window decoration to the selected components."},
-		}
+		return append(rows, uninstall)
+	case pageOptions:
+		rows := []row{{label: "C++ components", check: &m.plan.components,
+			hint: "Protea's application style and window decoration, compiled from source with makepkg. Takes about a minute and asks for your sudo password."}}
 		if st.Package != "" {
 			rows = append(rows, row{label: "Build again", check: &m.plan.rebuild,
-				hint: "Rebuilds even if the installed package is current, for example after changing the C++ code."})
+				hint: "Rebuilds even if the installed C++ components are current, for example after changing the C++ code."})
 		}
 		return rows
 	case pageRemove:
 		var rows []row
 		if m.themePresent() {
 			rows = append(rows, row{label: "Protea Dark theme", check: &m.plan.removeTheme,
-				hint: "Switches back to your previous colors, Plasma Style and Global Theme settings, then removes the theme files."})
+				hint: "Switches to Breeze Dark if Protea Dark is in use, then removes the theme files."})
 		}
 		if st.Package != "" {
-			rows = append(rows, row{label: "Application style and window decoration", check: &m.plan.removePackage,
-				hint: "Switches back to your previous application style and window decoration, then removes the protea package with pacman."})
+			rows = append(rows, row{label: "C++ components", check: &m.plan.removePackage,
+				hint: "Switches the application style and window decoration to Breeze if Protea's are in use, then removes the protea package with pacman."})
 		}
 		return rows
 	case pageReview:
+		back := row{label: "Back", next: func() tea.Cmd { m.back(); return nil }}
 		if len(m.reviewSteps()) == 0 {
-			return []row{{label: "Back", next: func() tea.Cmd { m.back(); return nil }}}
+			return []row{back}
 		}
-		return []row{
-			{label: m.actionName(), next: m.run},
-			{label: "Back", next: func() tea.Cmd { m.back(); return nil }},
-		}
+		return []row{{label: m.actionName(), next: m.run}, back}
 	}
 	return nil
 }
@@ -377,7 +328,7 @@ func (m *Model) flow() []string {
 	case modePrepare:
 		return []string{"Welcome", "Review", "Prepare"}
 	}
-	return []string{"Welcome", "Theme", "Components", "Review", "Install"}
+	return []string{"Welcome", "Options", "Review", "Install"}
 }
 
 func (m *Model) actionName() string { return m.flow()[len(m.flow())-1] }
@@ -388,10 +339,8 @@ func (m *Model) position() int {
 	switch m.page {
 	case pageWelcome:
 		return 0
-	case pageTheme, pageRemove:
+	case pageOptions, pageRemove:
 		return 1
-	case pageComponents:
-		return 2
 	case pageReview:
 		return last - 1
 	case pageRun:
@@ -406,11 +355,7 @@ func (m *Model) planSteps() []step {
 	case modeUninstall:
 		return m.uninstallSteps()
 	case modePrepare:
-		var steps []step
-		if m.status.StyleActive || m.status.DecorationActive {
-			steps = append(steps, step{name: "Switch back to your previous application style and window decoration", run: m.runner.RevertComponents})
-		}
-		return append(steps, m.removePackageStep())
+		return m.removePackageSteps()
 	}
 	return m.installSteps()
 }
@@ -426,23 +371,12 @@ func (m *Model) reviewSteps() []step {
 	return steps
 }
 
-// needsBuild reports whether the plan's components must be (re)built.
+// needsBuild reports whether the C++ components must be (re)built.
 func (p plan) needsBuild(st system.Status) bool {
-	if !p.style && !p.decoration {
+	if !p.components {
 		return false
 	}
-	return st.Package == "" || p.rebuild || st.Mismatch() ||
-		p.style != st.BuiltStyle() || p.decoration != st.BuiltDecoration()
-}
-
-func componentNames(style, decoration bool) string {
-	switch {
-	case style && decoration:
-		return "application style and window decoration"
-	case style:
-		return "application style"
-	}
-	return "window decoration"
+	return st.Package == "" || p.rebuild || st.Mismatch() || !st.BuiltStyle() || !st.BuiltDecoration()
 }
 
 func (m *Model) installSteps() []step {
@@ -454,30 +388,11 @@ func (m *Model) installSteps() []step {
 		steps = append(steps, step{name: "Install the build tools: " + strings.Join(st.MissingTools, ", "), exec: m.runner.ToolsCommand})
 	}
 
-	copyName := "Copy Protea Dark into " + tildePath(system.DataHome())
+	copyName := "Install Protea Dark into " + tildePath(system.DataHome())
 	if st.CoreInstalled {
 		copyName = "Update Protea Dark in " + tildePath(system.DataHome())
 	}
 	steps = append(steps, step{name: copyName, run: func() error { return m.runner.InstallCore(m.files) }})
-
-	// Switch back from components that are being dropped. Done before the
-	// Global Theme, which sets its own style and decoration.
-	keepStyle, keepDecoration := p.style && p.use, p.decoration && p.use
-	if st.StyleActive && !keepStyle {
-		steps = append(steps, step{name: "Switch back to your previous application style", run: m.runner.RevertStyle})
-	}
-	if st.DecorationActive && !keepDecoration {
-		steps = append(steps, step{name: "Switch back to your previous window decoration", run: m.runner.RevertDecoration})
-	}
-
-	styleActive, decorationActive := st.StyleActive, st.DecorationActive
-	switch {
-	case p.theme == themeGlobal && !st.GlobalThemeActive:
-		steps = append(steps, step{name: "Apply the Protea Dark Global Theme", run: m.runner.ApplyGlobalTheme})
-		styleActive, decorationActive = false, false
-	case p.theme == themeColors && !(st.ColorsActive && st.PlasmaStyleActive):
-		steps = append(steps, step{name: "Switch colors and Plasma Style to Protea Dark", run: m.runner.ApplyColors})
-	}
 
 	switch {
 	case build:
@@ -487,8 +402,8 @@ func (m *Model) installSteps() []step {
 				dir, err = m.runner.PrepareBuild(m.files)
 				return err
 			}},
-			step{name: "Build and install the " + componentNames(p.style, p.decoration) + " with makepkg", exec: func() *exec.Cmd {
-				return m.runner.BuildCommand(dir, p.style, p.decoration)
+			step{name: "Build and install the C++ components with makepkg", exec: func() *exec.Cmd {
+				return m.runner.BuildCommand(dir)
 			}},
 			step{name: "Remove the temporary build folder", quiet: true, always: true, run: func() error {
 				if dir == "" {
@@ -497,15 +412,8 @@ func (m *Model) installSteps() []step {
 				return m.runner.CleanBuild(dir)
 			}},
 		)
-	case !p.style && !p.decoration && st.Package != "":
-		steps = append(steps, m.removePackageStep())
-	}
-
-	if keepStyle && !styleActive {
-		steps = append(steps, step{name: "Switch the application style to Protea", run: m.runner.UseStyle})
-	}
-	if keepDecoration && !decorationActive {
-		steps = append(steps, step{name: "Switch the window decoration to Protea", run: m.runner.UseDecoration})
+	case !p.components && st.Package != "":
+		steps = append(steps, m.removePackageSteps()...)
 	}
 	return steps
 }
@@ -514,13 +422,15 @@ func (m *Model) uninstallSteps() []step {
 	st, p := m.status, m.plan
 	var steps []step
 	if p.removePackage && st.Package != "" {
-		if st.StyleActive || st.DecorationActive {
-			steps = append(steps, step{name: "Switch back to your previous application style and window decoration", run: m.runner.RevertComponents})
-		}
-		steps = append(steps, m.removePackageStep())
+		steps = append(steps, m.removePackageSteps()...)
 	}
 	if p.removeTheme && m.themePresent() {
-		steps = append(steps, step{name: "Switch back to your previous theme settings", run: m.runner.RevertCore})
+		switch {
+		case st.GlobalThemeActive:
+			steps = append(steps, step{name: "Switch to the Breeze Dark Global Theme", run: m.runner.RevertCore})
+		case st.ColorsActive || st.PlasmaStyleActive:
+			steps = append(steps, step{name: "Switch colors and Plasma Style back to Breeze Dark's", run: m.runner.RevertCore})
+		}
 		if st.CoreInstalled {
 			steps = append(steps, step{name: "Remove the theme files", run: m.runner.UninstallCore})
 		}
@@ -528,8 +438,14 @@ func (m *Model) uninstallSteps() []step {
 	return steps
 }
 
-func (m *Model) removePackageStep() step {
-	return step{name: "Remove the protea package with pacman", exec: func() *exec.Cmd { return m.runner.RemoveCommand(true) }}
+// removePackageSteps switch away from the C++ components, if they're in
+// use, and remove the package.
+func (m *Model) removePackageSteps() []step {
+	var steps []step
+	if m.status.StyleActive || m.status.DecorationActive {
+		steps = append(steps, step{name: "Switch the application style and window decoration back to Breeze", run: m.runner.RevertComponents})
+	}
+	return append(steps, step{name: "Remove the C++ components with pacman", exec: func() *exec.Cmd { return m.runner.RemoveCommand(true) }})
 }
 
 // run starts the plan's steps.
@@ -580,34 +496,63 @@ func tildePath(p string) string {
 
 func (m *Model) View() tea.View {
 	var b strings.Builder
-	b.WriteString(title.Render("Protea Dark") + "  " + m.progressLine())
+	b.WriteString(logo + "\n\n" + m.progressLine() + "\n")
 	if m.runner.DryRun {
-		b.WriteString("\n" + warning.Render("Dry run: nothing will be changed"))
+		b.WriteString(warning.Render("Dry run: nothing will be changed") + "\n")
 	}
-	b.WriteString("\n\n")
-	switch {
-	case !m.loaded:
+	b.WriteString("\n")
+	if !m.loaded {
 		b.WriteString(dim.Render("Checking your system…"))
-	case m.page == pageWelcome:
-		m.viewWelcome(&b)
-	case m.page == pageTheme:
-		b.WriteString(m.wrap("The theme files are always installed into "+tildePath(system.DataHome())+". How should Protea Dark be used?") + "\n\n")
-		m.viewRows(&b, "↑/↓ choose · enter next · esc back · q quit")
-	case m.page == pageComponents:
-		m.viewComponents(&b)
-	case m.page == pageRemove:
-		b.WriteString("What should be removed?\n\n")
-		m.viewRows(&b, "↑/↓ move · space tick · enter next · esc back · q quit")
-	case m.page == pageReview:
-		m.viewReview(&b)
-	case m.page == pageRun:
-		m.viewSteps(&b)
-	case m.page == pageDone:
-		m.viewDone(&b)
+	} else {
+		heading, description := m.heading()
+		b.WriteString(selected.Render("▍") + pageTitle.Render(heading) + "\n")
+		b.WriteString(m.wrap(description, text) + "\n\n")
+		switch m.page {
+		case pageWelcome:
+			m.viewWelcome(&b)
+		case pageOptions:
+			m.viewOptions(&b)
+		case pageRemove:
+			m.viewRows(&b, "↑/↓ move · space tick · enter next · esc back · q quit")
+		case pageReview:
+			m.viewReview(&b)
+		case pageRun:
+			m.viewSteps(&b)
+		case pageDone:
+			m.viewDone(&b)
+		}
 	}
 	v := tea.NewView(lipgloss.NewStyle().Padding(1, 2).Render(b.String()))
 	v.AltScreen = true
 	return v
+}
+
+// heading is the current page's title and the description under it.
+func (m *Model) heading() (string, string) {
+	action := m.actionName()
+	switch m.page {
+	case pageWelcome:
+		return "Welcome", "Protea Dark is a dark theme for KDE Plasma, forked from Breeze. Here's what's on your system."
+	case pageOptions:
+		return "Choose what to install", "Protea Dark's Global Theme, Plasma Style and color scheme are always installed into " +
+			tildePath(system.DataHome()) + ". The C++ components are optional."
+	case pageRemove:
+		return "Choose what to remove", "Anything of Protea's that's in use is switched to Breeze Dark first, so Plasma never points at missing files."
+	case pageReview:
+		return "Review the plan", "Nothing has changed yet. These steps run when you choose " + action + "."
+	case pageRun:
+		titles := map[mode]string{modeInstall: "Installing", modeUninstall: "Uninstalling", modePrepare: "Preparing for the Plasma upgrade"}
+		return titles[m.plan.mode], "Steps that need sudo take over the terminal. Press Enter afterwards to come back here."
+	}
+	switch {
+	case m.failed:
+		return "Didn't finish", "A step failed. Nothing after it was done, except cleanup."
+	case m.plan.mode == modeInstall:
+		return "Installed", "Protea is ready. Apply it yourself in System Settings → Colors & Themes:"
+	case m.plan.mode == modePrepare:
+		return "Ready for the Plasma upgrade", "Now run sudo pacman -Syu, then run this installer again to build for the new Plasma."
+	}
+	return "Uninstalled", "Protea is removed."
 }
 
 func (m *Model) progressLine() string {
@@ -616,9 +561,9 @@ func (m *Model) progressLine() string {
 	for i, name := range m.flow() {
 		switch {
 		case i < pos:
-			parts = append(parts, good.Render("✓")+" "+dim.Render(name))
+			parts = append(parts, good.Render("✓ ")+dim.Render(name))
 		case i == pos:
-			parts = append(parts, accent.Render("●")+" "+bold.Render(name))
+			parts = append(parts, accent.Render("● ")+strong.Render(name))
 		default:
 			parts = append(parts, dim.Render("○ "+name))
 		}
@@ -626,19 +571,21 @@ func (m *Model) progressLine() string {
 	return strings.Join(parts, dim.Render(" ─ "))
 }
 
-func (m *Model) wrap(s string) string { return m.wrapIndent(s, 0) }
+// wrap renders s in style st, wrapped to the screen width.
+func (m *Model) wrap(s string, st lipgloss.Style) string { return m.wrapIndent(s, st, 0) }
 
-// wrapIndent wraps s to the screen width, indenting every line.
-func (m *Model) wrapIndent(s string, indent int) string {
+// wrapIndent renders s in style st, wrapped to the screen width with every
+// line indented.
+func (m *Model) wrapIndent(s string, st lipgloss.Style, indent int) string {
 	width := 76
 	if m.width > 0 {
 		width = min(width, m.width-4)
 	}
-	return lipgloss.NewStyle().Width(width).PaddingLeft(indent).Render(s)
+	return st.Width(width).PaddingLeft(indent).Render(s)
 }
 
 func field(label, value string) string {
-	return dim.Render(fmt.Sprintf("%-13s", label)) + value + "\n"
+	return dim.Render(fmt.Sprintf("%-13s", label)) + text.Render(value) + "\n"
 }
 
 // viewRows draws the page's rows, the selected row's hint, any notes, and
@@ -646,32 +593,33 @@ func field(label, value string) string {
 func (m *Model) viewRows(b *strings.Builder, help string, notes ...string) {
 	rows := m.rows()
 	for i, r := range rows {
-		label := r.label
-		switch {
-		case r.check != nil:
-			box := "[ ]"
+		box := ""
+		if r.check != nil {
+			box = text.Render("[ ] ")
 			if *r.check {
-				box = "[" + accent.Render("x") + "]"
+				box = text.Render("[") + accent.Render("x") + text.Render("] ")
 			}
-			label = box + " " + label
-		case r.radio:
-			dotMark := "( )"
-			if i == m.cursor {
-				dotMark = "(" + accent.Render("•") + ")"
-			}
-			label = dotMark + " " + label
+		}
+		var label string
+		switch {
+		case r.disabled != "":
+			label = dim.Render(r.label + " · " + r.disabled)
+		case i == m.cursor:
+			label = selected.Render(r.label)
+		default:
+			label = text.Render(r.label)
 		}
 		cursor := "  "
 		if i == m.cursor {
-			cursor, label = accent.Render("› "), bold.Render(label)
+			cursor = accent.Render("› ")
 		}
-		b.WriteString(cursor + label + "\n")
+		b.WriteString(cursor + box + label + "\n")
 	}
 	if m.cursor < len(rows) && rows[m.cursor].hint != "" {
-		b.WriteString("\n" + m.wrap(dim.Render(rows[m.cursor].hint)) + "\n")
+		b.WriteString("\n" + m.wrap(rows[m.cursor].hint, dim) + "\n")
 	}
 	for _, n := range notes {
-		b.WriteString("\n" + m.wrap(n) + "\n")
+		b.WriteString("\n" + n + "\n")
 	}
 	b.WriteString("\n" + dim.Render(help))
 }
@@ -685,48 +633,42 @@ func (m *Model) viewWelcome(b *strings.Builder) {
 	case st.PlasmaSupported():
 		plasma += " " + good.Render("✓")
 	}
-	b.WriteString(bold.Render("Your system") + "\n")
 	b.WriteString(field("Plasma", plasma))
 	b.WriteString(field("Protea Dark", m.themeSummary()))
-	b.WriteString(field("Components", m.packageSummary()))
+	b.WriteString(field("C++", m.packageSummary()))
 	if st.Plasma != "" && !st.PlasmaSupported() {
-		b.WriteString("\n" + m.wrap(warning.Render(fmt.Sprintf("Protea is made for Plasma %s. On Plasma %s some parts may look wrong.",
-			system.TargetPlasma, system.Feature(st.Plasma)))) + "\n")
+		b.WriteString("\n" + m.wrap(fmt.Sprintf("Protea is made for Plasma %s. On Plasma %s some parts may look wrong.",
+			system.TargetPlasma, system.Feature(st.Plasma)), warning) + "\n")
 	}
 	if st.UpgradeBlocked() {
-		b.WriteString("\n" + m.wrap(warning.Render(fmt.Sprintf("Plasma %s is available, but the protea package's version pin blocks the upgrade so KWin never loads a mismatched window decoration.",
-			system.Feature(st.KdecorationUpgrade)))) + "\n")
+		b.WriteString("\n" + m.wrap(fmt.Sprintf("Plasma %s is available, but the protea package's version pin blocks the upgrade so KWin never loads a mismatched window decoration.",
+			system.Feature(st.KdecorationUpgrade)), warning) + "\n")
 	}
 	if st.Mismatch() {
-		b.WriteString("\n" + m.wrap(bad.Render(fmt.Sprintf("The window decoration was built for Plasma %s, but Plasma %s is installed. Update to build it again.",
-			st.BuiltFor(), system.Feature(st.Kdecoration)))) + "\n")
+		b.WriteString("\n" + m.wrap(fmt.Sprintf("The C++ components were built for Plasma %s, but Plasma %s is installed. Update to build them again.",
+			st.BuiltFor(), system.Feature(st.Kdecoration)), bad) + "\n")
 	}
-	b.WriteString("\n" + bold.Render("What would you like to do?") + "\n")
+	b.WriteString("\n" + strong.Render("What would you like to do?") + "\n")
 	m.viewRows(b, "↑/↓ choose · enter next · q quit")
 }
 
-func (m *Model) themeInUse() string {
+func (m *Model) themeSummary() string {
 	st := m.status
-	var parts []string
+	var in []string
 	if st.GlobalThemeActive {
-		parts = append(parts, "Global Theme")
+		in = append(in, "Global Theme")
 	}
 	if st.ColorsActive {
-		parts = append(parts, "colors")
+		in = append(in, "colors")
 	}
 	if st.PlasmaStyleActive {
-		parts = append(parts, "Plasma Style")
+		in = append(in, "Plasma Style")
 	}
-	return strings.Join(parts, ", ")
-}
-
-func (m *Model) themeSummary() string {
-	in := m.themeInUse()
 	switch {
-	case !m.status.CoreInstalled:
+	case !st.CoreInstalled:
 		return "not installed"
-	case in != "":
-		return "installed · in use: " + good.Render(in)
+	case len(in) > 0:
+		return "installed · in use: " + good.Render(strings.Join(in, ", "))
 	}
 	return "installed · not in use"
 }
@@ -736,38 +678,35 @@ func (m *Model) packageSummary() string {
 	if st.Package == "" {
 		return "not installed"
 	}
-	var used []string
+	var in []string
 	if st.StyleActive {
-		used = append(used, "application style")
+		in = append(in, "application style")
 	}
 	if st.DecorationActive {
-		used = append(used, "window decoration")
+		in = append(in, "window decoration")
 	}
-	s := componentNames(st.BuiltStyle(), st.BuiltDecoration())
-	if len(used) > 0 {
-		return s + " · in use: " + good.Render(strings.Join(used, ", "))
+	if len(in) > 0 {
+		return "installed · in use: " + good.Render(strings.Join(in, ", "))
 	}
-	return s + " · not in use"
+	return "installed · not in use"
 }
 
-func (m *Model) viewComponents(b *strings.Builder) {
+func (m *Model) viewOptions(b *strings.Builder) {
 	st := m.status
-	b.WriteString(m.wrap("Optional. Compiled from source with makepkg, which takes about a minute and asks for your sudo password.") + "\n\n")
-
 	var notes []string
 	if st.Package != "" {
-		built := "Installed: protea " + st.Package + ", Qt " + st.Build["QT_VERSION"]
+		built := "Installed: protea " + st.Package + ", built for Qt " + st.Build["QT_VERSION"]
 		if st.BuiltDecoration() {
-			built += ", Plasma " + st.BuiltFor()
+			built += " and Plasma " + st.BuiltFor()
 		}
-		notes = append(notes, dim.Render(built+"."))
+		notes = append(notes, m.wrap(built+".", dim))
 	}
 	if m.plan.needsBuild(st) && len(st.MissingTools) > 0 {
-		notes = append(notes, warning.Render("Missing build tools ("+strings.Join(st.MissingTools, ", ")+") will be installed first."))
+		notes = append(notes, m.wrap("Missing build tools ("+strings.Join(st.MissingTools, ", ")+") will be installed first.", warning))
 	}
-	if m.plan.decoration {
-		notes = append(notes, dim.Render(fmt.Sprintf("The window decoration is pinned to Plasma %s: pacman won't upgrade Plasma to the next feature release until the package is removed. This installer walks you through that.",
-			system.Feature(st.Kdecoration))))
+	if m.plan.components {
+		notes = append(notes, m.wrap(fmt.Sprintf("The window decoration is pinned to Plasma %s: pacman won't upgrade Plasma to the next feature release until the C++ components are removed. This installer walks you through that.",
+			system.Feature(st.Kdecoration)), dim))
 	}
 	m.viewRows(b, "↑/↓ move · space tick · enter next · esc back · q quit", notes...)
 }
@@ -775,31 +714,22 @@ func (m *Model) viewComponents(b *strings.Builder) {
 func (m *Model) viewReview(b *strings.Builder) {
 	steps := m.reviewSteps()
 	if len(steps) == 0 {
-		b.WriteString("Nothing to change.\n\n")
+		b.WriteString(text.Render("Nothing to change.") + "\n\n")
 		m.viewRows(b, "enter back · q quit")
 		return
 	}
-	b.WriteString(bold.Render("This will:") + "\n")
-	sudo := false
 	for i, s := range steps {
-		line := fmt.Sprintf("  %d  %s", i+1, s.name)
+		line := accent.Render(fmt.Sprintf("  %d  ", i+1)) + text.Render(s.name)
 		if s.exec != nil {
 			line += "  " + warning.Render("needs sudo")
-			sudo = true
 		}
-		b.WriteString(m.wrap(line) + "\n")
+		b.WriteString(line + "\n")
 	}
-	p := m.plan
-	switch p.mode {
+	switch m.plan.mode {
 	case modeInstall:
-		if p.theme != themeFilesOnly || (p.use && (p.style || p.decoration)) {
-			b.WriteString("\n" + m.wrap(dim.Render("Your current settings are saved first, so Uninstall can put them back.")) + "\n")
-		}
+		b.WriteString("\n" + m.wrap("Your current look doesn't change. Apply Protea Dark yourself in System Settings afterwards.", dim) + "\n")
 	case modePrepare:
-		b.WriteString("\n" + m.wrap(dim.Render("Afterwards, run sudo pacman -Syu, then run this installer again to build for the new Plasma.")) + "\n")
-	}
-	if sudo {
-		b.WriteString(m.wrap(dim.Render("Steps needing sudo take over the terminal; press Enter afterwards to come back.")) + "\n")
+		b.WriteString("\n" + m.wrap("Afterwards, run sudo pacman -Syu, then run this installer again to build for the new Plasma.", dim) + "\n")
 	}
 	b.WriteString("\n")
 	m.viewRows(b, "↑/↓ choose · enter select · esc back · q quit")
@@ -807,55 +737,45 @@ func (m *Model) viewReview(b *strings.Builder) {
 
 func (m *Model) viewSteps(b *strings.Builder) {
 	for _, s := range m.steps {
-		var mark string
+		var mark, name string
 		switch s.state {
 		case stepPending:
-			mark = dim.Render("·")
+			mark, name = dim.Render("·"), dim.Render(s.name)
 		case stepRunning:
-			mark = m.spinner.View()
+			mark, name = m.spinner.View(), strong.Render(s.name)
 		case stepDone:
-			mark = good.Render("✓")
+			mark, name = good.Render("✓"), text.Render(s.name)
 		case stepFailed:
-			mark = bad.Render("✗")
+			mark, name = bad.Render("✗"), text.Render(s.name)
 		case stepSkipped:
-			mark = dim.Render("–")
-		}
-		name := s.name
-		if s.state == stepSkipped || s.state == stepPending {
-			name = dim.Render(name)
+			mark, name = dim.Render("–"), dim.Render(s.name)
 		}
 		b.WriteString(mark + " " + name + "\n")
 		if s.err != nil {
-			b.WriteString(m.wrapIndent(bad.Render(s.err.Error()), 2) + "\n")
+			b.WriteString(m.wrapIndent(s.err.Error(), bad, 2) + "\n")
 		}
 		for _, l := range s.log {
-			b.WriteString(m.wrapIndent(dim.Render(l), 2) + "\n")
+			b.WriteString(m.wrapIndent(l, dim, 2) + "\n")
 		}
 	}
 }
 
 func (m *Model) viewDone(b *strings.Builder) {
+	if !m.failed && m.plan.mode == modeInstall {
+		setting := func(page, choice string) string {
+			return "  " + strong.Render(fmt.Sprintf("%-19s", page)) + accent.Render("→ ") + text.Render(choice) + "\n"
+		}
+		b.WriteString(setting("Global Theme", "Protea Dark"))
+		b.WriteString(dim.Render("  or, to keep your icons and title bars, only:") + "\n")
+		b.WriteString(setting("Colors", "Protea Dark"))
+		b.WriteString(setting("Plasma Style", "Protea Dark"))
+		if m.status.Package != "" {
+			b.WriteString(dim.Render("  and for the C++ components:") + "\n")
+			b.WriteString(setting("Application Style", "Protea"))
+			b.WriteString(setting("Window Decorations", "Protea"))
+		}
+		b.WriteString("\n")
+	}
 	m.viewSteps(b)
-	b.WriteString("\n")
-	switch {
-	case m.failed:
-		b.WriteString(bad.Render("Didn't finish.") + " " + dim.Render("Nothing after the failed step was done, except cleanup.") + "\n")
-	case m.plan.mode == modePrepare:
-		b.WriteString(good.Render("Done.") + "\n" + m.wrap("Now run sudo pacman -Syu, then run this installer again to build for the new Plasma.") + "\n")
-	default:
-		b.WriteString(good.Render("Done.") + "\n")
-		if m.ranStep("Switch the application style to Protea") {
-			b.WriteString(m.wrap(dim.Render("Some apps need a restart to show the new application style.")) + "\n")
-		}
-	}
 	b.WriteString("\n" + dim.Render("enter start over · q quit"))
-}
-
-func (m *Model) ranStep(name string) bool {
-	for _, s := range m.steps {
-		if s.name == name && s.state == stepDone {
-			return true
-		}
-	}
-	return false
 }

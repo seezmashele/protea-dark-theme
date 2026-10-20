@@ -89,13 +89,14 @@ func TestPrepareBuild(t *testing.T) {
 	}
 }
 
-// fakeSetup points KDE's config reader and the saved-settings file at
-// temporary folders, writes the given config files, and returns a runner
-// that records commands instead of running them.
+// fakeSetup points KDE's config reader at temporary folders, writes the
+// given config files, and returns a runner that records commands instead
+// of running them. XDG_CONFIG_DIRS is replaced too: Plasma adds
+// ~/.config/kdedefaults to it, where an applied Global Theme's values live.
 func fakeSetup(t *testing.T, configs map[string]string) (*Runner, *[][]string) {
 	t.Helper()
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	t.Setenv("XDG_STATE_HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_DIRS", t.TempDir())
 	writeConfigs(t, configs)
 	var ran [][]string
 	return &Runner{stub: func(cmd []string) { ran = append(ran, cmd) }}, &ran
@@ -110,8 +111,8 @@ func writeConfigs(t *testing.T, configs map[string]string) {
 	}
 }
 
-// commands returns the recorded commands as strings, with helper paths
-// reduced to their names, sorted (settings are applied in map order).
+// commands returns the recorded commands as sorted strings, with helper
+// paths reduced to their names.
 func commands(ran [][]string) []string {
 	var out []string
 	for _, c := range ran {
@@ -130,94 +131,42 @@ func check(t *testing.T, ran *[][]string, want ...string) {
 	*ran = nil
 }
 
-func TestColorsSwitchBackToPrevious(t *testing.T) {
-	r, ran := fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=Nordic\n"})
-	if err := r.ApplyColors(); err != nil {
-		t.Fatal(err)
-	}
-	check(t, ran, "plasma-apply-colorscheme ProteaDark", "plasma-apply-desktoptheme protea-dark")
-	if got := loadSaved(); !reflect.DeepEqual(got, map[string]string{"colorScheme": "Nordic", "plasmaStyle": "default"}) {
-		t.Errorf("saved %v", got)
-	}
-
-	writeConfigs(t, map[string]string{"kdeglobals": "[General]\nColorScheme=ProteaDark\n", "plasmarc": "[Theme]\nname=protea-dark\n"})
+func TestRevertCoreReplacesGlobalTheme(t *testing.T) {
+	r, ran := fakeSetup(t, map[string]string{
+		"kdeglobals": "[General]\nColorScheme=ProteaDark\n[KDE]\nLookAndFeelPackage=" + GlobalThemeID + "\n",
+		"plasmarc":   "[Theme]\nname=protea-dark\n",
+	})
 	if err := r.RevertCore(); err != nil {
 		t.Fatal(err)
 	}
-	check(t, ran, "plasma-apply-colorscheme Nordic", "plasma-apply-desktoptheme default")
-	if got := loadSaved(); len(got) != 0 {
-		t.Errorf("saved settings not used up: %v", got)
-	}
+	// The Breeze Dark Global Theme covers colors and Plasma Style too.
+	check(t, ran, "plasma-apply-lookandfeel --apply org.kde.breezedark.desktop")
 }
 
-func TestRevertWithoutSavedUsesFallback(t *testing.T) {
-	r, ran := fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=ProteaDark\n[KDE]\nLookAndFeelPackage=" + GlobalThemeID + "\n"})
+func TestRevertCoreSwitchesColorsAndStyle(t *testing.T) {
+	r, ran := fakeSetup(t, map[string]string{
+		"kdeglobals": "[General]\nColorScheme=ProteaDark\n[KDE]\nLookAndFeelPackage=org.kde.breezedark.desktop\n",
+		"plasmarc":   "[Theme]\nname=protea-dark\n",
+	})
 	if err := r.RevertCore(); err != nil {
 		t.Fatal(err)
 	}
-	// The Global Theme's other settings are only switched back when a
-	// previous value was saved.
-	check(t, ran, "plasma-apply-colorscheme BreezeDark",
-		"kwriteconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage org.kde.breezedark.desktop")
+	check(t, ran, "plasma-apply-colorscheme BreezeDark", "plasma-apply-desktoptheme default")
 }
 
-func TestRevertLeavesUserChoiceAlone(t *testing.T) {
-	r, ran := fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=Nordic\n"})
-	saved := map[string]string{"colorScheme": "BreezeDark"}
-	if err := r.storeSaved(saved); err != nil {
-		t.Fatal(err)
-	}
-	if err := r.RevertCore(); err != nil {
+func TestRevertLeavesOtherChoicesAlone(t *testing.T) {
+	r, ran := fakeSetup(t, map[string]string{
+		"kdeglobals": "[General]\nColorScheme=Nordic\n[KDE]\nwidgetStyle=Oxygen\n",
+		"kwinrc":     "[org.kde.kdecoration2]\ntheme=__aurorae__svg__ChromeOS-dark\n",
+	})
+	if err := errors.Join(r.RevertCore(), r.RevertComponents()); err != nil {
 		t.Fatal(err)
 	}
 	check(t, ran)
 }
 
-func TestGlobalThemeSwitchesEverythingBack(t *testing.T) {
+func TestRevertComponents(t *testing.T) {
 	r, ran := fakeSetup(t, map[string]string{
-		"kdeglobals": "[General]\nColorScheme=BreezeDark\n[Icons]\nTheme=Papirus-Dark\n[KDE]\nLookAndFeelPackage=org.kde.breezedark.desktop\nwidgetStyle=Breeze\n",
-		"kcminputrc": "[Mouse]\ncursorTheme=McMojave-cursors\n",
-		"kwinrc":     "[org.kde.kdecoration2]\nlibrary=org.kde.kwin.aurorae.v2\ntheme=__aurorae__svg__ChromeOS-dark\n",
-	})
-	if err := r.ApplyGlobalTheme(); err != nil {
-		t.Fatal(err)
-	}
-	check(t, ran, "plasma-apply-lookandfeel --apply "+GlobalThemeID)
-
-	// What the Global Theme sets.
-	writeConfigs(t, map[string]string{
-		"kdeglobals": "[General]\nColorScheme=ProteaDark\n[Icons]\nTheme=breeze-dark\n[KDE]\nLookAndFeelPackage=" + GlobalThemeID + "\nwidgetStyle=Breeze\n",
-		"plasmarc":   "[Theme]\nname=protea-dark\n",
-		"kcminputrc": "[Mouse]\ncursorTheme=breeze_cursors\n",
-		"kwinrc":     "[org.kde.kdecoration2]\nlibrary=org.kde.breeze\ntheme=Breeze\n",
-	})
-	if err := r.RevertCore(); err != nil {
-		t.Fatal(err)
-	}
-	check(t, ran,
-		"plasma-apply-colorscheme BreezeDark",
-		"plasma-apply-desktoptheme default",
-		"kwriteconfig6 --file kdeglobals --group KDE --key LookAndFeelPackage org.kde.breezedark.desktop",
-		"plasma-changeicons Papirus-Dark",
-		"plasma-apply-cursortheme McMojave-cursors",
-		"kwin-applywindowdecoration __aurorae__svg__ChromeOS-dark",
-	)
-}
-
-func TestComponentsSwitchBack(t *testing.T) {
-	r, ran := fakeSetup(t, map[string]string{
-		"kdeglobals": "[KDE]\nwidgetStyle=Oxygen\n",
-		"kwinrc":     "[org.kde.kdecoration2]\ntheme=__aurorae__svg__ChromeOS-dark\n",
-	})
-	if err := errors.Join(r.UseStyle(), r.UseDecoration()); err != nil {
-		t.Fatal(err)
-	}
-	notify := "dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:2 int32:0"
-	check(t, ran,
-		"kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Protea", notify,
-		"kwin-applywindowdecoration Protea")
-
-	writeConfigs(t, map[string]string{
 		"kdeglobals": "[KDE]\nwidgetStyle=Protea\n",
 		"kwinrc":     "[org.kde.kdecoration2]\nlibrary=org.proteadesktop.protea\ntheme=Protea\n",
 	})
@@ -225,20 +174,20 @@ func TestComponentsSwitchBack(t *testing.T) {
 		t.Fatal(err)
 	}
 	check(t, ran,
-		"kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Oxygen", notify,
-		"kwin-applywindowdecoration __aurorae__svg__ChromeOS-dark")
+		"kwriteconfig6 --file kdeglobals --group KDE --key widgetStyle Breeze",
+		"dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:2 int32:0",
+		"kwin-applywindowdecoration Breeze")
 }
 
 func TestInteractiveCommands(t *testing.T) {
 	dir := t.TempDir()
-	cmd := (&Runner{DryRun: true}).BuildCommand(dir, true, false)
+	cmd := (&Runner{DryRun: true}).BuildCommand(dir)
 	cmd.Stdin = strings.NewReader("\n")
 	out, err := cmd.Output()
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Dry run, would run: makepkg --cleanbuild --install", "in " + dir,
-		"with PROTEA_WITH_STYLE=ON", "with PROTEA_WITH_DECORATIONS=OFF"} {
+	for _, want := range []string{"Dry run, would run: makepkg --cleanbuild --install", "in " + dir} {
 		if !strings.Contains(string(out), want) {
 			t.Errorf("dry-run build output missing %q:\n%s", want, out)
 		}
@@ -258,19 +207,16 @@ func TestInteractiveCommands(t *testing.T) {
 
 func TestDryRunChangesNothing(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
-	_, _ = fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=Nordic\n"})
+	_, _ = fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=ProteaDark\n"})
 	r := &Runner{DryRun: true}
-	if err := errors.Join(r.InstallCore(repoFiles), r.ApplyColors(), r.UseStyle()); err != nil {
+	if err := errors.Join(r.InstallCore(repoFiles), r.RevertCore()); err != nil {
 		t.Fatal(err)
 	}
 	if coreInstalled() {
 		t.Error("dry run installed files")
 	}
-	if got := loadSaved(); len(got) != 0 {
-		t.Errorf("dry run saved settings: %v", got)
-	}
 	log := strings.Join(r.TakeLog(), "\n")
-	for _, want := range []string{"would copy theme/color-schemes/ProteaDark.colors", "would run: plasma-apply-colorscheme ProteaDark", "widgetStyle Protea"} {
+	for _, want := range []string{"would copy theme/color-schemes/ProteaDark.colors", "would run: plasma-apply-colorscheme BreezeDark"} {
 		if !strings.Contains(log, want) {
 			t.Errorf("dry-run log missing %q:\n%s", want, log)
 		}

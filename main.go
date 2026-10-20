@@ -27,7 +27,7 @@ import (
 var files embed.FS
 
 func main() {
-	uninstall := flag.Bool("uninstall", false, "switch back to your previous settings and remove Protea Dark and the protea package, without the interface")
+	uninstall := flag.Bool("uninstall", false, "switch to Breeze Dark where Protea is in use, then remove Protea Dark and the protea package, without the interface")
 	dryRun := flag.Bool("dry-run", false, "show what would change without changing anything")
 	flag.Parse()
 
@@ -62,14 +62,14 @@ func uninstallAll(r *system.Runner) bool {
 	}
 
 	if st.StyleActive || st.DecorationActive {
-		report("Switch back to your previous application style and window decoration", r.RevertComponents())
+		report("Switch the application style and window decoration back to Breeze", r.RevertComponents())
 	}
 	if st.Package != "" {
 		cmd := r.RemoveCommand(false)
 		cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 		report("Remove the protea package", cmd.Run())
 	}
-	report("Switch back to your previous theme settings", r.RevertCore())
+	report("Switch away from Protea Dark to Breeze Dark", r.RevertCore())
 	if st.CoreInstalled {
 		report("Remove the theme files", r.UninstallCore())
 	}
