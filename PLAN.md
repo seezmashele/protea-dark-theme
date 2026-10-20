@@ -306,6 +306,21 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 
 The thin line around each window is `#2e2e2f`, on focused and unfocused windows alike: the focused title bar color, so on focused windows it blends into the title bar and borders. This needs the Protea decoration ([proteadecoration.cpp](cpp/kdecoration/proteadecoration.cpp), `recalculateBorders`). Breeze mixes the outline from the title bar toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
 
+### Corners
+
+Windows and everything Plasma draws on top of them round their corners at **10 px**. Breeze uses 5 px for windows and 6 px for Plasma.
+
+| What | Where it's set |
+|---|---|
+| Windows: title bar, bottom corners, outline; the shadow at 10.5 px | `Frame_FrameRadius = 5` in [kdecoration/protea.h](cpp/kdecoration/protea.h), in units of KWin's small spacing (always 2 px on Wayland) |
+| Panels, popups, tooltips, and the header and footer strips inside popups | The Plasma Style's frame SVGs, redrawn by [scripts/frame-radius.py](scripts/frame-radius.py) |
+
+- **Changing the radius:** set `Frame_FrameRadius` to half the new radius, and run `scripts/frame-radius.py <radius>`. `TestCornerRadiusMatches` fails if the two differ.
+- **What the script redraws:** each frame's corners, as true circular arcs like the decoration's, with edges as thick as the radius. It also redraws the blur mask, 1 px smaller as in Breeze, and the shadow, using Breeze's own falloff. Each file keeps its colors, opacity and margins, so the content inside doesn't move. The script needs Inkscape to measure the files.
+- **Not redrawn:** the `opaque/` versions, used without compositing. Breeze only cuts one pixel off their corners, since they can't be smoothed.
+- **Still smaller:** menus and buttons inside apps (5 px, `Frame_FrameRadius` in `kstyle/proteametrics.h`), desktop widget backgrounds (4 px), and Kirigami's cards in System Settings and Discover (5 px, set by Kirigami itself).
+- **Bottom border:** the decoration's radius also sets the bottom border with the "No side borders" setting, which grew from 4.5 to 7 px, as in upstream's formula.
+
 ## Distribution
 
 - **Now:** source only. Users run the installer, which builds the C++ part on their machine if they choose it.
@@ -322,7 +337,8 @@ protea-theme/
 ├── UPSTREAM.md                 upstream repos, tag and commit for each imported piece
 ├── scripts/
 │   ├── import-upstream.sh      imports pristine Breeze sources at a given tag
-│   └── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
+│   ├── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
+│   └── frame-radius.py         redraws the Plasma Style's panel, popup and tooltip corners at a radius
 ├── theme/                      core theme
 │   ├── color-schemes/
 │   ├── desktoptheme/
@@ -332,7 +348,7 @@ protea-theme/
 ├── packaging/arch/             PKGBUILD for the C++ part
 ├── go.mod, go.sum              Go module proteadesktop.org/protea-theme
 ├── main.go                     the installer program (Go + Bubble Tea); embeds theme/, cpp/ and the PKGBUILD
-├── main_test.go                checks what's embedded
+├── main_test.go                checks what's embedded, and that window and Plasma corners match
 └── internal/
     ├── system/                 reads the setup and makes the changes
     └── tui/                    the installer's screens
@@ -351,7 +367,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips and the window outline are done (see Design). |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline and 10 px corners on windows, panels, popups and tooltips are done (see Design). |
 
 Commit after each step.
 

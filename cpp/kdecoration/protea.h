@@ -26,7 +26,9 @@ namespace Metrics
 // kstyle/proteametrics.h
 // NOTE: this value is multiplied by settings()->smallSpacing()
 // which is always 2 on wayland, but can be something else on X11
-static constexpr qreal Frame_FrameRadius = 2.5;
+// Protea: 10 px on Wayland, the same as the Plasma Style's panels, popups
+// and tooltips (scripts/frame-radius.py); a test checks they match.
+static constexpr qreal Frame_FrameRadius = 5;
 
 //* titlebar metrics, in units of small spacing
 static constexpr int TitleBar_TopMargin = 2;
