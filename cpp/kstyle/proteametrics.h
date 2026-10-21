@@ -76,6 +76,11 @@ struct Metrics {
     static constexpr int Button_MinWidth = 80;
     static constexpr int Button_MarginWidth = 6;
     static constexpr int Button_ItemSpacing = 4;
+    // Protea: buttons have no outline. Hover and keyboard focus lay the hover
+    // color over the fill at this opacity, a press at the second one. Plasma's
+    // buttons use 20% too (HOVER_OPACITY in scripts/widget-frames.py).
+    static constexpr qreal Button_HoverOpacity = 0.2;
+    static constexpr qreal Button_PressedOpacity = 0.3;
 
     // tool buttons
     static constexpr int ToolButton_MarginWidth = 6;

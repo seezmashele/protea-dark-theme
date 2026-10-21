@@ -8217,14 +8217,8 @@ bool Style::drawScrollBarComplexControl(const QStyleOptionComplex *option, QPain
         return true;
     }
 
-    QRect separatorRect;
-    if (option->state & State_Horizontal) {
-        separatorRect = QRect(0, 0, option->rect.width(), PenWidth::Frame);
-    } else {
-        separatorRect = alignedRect(option->direction, Qt::AlignLeft, QSize(PenWidth::Frame, option->rect.height()), option->rect);
-    }
-
-    _helper->renderScrollBarBorder(painter, separatorRect, _helper->alphaColor(option->palette.color(QPalette::Text), _helper->frameIntensityBias()));
+    // Protea: no line along the scrollbar's inner edge (Breeze draws one in
+    // the text color at the frame contrast)
 
     // call base class primitive
     ParentStyleClass::drawComplexControl(CC_ScrollBar, option, painter, widget);

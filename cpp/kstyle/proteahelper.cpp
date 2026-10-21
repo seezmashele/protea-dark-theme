@@ -671,60 +671,38 @@ void Helper::renderButtonFrame(QPainter *painter,
     }
 
     QRectF shadowedRect = this->shadowedRect(rect);
-    QRectF frameRect = strokedRect(shadowedRect);
     // setting color group to work around KColorScheme feature
     const QColor &highlightColor = palette.color(!enabled ? QPalette::Disabled : QPalette::Active, QPalette::Highlight);
     QBrush bgBrush;
-    QBrush penBrush;
 
     // Colors
+    // Protea: no outline; hover, keyboard focus and a press tint the resting
+    // fill with the hover color instead (see below)
     if (flat) {
-        if (down && enabled) {
-            bgBrush = alphaColor(highlightColor, highlightBackgroundAlpha);
-        } else if (checked) {
+        if (checked) {
             bgBrush = hasNeutralHighlight ? alphaColor(neutralText(palette), highlightBackgroundAlpha) : alphaColor(palette.buttonText().color(), 0.125);
-            penBrush =
-                hasNeutralHighlight ? neutralText(palette) : KColorUtils::mix(palette.button().color(), palette.buttonText().color(), frameIntensityBias());
         } else if (isActiveWindow && defaultButton) {
             bgBrush = alphaColor(highlightColor, 0.125);
-            penBrush = KColorUtils::mix(highlightColor, KColorUtils::mix(palette.button().color(), palette.buttonText().color(), frameIntensityBias()), 0.5);
         } else {
             bgBrush = alphaColor(highlightColor, 0);
-            penBrush = hasNeutralHighlight ? neutralText(palette) : bgBrush;
         }
     } else {
-        if (down && enabled) {
-            bgBrush = KColorUtils::mix(palette.button().color(), highlightColor, Metrics::Blend_Value);
-        } else if (checked) {
+        if (checked) {
             bgBrush = hasNeutralHighlight ? KColorUtils::mix(palette.button().color(), neutralText(palette), Metrics::Blend_Value)
                                           : KColorUtils::mix(palette.button().color(), palette.buttonText().color(), 0.125);
-            penBrush =
-                hasNeutralHighlight ? neutralText(palette) : KColorUtils::mix(palette.button().color(), palette.buttonText().color(), frameIntensityBias());
         } else if (isActiveWindow && defaultButton) {
             bgBrush = KColorUtils::mix(palette.button().color(), highlightColor, 0.2);
-            penBrush = KColorUtils::mix(highlightColor, KColorUtils::mix(palette.button().color(), palette.buttonText().color(), frameIntensityBias()), 0.5);
         } else {
             bgBrush = palette.button().color();
-            penBrush =
-                hasNeutralHighlight ? neutralText(palette) : KColorUtils::mix(palette.button().color(), palette.buttonText().color(), frameIntensityBias());
         }
     }
 
-    if ((hovered || visualFocus || down) && enabled) {
-        penBrush = highlightColor;
-    }
-
-    // Animations
-    if (bgAnimation != AnimationData::OpacityInvalid && enabled) {
-        QColor color1 = bgBrush.color();
-        QColor color2 =
-            flat ? alphaColor(highlightColor, highlightBackgroundAlpha) : KColorUtils::mix(palette.button().color(), highlightColor, Metrics::Blend_Value);
-        bgBrush = KColorUtils::mix(color1, color2, bgAnimation);
-    }
-    if (penAnimation != AnimationData::OpacityInvalid && enabled) {
-        QColor color1 = penBrush.color();
-        QColor color2 = highlightColor;
-        penBrush = KColorUtils::mix(color1, color2, penAnimation);
+    // Tint, following the animations: the hover one covers hover, focus and press
+    qreal tint = 0;
+    if (enabled) {
+        const qreal hover = penAnimation != AnimationData::OpacityInvalid ? penAnimation : ((hovered || visualFocus || down) ? 1.0 : 0.0);
+        const qreal press = bgAnimation != AnimationData::OpacityInvalid ? bgAnimation : (down ? 1.0 : 0.0);
+        tint = Metrics::Button_HoverOpacity * hover + (Metrics::Button_PressedOpacity - Metrics::Button_HoverOpacity) * press;
     }
 
     const qreal roundRadius = std::max(rect.width(), rect.height()) / 2;
@@ -735,11 +713,23 @@ void Helper::renderButtonFrame(QPainter *painter,
     }
 
     // Render button
+    // Protea: filled to the edge. Only the neutral highlight keeps an outline,
+    // drawn last so that a split button's separator line uses it too.
     painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->setPen(Qt::NoPen);
+    const qreal radius = roundButton ? roundRadius : frameRadius(PenWidth::NoPen);
     painter->setBrush(bgBrush);
-    painter->setPen(QPen(penBrush, PenWidth::Frame));
-    const qreal radius = roundButton ? roundRadius : frameRadius(PenWidth::Frame);
-    painter->drawRoundedRect(frameRect, radius, radius);
+    painter->drawRoundedRect(shadowedRect, radius, radius);
+    if (tint > 0) {
+        painter->setBrush(alphaColor(hoverColor(palette), tint));
+        painter->drawRoundedRect(shadowedRect, radius, radius);
+    }
+    if (hasNeutralHighlight) {
+        const qreal strokedRadius = roundButton ? roundRadius : frameRadius(PenWidth::Frame);
+        painter->setBrush(Qt::NoBrush);
+        painter->setPen(QPen(neutralText(palette), PenWidth::Frame));
+        painter->drawRoundedRect(strokedRect(shadowedRect), strokedRadius, strokedRadius);
+    }
 }
 
 //______________________________________________________________________________
