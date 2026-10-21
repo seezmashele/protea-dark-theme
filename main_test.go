@@ -84,6 +84,38 @@ func TestCornerRadiusMatches(t *testing.T) {
 	}
 }
 
+// When the pointer is over an app, the task manager looks for
+// "<state>-hover" before "<edge>-hover" (taskPrefixHovered in TaskTools.js),
+// so each plain "<state>-hover" frame drawn for bottom panels needs a copy
+// for every edge with its own hover frame, or top and side panels get the
+// bottom panel's hover.
+func TestTaskHoverFramesPerEdge(t *testing.T) {
+	data, err := fs.ReadFile(os.DirFS("."), "theme/desktoptheme/"+system.PlasmaStyleID+"/widgets/tasks.svg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := map[string]bool{}
+	for _, m := range regexp.MustCompile(` id="([^"]+)"`).FindAllSubmatch(data, -1) {
+		ids[string(m[1])] = true
+	}
+	pieces := []string{"topleft", "top", "topright", "left", "center", "right", "bottomleft", "bottom", "bottomright"}
+	for _, state := range []string{"normal", "focus", "minimized", "attention", "launcher"} {
+		if !ids[state+"-hover-center"] {
+			continue
+		}
+		for _, edge := range []string{"north", "east", "west"} {
+			if !ids[edge+"-hover-center"] {
+				continue
+			}
+			for _, p := range pieces {
+				if id := edge + "-" + state + "-hover-" + p; !ids[id] {
+					t.Errorf("tasks.svg has %s-hover but no %s; run scripts/task-frames.py", state, id)
+				}
+			}
+		}
+	}
+}
+
 // cornerSize is the width of a corner piece as scripts/frame-radius.py draws
 // it: a path of absolute M, L and A commands inside the group with that id.
 func cornerSize(svg []byte, id string) (float64, error) {

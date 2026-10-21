@@ -100,7 +100,7 @@
 
     <!-- Protea: title bar opacity in percent; KWin's blur effect blurs what's behind it -->
     <entry name="TitleBarOpacity" type="Int">
-      <default>85</default>
+      <default>80</default>
       <min>50</min>
       <max>100</max>
     </entry>

@@ -345,13 +345,31 @@ Minimize, maximize, restore and close use Windows-style symbols, in [kdecoration
 
 ### See-through title bar
 
-The title bar, and the window borders when there are any, are drawn at **85% opacity**, and KWin's Blur effect blurs what's behind them. The setting is "Title bar opacity" in the decoration's settings window (`TitleBarOpacity` in `~/.config/protearc`, 50 to 100%, where 100% is solid).
+The title bar, and the window borders when there are any, are drawn at **80% opacity**, and KWin's Blur effect blurs what's behind them. The setting is "Title bar opacity" in the decoration's settings window (`TitleBarOpacity` in `~/.config/protearc`, 50 to 100%, where 100% is solid).
 
 - **How:** the decoration fills the title bar in one pass with the see-through color (Breeze's overlapping layers would add up into darker bands), and gives KWin a blur region in the window's shape with its rounded corners (`Decoration::updateBlurRegion`). KWin only blurs the decoration, never the window's contents, so nothing changes inside apps.
 - **The shadow stops at the window's edge.** Breeze tucks the window shadow 2 px under the window to hide hairline gaps at fractional display scales, and the shadow is darkest there. Under a see-through title bar that showed as a dark line along the edges, so with an opacity below 100% the shadow is cut out exactly at the edge instead (`Decoration::createShadowObject`). At fractional scales a hairline gap between shadow and window may show instead.
 - **Solid when maximized:** there's nothing worth seeing behind a maximized window, and its title bar then meets the app's toolbar seamlessly. It's also solid without compositing.
 - **Apps' toolbars stay solid.** KDE apps paint their toolbar right under the title bar in the same color. That belongs to the app, not the decoration, so on a normal window a frosted strip sits above a solid toolbar. Making toolbars see-through as well would need the app style to make every app's window transparent (what Kvantum does), which breaks some apps.
 - **Without the Blur effect**, what's behind shows through unblurred. The blur strength is a KWin setting: System Settings → Desktop Effects → Blur.
+
+### Task manager
+
+In a bottom panel, each open app is marked by a **2 px line along the bottom edge**. Only the focused app, and an app under the pointer, get a tint behind them. Breeze tints every open app and draws a 3 px line along the top.
+
+| App | At rest | Under the pointer |
+|---|---|---|
+| Running | grey line (text color, 35%) | grey tint (text color, 15%) behind the line |
+| Minimized | the same as running | the same as running |
+| Focused | accent tint 45%, accent line 90% | accent tint 34%, accent line 100% |
+| Needs attention | orange line (`ForegroundNeutral`, 80%) | grey tint behind the orange line |
+| Pinned, not running | nothing | nothing; the icon brightens |
+
+- **Where:** the frames in `widgets/tasks.svg`, drawn by [scripts/task-frames.py](scripts/task-frames.py) from its `STATES` table. Change a color or opacity there and rerun it; it needs Inkscape to measure the file.
+- **Each state has its own hover frame** (`focus-hover`, `normal-hover`, `minimized-hover`, `attention-hover`), so an app keeps its line under the pointer. The task manager looks for `<state>-hover` before the shared `hover`, which is now only a fallback.
+- **Top and side panels keep Breeze's look**, from their `north-`, `east-` and `west-` frames. The task manager tries the plain `<state>-hover` before `<edge>-hover`, so the script gives each edge a copy of its own hover frame under each new name. `TestTaskHoverFramesPerEdge` fails if one is missing.
+- **2 px between apps.** The task manager puts apps right next to each other, and each frame leaves 1 px clear on each side. A 1 px gap would need the clear column on one side only, which leaves the frame half a pixel off the icon, since Plasma always centers the icon in its slot.
+- **Sizes:** every frame keeps Breeze's piece sizes, so icons don't move and the `normal-hint-*-margin` margins still apply.
 
 ## Distribution
 
@@ -370,7 +388,8 @@ protea-theme/
 ├── scripts/
 │   ├── import-upstream.sh      imports pristine Breeze sources at a given tag
 │   ├── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
-│   └── frame-radius.py         redraws the Plasma Style's panel, popup and tooltip corners at a radius
+│   ├── frame-radius.py         redraws the Plasma Style's panel, popup and tooltip corners at a radius
+│   └── task-frames.py          redraws the task manager's lines and hover tints in widgets/tasks.svg
 ├── theme/                      core theme
 │   ├── color-schemes/
 │   ├── desktoptheme/
@@ -399,7 +418,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 10 px corners on windows, panels, popups and tooltips, Windows-style title bar buttons, and a see-through, blurred title bar are done (see Design). |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 10 px corners on windows, panels, popups and tooltips, Windows-style title bar buttons, a see-through, blurred title bar, and the task manager's bottom lines are done (see Design). |
 
 Commit after each step.
 
