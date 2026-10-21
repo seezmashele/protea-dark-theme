@@ -39,7 +39,9 @@ struct Metrics {
 
     // frames
     static constexpr int Frame_FrameWidth = 2;
-    static constexpr int Frame_FrameRadius = 5;
+    // Protea: 8 px (Breeze: 5), the same as windows and the Plasma Style's
+    // panels, popups and tooltips; a test checks they match.
+    static constexpr int Frame_FrameRadius = 8;
 
     // layout
     static constexpr int Layout_TopLevelMarginWidth = 10;
@@ -87,7 +89,8 @@ struct Metrics {
     static constexpr int CheckBox_Size = 20;
     static constexpr int CheckBox_FocusMarginWidth = 2;
     static constexpr int CheckBox_ItemSpacing = 4;
-    static constexpr int CheckBox_Radius = Frame_FrameRadius - 1;
+    // Protea: Breeze's 4 px, kept when Frame_FrameRadius went up.
+    static constexpr int CheckBox_Radius = 4;
 
     // menubar items
     static constexpr int MenuBarItem_MarginWidth = 10;

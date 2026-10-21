@@ -39,9 +39,10 @@ func TestEmbeddedFiles(t *testing.T) {
 	}
 }
 
-// Windows and Plasma's panels, popups and tooltips have the same rounded
-// corners: the decoration's radius is in cpp/kdecoration/protea.h, and
-// scripts/frame-radius.py redraws the Plasma Style's frames.
+// Windows, Plasma's panels, popups and tooltips, and the app style's frames
+// have the same rounded corners: the decoration's radius is in
+// cpp/kdecoration/protea.h, the app style's in cpp/kstyle/proteametrics.h,
+// and scripts/frame-radius.py redraws the Plasma Style's frames.
 func TestCornerRadiusMatches(t *testing.T) {
 	repo := os.DirFS(".")
 	h, err := fs.ReadFile(repo, "cpp/kdecoration/protea.h")
@@ -55,6 +56,18 @@ func TestCornerRadiusMatches(t *testing.T) {
 	units, _ := strconv.ParseFloat(string(m[1]), 64)
 	want := units * 2 // KWin's small spacing is always 2 px on Wayland
 
+	metrics, err := fs.ReadFile(repo, "cpp/kstyle/proteametrics.h")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m = regexp.MustCompile(`int Frame_FrameRadius = ([0-9]+);`).FindSubmatch(metrics)
+	if m == nil {
+		t.Fatal("no Frame_FrameRadius in proteametrics.h")
+	}
+	if style, _ := strconv.ParseFloat(string(m[1]), 64); style != want {
+		t.Errorf("the app style has %g px corners, the window decoration %g px; set Frame_FrameRadius in kstyle/proteametrics.h to %g", style, want, want)
+	}
+
 	// The files scripts/frame-radius.py redraws (FRAMES there).
 	for _, f := range []string{
 		"dialogs/background.svg",
@@ -67,6 +80,9 @@ func TestCornerRadiusMatches(t *testing.T) {
 		"translucent/widgets/tooltip.svg",
 		"solid/widgets/tooltip.svg",
 		"widgets/plasmoidheading.svg",
+		"opaque/dialogs/background.svg",
+		"opaque/widgets/panel-background.svg",
+		"opaque/widgets/tooltip.svg",
 	} {
 		data, err := fs.ReadFile(repo, "theme/desktoptheme/"+system.PlasmaStyleID+"/"+f)
 		if err != nil {
@@ -130,33 +146,61 @@ func TestTaskHoverFramesPerEdge(t *testing.T) {
 }
 
 // cornerSize is the width of a corner piece as scripts/frame-radius.py draws
-// it: a path of absolute M, L and A commands inside the group with that id.
+// it in the group with that id: a path of absolute M, L and A commands, or,
+// for frames used without compositing, a rect for each row of pixels.
 func cornerSize(svg []byte, id string) (float64, error) {
 	d := xml.NewDecoder(bytes.NewReader(svg))
-	inCorner := false
+	depth := 0 // inside the corner's group while above 0
+	lo, hi := math.Inf(1), math.Inf(-1)
 	for {
 		tok, err := d.Token()
 		if err != nil {
 			return 0, fmt.Errorf("no %s piece", id)
 		}
-		el, ok := tok.(xml.StartElement)
-		if !ok {
-			continue
-		}
-		for _, a := range el.Attr {
-			if a.Name.Local == "id" && a.Value == id {
-				inCorner = true
+		switch el := tok.(type) {
+		case xml.StartElement:
+			if depth > 0 {
+				depth++
+			} else if attr(el, "id") == id {
+				depth = 1
 			}
-		}
-		if !inCorner || el.Name.Local != "path" {
-			continue
-		}
-		for _, a := range el.Attr {
-			if a.Name.Local == "d" {
-				return pathWidth(a.Value)
+			if depth == 0 {
+				continue
+			}
+			switch el.Name.Local {
+			case "path":
+				return pathWidth(attr(el, "d"))
+			case "rect":
+				x, err := strconv.ParseFloat(attr(el, "x"), 64)
+				if err != nil {
+					return 0, err
+				}
+				w, err := strconv.ParseFloat(attr(el, "width"), 64)
+				if err != nil {
+					return 0, err
+				}
+				lo, hi = min(lo, x), max(hi, x+w)
+			}
+		case xml.EndElement:
+			if depth > 0 {
+				if depth--; depth == 0 {
+					if lo > hi {
+						return 0, fmt.Errorf("the %s piece has no shapes", id)
+					}
+					return hi - lo, nil
+				}
 			}
 		}
 	}
+}
+
+func attr(el xml.StartElement, name string) string {
+	for _, a := range el.Attr {
+		if a.Name.Local == name {
+			return a.Value
+		}
+	}
+	return ""
 }
 
 func pathWidth(d string) (float64, error) {

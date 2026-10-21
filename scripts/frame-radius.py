@@ -12,12 +12,15 @@ Each file keeps its own colors, opacity and hints (margins), and everything
 else in it is left alone.
 
 With no SVGs given, it redraws the Plasma Style's panels, popups, tooltips
-and popup headers (FRAMES below). The opaque/ versions, used without
-compositing, are left as they are: Breeze cuts a single pixel off their
-corners, because without compositing they can't be smoothed.
+and popup headers (FRAMES below), including the opaque/ versions used
+without compositing. Without compositing there's no transparency to smooth
+a curve with, so their corners are drawn in whole pixels, as a staircase
+with the outline along it, and the window's shape (the mask) follows the
+same pixels. Their radius has to be a whole number of pixels.
 
 The window decoration's radius is set separately (Frame_FrameRadius in
-cpp/kdecoration/protea.h, in units of 2 px); keep the two the same.
+cpp/kdecoration/protea.h, in units of 2 px), and so is the app style's
+(Frame_FrameRadius in cpp/kstyle/proteametrics.h); keep all three the same.
 
 Needs Inkscape, to measure where the frames are in each file.
 """
@@ -41,6 +44,9 @@ FRAMES = [
     "translucent/widgets/tooltip.svg",
     "solid/widgets/tooltip.svg",
     "widgets/plasmoidheading.svg",
+    "opaque/dialogs/background.svg",
+    "opaque/widgets/panel-background.svg",
+    "opaque/widgets/tooltip.svg",
 ]
 
 # Breeze's shadow, read off its SVGs: a box the size of the frame, shrunk by
@@ -106,10 +112,16 @@ def save(tree, path):
     Path(path).write_text(prolog + ET.tostring(tree.getroot(), encoding="unicode") + "\n")
 
 
+def invisible(e):
+    """Whether shape e paints nothing, like the placeholder some pieces start with to keep their size."""
+    style = (e.get("style") or "").replace(" ", "")
+    return e.get("fill") == "none" or "fill:none" in style
+
+
 def paint(el):
-    """How the first shape in el (or el itself) is painted."""
+    """How the first visible shape in el (or el itself) is painted."""
     for e in el.iter():
-        if e.tag in (q("rect"), q("path")):
+        if e.tag in (q("rect"), q("path")) and not invisible(e):
             return {k: e.get(k) for k in PAINT if e.get(k) is not None}
     return {}
 
@@ -146,8 +158,43 @@ def rounded(ix, iy, sx, sy, r):
             f"A {num(r)},{num(r)} 0 0 {sweep(ix, iy, p1, p2)} {num(p2[0])},{num(p2[1])} Z")
 
 
-def frame(kind, prefix, box, r, looks, shadow):
-    """The nine pieces of a frame whose center is box, as a group."""
+def corner_pixels(r):
+    """The whole pixels of an r x r corner that lie inside its quarter circle,
+    as (x, y) counted from the frame's outer edges."""
+    return {(x, y) for x in range(r) for y in range(r) if (r - x - 0.5) ** 2 + (r - y - 0.5) ** 2 <= r * r}
+
+
+def crisp_corner(ix, iy, sx, sy, r, fill, line):
+    """A corner in whole pixels, at inner corner (ix, iy) facing (sx, sy): one
+    rect per row of fill, and the line over the outermost pixels."""
+    inside = corner_pixels(r)
+    edge = {(x, y) for x, y in inside if (x - 1, y) not in inside or (x, y - 1) not in inside}
+    ox, oy = ix + sx * r, iy + sy * r  # the outer edges
+
+    def run(a, b, y, attrs):
+        """Pixels a to b (exclusive) of row y, counted from the outer edges."""
+        left = ox + a if sx < 0 else ox - b
+        top = oy + y if sy < 0 else oy - y - 1
+        return rect(left, top, b - a, 1, attrs)
+
+    out = []
+    for y in range(r):
+        xs = sorted(x for x, yy in inside if yy == y)
+        out.append(run(xs[0], r, y, fill))
+    if line:
+        for y in range(r):
+            xs = sorted(x for x, yy in edge if yy == y)
+            start = xs[0]
+            for a, b in zip(xs, xs[1:] + [None]):
+                if b != a + 1:
+                    out.append(run(start, a + 1, y, line))
+                    start = b
+    return out
+
+
+def frame(kind, prefix, box, r, looks, shadow, crisp=False):
+    """The nine pieces of a frame whose center is box, as a group. A crisp
+    frame, for use without compositing, has whole-pixel corners."""
     x0, y0, w, h = box
     inner = {"topleft": (x0, y0), "topright": (x0 + w, y0), "bottomleft": (x0, y0 + h), "bottomright": (x0 + w, y0 + h)}
     fill, line = looks.get("fill", {}), looks.get("line")
@@ -159,7 +206,11 @@ def frame(kind, prefix, box, r, looks, shadow):
     if kind in ("background", "mask"):
         for name, (sx, sy) in CORNERS.items():
             ix, iy = inner[name]
-            if kind == "background":
+            if crisp:
+                # The mask is the window's shape here, not a blur mask, so
+                # it's the same size as the frame.
+                out.append(piece(prefix + name, *crisp_corner(ix, iy, sx, sy, int(r), fill, line if kind == "background" else None)))
+            elif kind == "background":
                 out.append(piece(prefix + name, path(rounded(ix, iy, sx, sy, r), fill)))
             else:
                 # The blur mask isn't antialiased, so Breeze makes its corners
@@ -287,6 +338,9 @@ def remove_unused_gradients(root, parents):
 
 
 def redraw(svg, r):
+    crisp = "opaque" in svg.parts
+    if crisp and r != int(r):
+        sys.exit(f"{svg}: used without compositing, so it needs a whole number of pixels, not {num(r)}")
     boxes = query(svg)
     tree = load(svg)
     root = tree.getroot()
@@ -344,7 +398,7 @@ def redraw(svg, r):
         root.insert(0, defs)
     for f in frames:
         gradients = []
-        append(root, frame(f["kind"], f["prefix"], f["box"], r, f["looks"], {"margins": margins, "gradients": gradients}), 1)
+        append(root, frame(f["kind"], f["prefix"], f["box"], r, f["looks"], {"margins": margins, "gradients": gradients}, crisp), 1)
         for g in gradients:
             append(defs, g, 2)
     save(tree, svg)

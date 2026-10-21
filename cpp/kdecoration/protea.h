@@ -27,9 +27,10 @@ namespace Metrics
 // kstyle/proteametrics.h
 // NOTE: this value is multiplied by settings()->smallSpacing()
 // which is always 2 on wayland, but can be something else on X11
-// Protea: 10 px on Wayland, the same as the Plasma Style's panels, popups
-// and tooltips (scripts/frame-radius.py); a test checks they match.
-static constexpr qreal Frame_FrameRadius = 5;
+// Protea: 8 px on Wayland, the same as the Plasma Style's panels, popups
+// and tooltips (scripts/frame-radius.py) and the app style's frames
+// (Frame_FrameRadius in kstyle/proteametrics.h); a test checks they match.
+static constexpr qreal Frame_FrameRadius = 4;
 
 //* titlebar metrics, in units of small spacing
 // Protea: 2 px margins around 24 px buttons keep Breeze's 28 px title bar,

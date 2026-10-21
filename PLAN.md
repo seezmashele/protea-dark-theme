@@ -312,18 +312,27 @@ The thin line around each window is `#3a3a3b`, on focused and unfocused windows 
 
 ### Corners
 
-Windows and everything Plasma draws on top of them round their corners at **10 px**. Breeze uses 5 px for windows and 6 px for Plasma.
+Windows, everything Plasma draws on top of them, and the frames inside apps round their corners at **8 px**. Breeze uses 5 px for windows and inside apps, and 6 px for Plasma.
 
 | What | Where it's set |
 |---|---|
-| Windows: title bar, bottom corners, outline; the shadow at 10.5 px | `Frame_FrameRadius = 5` in [kdecoration/protea.h](cpp/kdecoration/protea.h), in units of KWin's small spacing (always 2 px on Wayland) |
-| Panels, popups, tooltips, and the header and footer strips inside popups | The Plasma Style's frame SVGs, redrawn by [scripts/frame-radius.py](scripts/frame-radius.py) |
+| Windows: title bar, bottom corners, outline; the shadow at 8.5 px | `Frame_FrameRadius = 4` in [kdecoration/protea.h](cpp/kdecoration/protea.h), in units of KWin's small spacing (always 2 px on Wayland) |
+| Panels, popups, tooltips, and the header and footer strips inside popups, with and without compositing | The Plasma Style's frame SVGs, redrawn by [scripts/frame-radius.py](scripts/frame-radius.py) |
+| Inside apps: buttons, text fields, combo and spin boxes, menus and their shadows, tooltips, tabs, frames around lists, list highlights, focus rings, drag selection | `Frame_FrameRadius = 8` in [kstyle/proteametrics.h](cpp/kstyle/proteametrics.h), in pixels |
 
-- **Changing the radius:** set `Frame_FrameRadius` to half the new radius, and run `scripts/frame-radius.py <radius>`. `TestCornerRadiusMatches` fails if the two differ.
+- **Changing the radius:** set the decoration's `Frame_FrameRadius` to half the new radius and the app style's to the radius itself, and run `scripts/frame-radius.py <radius>`. `TestCornerRadiusMatches` fails if any of them differ. The decoration and app style need rebuilding.
 - **What the script redraws:** each frame's corners, as true circular arcs like the decoration's, with edges as thick as the radius. It also redraws the blur mask, 1 px smaller as in Breeze, and the shadow, using Breeze's own falloff. Each file keeps its colors, opacity and margins, so the content inside doesn't move. The script needs Inkscape to measure the files.
-- **Not redrawn:** the `opaque/` versions, used without compositing. Breeze only cuts one pixel off their corners, since they can't be smoothed.
-- **Still smaller:** menus and buttons inside apps (5 px, `Frame_FrameRadius` in `kstyle/proteametrics.h`), desktop widget backgrounds (4 px), and Kirigami's cards in System Settings and Discover (5 px, set by Kirigami itself).
-- **Bottom border:** the decoration's radius also sets the bottom border with the "No side borders" setting, which grew from 4.5 to 7 px, as in upstream's formula.
+- **Without compositing** (the `opaque/` versions, only used on X11 with compositing off): there's no transparency to smooth a curve with, so the script draws their corners in whole pixels, as a staircase with the outline along it, and the window's shape (the mask) uses the same pixels. Their radius has to be a whole number of pixels.
+- **Bottom border:** the decoration's radius also sets the bottom border with the "No side borders" setting, as in upstream's formula: 2 px plus the radius in units, so 6 px now (Breeze: 4.5 px).
+
+**Not changed yet** (to do later):
+
+| What | Radius now | Where it's set |
+|---|---|---|
+| Plasma's own controls in panel popups: buttons, text fields, list highlights | 5 px, with 7 px focus rings | The Plasma Style's `widgets/button.svg`, `widgets/lineedit.svg` and `widgets/viewitem.svg` |
+| Checkboxes inside apps | 4 px | `CheckBox_Radius` in [kstyle/proteametrics.h](cpp/kstyle/proteametrics.h), kept at Breeze's value when `Frame_FrameRadius` went to 8 |
+| Desktop widget backgrounds | 4 px | The Plasma Style's `widgets/background.svg` |
+| Kirigami's cards in System Settings and Discover | 5 px | Kirigami itself, not the theme |
 
 ### Title bar buttons
 
@@ -433,7 +442,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 10 px corners on windows, panels, popups and tooltips, Windows-style title bar buttons, a see-through, blurred title bar, and the task manager's bottom lines are done (see Design). |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 8 px corners on windows, panels, popups, tooltips and inside apps, Windows-style title bar buttons, a see-through, blurred title bar, and the task manager's bottom lines are done (see Design). |
 
 Commit after each step.
 
