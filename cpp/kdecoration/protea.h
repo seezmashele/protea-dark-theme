@@ -64,12 +64,16 @@ static constexpr qreal Button_PressedOpacity = 0.2;
 static constexpr qreal Button_DefaultSize = 2.4;
 
 // rectangular title bar buttons (the "Button shape" setting): as tall as the
-// title bar and this wide, in grid units (36 px with a 10 px grid unit; keep
+// title bar and this wide, in grid units (32 px with a 10 px grid unit; keep
 // it even in pixels so the centered symbols stay sharp), with a fainter
 // highlight than the round ones because they're bigger
-static constexpr qreal Button_RectangleWidth = 3.6;
+static constexpr qreal Button_RectangleWidth = 3.2;
 static constexpr qreal Button_RectangleHoverOpacity = 0.1;
 static constexpr qreal Button_RectanglePressedOpacity = 0.07;
+
+// title bar buttons: the opacity of the symbols, and of Close's red
+static constexpr qreal Button_SymbolOpacity = 0.8;
+static constexpr qreal Button_CloseOpacity = 0.8;
 }
 
 //* standard pen widths

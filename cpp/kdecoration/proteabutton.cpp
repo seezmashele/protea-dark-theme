@@ -188,8 +188,11 @@ void Button::drawIcon(QPainter *painter) const
     painter->translate(-9, -9);
 
     // render mark
-    const QColor foregroundColor(this->foregroundColor());
+    QColor foregroundColor(this->foregroundColor());
     if (foregroundColor.isValid()) {
+        // Protea: the symbols are slightly see-through
+        foregroundColor.setAlphaF(foregroundColor.alphaF() * Metrics::Button_SymbolOpacity);
+
         // setup painter
         QPen pen(foregroundColor);
         pen.setCapStyle(Qt::RoundCap);
@@ -376,6 +379,8 @@ QColor Button::backgroundColor() const
 
     auto c = d->window();
     QColor redColor(c->color(ColorGroup::Warning, ColorRole::Foreground));
+    // Protea: the red is slightly see-through, like the symbols
+    redColor.setAlphaF(redColor.alphaF() * Metrics::Button_CloseOpacity);
 
     // Protea: hovered and pressed buttons get translucent white behind them,
     // fainter on the bigger rectangular ones, and Close turns the color
