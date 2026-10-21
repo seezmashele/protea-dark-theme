@@ -29,18 +29,18 @@
     </g>
     <g id="header-bottomleft">
       <rect x="18" y="51" width="8" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
-      <rect x="18" y="58" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" />
+      <rect x="18" y="58" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" opacity="0" />
     </g>
     <g id="header-bottomright">
       <rect x="58" y="51" width="8" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
-      <rect x="58" y="58" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" />
+      <rect x="58" y="58" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" opacity="0" />
     </g>
     <g id="header-top">
       <rect x="26" y="11" width="32" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
     </g>
     <g id="header-bottom">
       <rect x="26" y="51" width="32" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
-      <rect x="26" y="58" width="32" height="1" class="ColorScheme-Frame" fill="currentColor" />
+      <rect x="26" y="58" width="32" height="1" class="ColorScheme-Frame" fill="currentColor" opacity="0" />
     </g>
     <g id="header-left">
       <rect x="18" y="19" width="8" height="32" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
@@ -55,11 +55,11 @@
   <g id="protea-footer-frame">
     <g id="footer-topleft">
       <rect x="74" y="11" width="8" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
-      <rect x="74" y="11" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" />
+      <rect x="74" y="11" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" opacity="0" />
     </g>
     <g id="footer-topright">
       <rect x="114" y="11" width="8" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
-      <rect x="114" y="11" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" />
+      <rect x="114" y="11" width="8" height="1" class="ColorScheme-Frame" fill="currentColor" opacity="0" />
     </g>
     <g id="footer-bottomleft">
       <path d="M 82,51 L 82,59 A 8,8 0 0 1 74,51 Z" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
@@ -69,7 +69,7 @@
     </g>
     <g id="footer-top">
       <rect x="82" y="11" width="32" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />
-      <rect x="82" y="11" width="32" height="1" class="ColorScheme-Frame" fill="currentColor" />
+      <rect x="82" y="11" width="32" height="1" class="ColorScheme-Frame" fill="currentColor" opacity="0" />
     </g>
     <g id="footer-bottom">
       <rect x="82" y="51" width="32" height="8" class="ColorScheme-Background" fill="currentColor" opacity=".75" />

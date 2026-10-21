@@ -329,7 +329,7 @@ Windows, everything Plasma draws on top of them, and the frames inside apps roun
 
 | What | Radius now | Where it's set |
 |---|---|---|
-| Plasma's own controls in panel popups: buttons, text fields, list highlights | 5 px, with 7 px focus rings | The Plasma Style's `widgets/button.svg`, `widgets/lineedit.svg` and `widgets/viewitem.svg` |
+| Plasma's own controls in panel popups: buttons and list highlights (text fields are done, see Widget popups) | 5 px, with 7 px focus rings | The Plasma Style's `widgets/button.svg` and `widgets/viewitem.svg` |
 | Checkboxes inside apps | 4 px | `CheckBox_Radius` in [kstyle/proteametrics.h](cpp/kstyle/proteametrics.h), kept at Breeze's value when `Frame_FrameRadius` went to 8 |
 | Desktop widget backgrounds | 4 px | The Plasma Style's `widgets/background.svg` |
 | Kirigami's cards in System Settings and Discover | 5 px | Kirigami itself, not the theme |
@@ -362,6 +362,22 @@ The title bar, and the window borders when there are any, are drawn at **80% opa
 - **Solid when maximized:** there's nothing worth seeing behind a maximized window, and its title bar then meets the app's toolbar seamlessly. It's also solid without compositing.
 - **Apps' toolbars stay solid.** KDE apps paint their toolbar right under the title bar in the same color. That belongs to the app, not the decoration, so on a normal window a frosted strip sits above a solid toolbar. Making toolbars see-through as well would need the app style to make every app's window transparent (what Kvantum does), which breaks some apps.
 - **Without the Blur effect**, what's behind shows through unblurred. The blur strength is a KWin setting: System Settings → Desktop Effects → Blur.
+
+### Widget popups
+
+Inside Plasma's popups and widgets, there are no separator lines, text fields are borderless and light, and the selected tab is marked by a grey background instead of an accent line. [scripts/widget-frames.py](scripts/widget-frames.py) draws all of it from the values at its top; change them there and rerun it (it needs Inkscape).
+
+| What | Look | File |
+|---|---|---|
+| Text fields, search bars included | 8 px corners, text color at 10%, no outline. Hover: 1 px outline in the hover color at 30%. Focus: 1 px outline in the focus color with a 2 px halo at 33% outside it (10 px corners) | `widgets/lineedit.svg` |
+| Selected tab, on all four sides | Text color at 10% with 8 px corners; no accent line (Breeze: a 3 px line along its outer edge) | `widgets/tabbar.svg` |
+| Lines between sections | Transparent, keeping their size | `widgets/line.svg` |
+| Lines under popup headers and over footers | Transparent, keeping their size; `scripts/frame-radius.py` keeps them that way | `widgets/plasmoidheading.svg` |
+
+- **Every Plasma text field** uses `lineedit.svg`: search bars, password and rename fields, editable combo boxes, spin boxes and text areas. Fields keep their size: their padding comes from the frame's hint margins, not its corners.
+- **Section lines** from `line.svg` are the ones in list section headings, expandable list items, and the Kickoff, Kicker and Konsole-profiles widgets. Lines drawn with Kirigami's separator (the Weather widget has two) come from the color scheme, appear inside apps too, and stay.
+- **Protea Launcher** draws its own pill-shaped search bar while its "Round search bar corners" option is on (the default), so it only gets this look with that option off.
+- **Placeholder text** ("Search…") is about 4.2:1 against the field at 10%, and typed text about 9:1.
 
 ### Task manager
 
@@ -412,7 +428,8 @@ protea-theme/
 │   ├── import-upstream.sh      imports pristine Breeze sources at a given tag
 │   ├── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
 │   ├── frame-radius.py         redraws the Plasma Style's panel, popup and tooltip corners at a radius
-│   └── task-frames.py          redraws the task manager's frames for both styles
+│   ├── task-frames.py          redraws the task manager's frames for both styles
+│   └── widget-frames.py        redraws widget popups' text fields and selected tabs, and hides their separator lines
 ├── theme/                      core theme
 │   ├── color-schemes/
 │   ├── desktoptheme/
@@ -442,7 +459,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 8 px corners on windows, panels, popups, tooltips and inside apps, Windows-style title bar buttons, a see-through, blurred title bar, and the task manager's bottom lines are done (see Design). |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 8 px corners on windows, panels, popups, tooltips and inside apps, Windows-style title bar buttons, a see-through, blurred title bar, the task manager's bottom lines, and quieter widget popups (no separator lines, light text fields, grey selected tabs) are done (see Design). |
 
 Commit after each step.
 
