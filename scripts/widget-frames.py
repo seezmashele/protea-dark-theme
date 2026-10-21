@@ -14,10 +14,9 @@ Plasma Style's SVGs. This script redraws them from the values below:
                         see-through background with rounded corners (TAB)
                         instead of the accent line along its edge
   widgets/button.svg    buttons and flat buttons under the pointer: the
-                        accent at 30%, with no outline (BUTTON_HOVER)
+                        accent at HOVER_OPACITY, with no outline
   widgets/viewitem.svg  list items under the pointer, like the launcher's
-                        apps: the accent at 30%, with no outline
-                        (VIEWITEM_HOVER)
+                        apps: the accent at HOVER_OPACITY, with no outline
   widgets/line.svg      the lines between sections, made transparent
   widgets/plasmoidheading.svg
                         popup headers and footers, background and line, made
@@ -47,7 +46,7 @@ FIELD_RADIUS = 8
 # opacity. Insets count from the frame's outer edge.
 FIELD = {
     "base": [("fill", 0, ("Text", 0.10))],
-    "hover": [("ring", 0, 1, ("ViewHover", 0.30))],
+    "hover": [("ring", 0, 1, ("ViewHover", 0.50))],
     "focus": [("ring", 0, 1, ("ViewFocus", 1))],
     # 2 px outside the field (its hint margins): a faint halo, then the
     # outline along the field's edge.
@@ -61,13 +60,17 @@ TAB_EDGES = ["north", "south", "east", "west"]
 # Plasma's buttons and list highlights keep Breeze's corners for now.
 CONTROL_RADIUS = 5
 
+# Buttons, flat buttons and list items under the pointer: the accent at this
+# opacity, with no outline.
+HOVER_OPACITY = 0.20
+
 BUTTON_HOVER = {
     # A raised button's hover is drawn over its resting frame, so an opaque
     # ring in the button's color covers the resting outline first.
-    "hover": [("ring", 0, 1, ("ButtonBackground", 1)), ("fill", 0, ("ButtonHover", 0.30))],
-    "toolbutton-hover": [("fill", 0, ("ButtonHover", 0.30))],
+    "hover": [("ring", 0, 1, ("ButtonBackground", 1)), ("fill", 0, ("ButtonHover", HOVER_OPACITY))],
+    "toolbutton-hover": [("fill", 0, ("ButtonHover", HOVER_OPACITY))],
 }
-VIEWITEM_HOVER = [("fill", 0, ("ButtonFocus", 0.30))]
+VIEWITEM_HOVER = [("fill", 0, ("ButtonFocus", HOVER_OPACITY))]
 
 CORNERS = {"topleft": (-1, -1), "topright": (1, -1), "bottomleft": (-1, 1), "bottomright": (1, 1)}
 PIECES = [*CORNERS, "top", "bottom", "left", "right", "center"]

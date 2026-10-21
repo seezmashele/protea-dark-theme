@@ -78,35 +78,35 @@
   <g id="protea-hover-frame">
     <g id="hover-topleft">
       <rect x="0" y="40" width="8" height="8" fill="none" />
-      <path d="M 0,48 A 8,8 0 0 1 8,40 L 8,41 A 7,7 0 0 0 1,48 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <path d="M 0,48 A 8,8 0 0 1 8,40 L 8,41 A 7,7 0 0 0 1,48 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-topright">
       <rect x="72" y="40" width="8" height="8" fill="none" />
-      <path d="M 80,48 A 8,8 0 0 0 72,40 L 72,41 A 7,7 0 0 1 79,48 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <path d="M 80,48 A 8,8 0 0 0 72,40 L 72,41 A 7,7 0 0 1 79,48 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-bottomleft">
       <rect x="0" y="62" width="8" height="8" fill="none" />
-      <path d="M 0,62 A 8,8 0 0 0 8,70 L 8,69 A 7,7 0 0 1 1,62 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <path d="M 0,62 A 8,8 0 0 0 8,70 L 8,69 A 7,7 0 0 1 1,62 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-bottomright">
       <rect x="72" y="62" width="8" height="8" fill="none" />
-      <path d="M 80,62 A 8,8 0 0 1 72,70 L 72,69 A 7,7 0 0 0 79,62 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <path d="M 80,62 A 8,8 0 0 1 72,70 L 72,69 A 7,7 0 0 0 79,62 Z" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-top">
       <rect x="8" y="40" width="64" height="8" fill="none" />
-      <rect x="8" y="40" width="64" height="1" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <rect x="8" y="40" width="64" height="1" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-bottom">
       <rect x="8" y="62" width="64" height="8" fill="none" />
-      <rect x="8" y="69" width="64" height="1" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <rect x="8" y="69" width="64" height="1" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-left">
       <rect x="0" y="48" width="8" height="14" fill="none" />
-      <rect x="0" y="48" width="1" height="14" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <rect x="0" y="48" width="1" height="14" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-right">
       <rect x="72" y="48" width="8" height="14" fill="none" />
-      <rect x="79" y="48" width="1" height="14" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.3" />
+      <rect x="79" y="48" width="1" height="14" class="ColorScheme-ViewHover" fill="currentColor" opacity="0.5" />
     </g>
     <g id="hover-center">
       <rect x="8" y="48" width="64" height="14" fill="none" />

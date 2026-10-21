@@ -100,15 +100,6 @@
        width="2"
        x="65"
        y="-3" />
-    <rect
-       id="private-hint-show-separator"
-       height="2"
-       rx="2.07712602615"
-       style="fill:#00f;fill-opacity:1;fill-rule:nonzero;opacity:0.1"
-       width="2"
-       x="-13.8756103516"
-       y="45.7764358521"
-       ry="2.07712602615" />
     <g
        id="mouseover-slider-top"
        style=""

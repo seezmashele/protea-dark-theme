@@ -333,84 +333,84 @@
     <g id="hover-topleft">
       <rect x="174" y="100" width="5" height="5" fill="none" />
       <path d="M 174,105 A 5,5 0 0 1 179,100 L 179,101 A 4,4 0 0 0 175,105 Z" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <path d="M 179,105 L 174,105 A 5,5 0 0 1 179,100 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 179,105 L 174,105 A 5,5 0 0 1 179,100 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-topright">
       <rect x="203" y="100" width="5" height="5" fill="none" />
       <path d="M 208,105 A 5,5 0 0 0 203,100 L 203,101 A 4,4 0 0 1 207,105 Z" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <path d="M 203,105 L 208,105 A 5,5 0 0 0 203,100 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 203,105 L 208,105 A 5,5 0 0 0 203,100 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-bottomleft">
       <rect x="174" y="129" width="5" height="5" fill="none" />
       <path d="M 174,129 A 5,5 0 0 0 179,134 L 179,133 A 4,4 0 0 1 175,129 Z" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <path d="M 179,129 L 174,129 A 5,5 0 0 0 179,134 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 179,129 L 174,129 A 5,5 0 0 0 179,134 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-bottomright">
       <rect x="203" y="129" width="5" height="5" fill="none" />
       <path d="M 208,129 A 5,5 0 0 1 203,134 L 203,133 A 4,4 0 0 0 207,129 Z" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <path d="M 203,129 L 208,129 A 5,5 0 0 1 203,134 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 203,129 L 208,129 A 5,5 0 0 1 203,134 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-top">
       <rect x="179" y="100" width="24" height="5" fill="none" />
       <rect x="179" y="100" width="24" height="1" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <rect x="179" y="100" width="24" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="179" y="100" width="24" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-bottom">
       <rect x="179" y="129" width="24" height="5" fill="none" />
       <rect x="179" y="133" width="24" height="1" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <rect x="179" y="129" width="24" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="179" y="129" width="24" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-left">
       <rect x="174" y="105" width="5" height="24" fill="none" />
       <rect x="174" y="105" width="1" height="24" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <rect x="174" y="105" width="5" height="24" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="174" y="105" width="5" height="24" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-right">
       <rect x="203" y="105" width="5" height="24" fill="none" />
       <rect x="207" y="105" width="1" height="24" class="ColorScheme-ButtonBackground" fill="currentColor" opacity="1" />
-      <rect x="203" y="105" width="5" height="24" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="203" y="105" width="5" height="24" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="hover-center">
       <rect x="179" y="105" width="24" height="24" fill="none" />
-      <rect x="179" y="105" width="24" height="24" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="179" y="105" width="24" height="24" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
   </g>
   <g id="protea-toolbutton-hover-frame">
     <g id="toolbutton-hover-topleft">
       <rect x="238" y="102" width="5" height="5" fill="none" />
-      <path d="M 243,107 L 238,107 A 5,5 0 0 1 243,102 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 243,107 L 238,107 A 5,5 0 0 1 243,102 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-topright">
       <rect x="263" y="102" width="5" height="5" fill="none" />
-      <path d="M 263,107 L 268,107 A 5,5 0 0 0 263,102 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 263,107 L 268,107 A 5,5 0 0 0 263,102 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-bottomleft">
       <rect x="238" y="127" width="5" height="5" fill="none" />
-      <path d="M 243,127 L 238,127 A 5,5 0 0 0 243,132 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 243,127 L 238,127 A 5,5 0 0 0 243,132 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-bottomright">
       <rect x="263" y="127" width="5" height="5" fill="none" />
-      <path d="M 263,127 L 268,127 A 5,5 0 0 1 263,132 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <path d="M 263,127 L 268,127 A 5,5 0 0 1 263,132 Z" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-top">
       <rect x="243" y="102" width="20" height="5" fill="none" />
-      <rect x="243" y="102" width="20" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="243" y="102" width="20" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-bottom">
       <rect x="243" y="127" width="20" height="5" fill="none" />
-      <rect x="243" y="127" width="20" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="243" y="127" width="20" height="5" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-left">
       <rect x="238" y="107" width="5" height="20" fill="none" />
-      <rect x="238" y="107" width="5" height="20" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="238" y="107" width="5" height="20" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-right">
       <rect x="263" y="107" width="5" height="20" fill="none" />
-      <rect x="263" y="107" width="5" height="20" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="263" y="107" width="5" height="20" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
     <g id="toolbutton-hover-center">
       <rect x="243" y="107" width="20" height="20" fill="none" />
-      <rect x="243" y="107" width="20" height="20" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3" />
+      <rect x="243" y="107" width="20" height="20" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.2" />
     </g>
   </g>
 </svg>

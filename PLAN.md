@@ -369,12 +369,13 @@ Inside Plasma's popups and widgets, there are no separator lines, headers and fo
 
 | What | Look | File |
 |---|---|---|
-| Text fields, search bars included | 8 px corners, text color at 10%, no outline. Hover: 1 px outline in the hover color at 30%. Focus: 1 px outline in the focus color with a 2 px halo at 33% outside it (10 px corners) | `widgets/lineedit.svg` |
+| Text fields, search bars included | 8 px corners, text color at 10%, no outline. Hover: 1 px outline in the hover color at 50%. Focus: 1 px outline in the focus color with a 2 px halo at 33% outside it (10 px corners) | `widgets/lineedit.svg` |
 | Selected tab, on all four sides | Text color at 10% with 8 px corners; no accent line (Breeze: a 3 px line along its outer edge) | `widgets/tabbar.svg` |
 | Lines between sections | Transparent, keeping their size | `widgets/line.svg` |
+| Line on the left of scrollbars | Not drawn. Plasma's `ScrollBar.qml` draws it itself (1 px, text color at 10%) only when the Plasma Style has a `private-hint-show-separator` element, so that element is removed by hand; the theme can't recolor the line | `widgets/scrollbar.svg` |
 | Popup headers and footers | Transparent, background and line, keeping their size; `scripts/frame-radius.py` keeps them that way (Breeze: the window color at 75% with a line) | `widgets/plasmoidheading.svg` |
-| Buttons and flat buttons under the pointer | The accent at 30%, no outline (Breeze: a 1 px selection-color outline). A raised button's hover is drawn over its resting frame, so it first covers the resting outline with an opaque ring in the button color | `widgets/button.svg` |
-| List items under the pointer, like the launcher's apps | The accent at 30%, no outline (Breeze: plus a 1 px accent outline) | `widgets/viewitem.svg` |
+| Buttons and flat buttons under the pointer | The accent at 20% (`HOVER_OPACITY`), no outline (Breeze: a 1 px selection-color outline). A raised button's hover is drawn over its resting frame, so it first covers the resting outline with an opaque ring in the button color | `widgets/button.svg` |
+| List items under the pointer, like the launcher's apps | The accent at 20% (`HOVER_OPACITY`), no outline (Breeze: plus a 1 px accent outline) | `widgets/viewitem.svg` |
 
 - **Every Plasma text field** uses `lineedit.svg`: search bars, password and rename fields, editable combo boxes, spin boxes and text areas. Fields keep their size: their padding comes from the frame's hint margins, not its corners.
 - **Section lines** from `line.svg` are the ones in list section headings, expandable list items, and the Kickoff, Kicker and Konsole-profiles widgets. Lines drawn with Kirigami's separator (the Weather widget has two) come from the color scheme, appear inside apps too, and stay.
