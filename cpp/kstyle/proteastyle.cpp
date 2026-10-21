@@ -4878,9 +4878,10 @@ bool Style::drawPanelItemViewItemPrimitive(const QStyleOption *option, QPainter 
     }
 
     // Focus decoration
+    // Protea: no outline around hovered or selected items, only the fill
     QColor focusColor = color;
     if (!hasCustomBackground) {
-        focusColor.setAlphaF(selected ? 1.0 : 0.8);
+        focusColor = Qt::transparent;
     }
 
     // render
@@ -6020,12 +6021,11 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
     // render hover and focus
     if (useStrongFocus && (selected || sunken)) {
         auto color = _helper->focusColor(palette);
-        // When clicking, use the same background color
-        auto outlineColor = color;
+        // Protea: no outline, only the fill
+        const QColor outlineColor(Qt::transparent);
         if (!sunken) {
             // If not clicking, use the alphaColor
             color = _helper->alphaColor(color, Metrics::Blend_Value);
-            outlineColor = _helper->focusOutlineColor(palette);
         }
 
         Sides sides;

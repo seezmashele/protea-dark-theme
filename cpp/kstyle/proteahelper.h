@@ -170,7 +170,7 @@ public:
     //* debug frame
     void renderDebugFrame(QPainter *, const QRectF &) const;
 
-    //* focus rect
+    //* focus rect; a transparent outline gives the rounded fill with no line
     void renderFocusRect(QPainter *, const QRectF &, const QBrush &, const QColor &outline = QColor(), Sides = {}) const;
 
     //* focus line

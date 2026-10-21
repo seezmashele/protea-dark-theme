@@ -379,9 +379,12 @@ void Helper::renderFocusRect(QPainter *painter, const QRectF &rect, const QBrush
     } else {
         painter->setClipRect(rect);
 
-        QRectF copy(strokedRect(rect));
+        // Protea: with a transparent outline, fill the whole rect so the
+        // corners match the outlined shape's outer edge
+        const bool stroked(outline.alpha() > 0);
+        QRectF copy(stroked ? strokedRect(rect) : rect);
 
-        const qreal radius(frameRadius(PenWidth::Frame));
+        const qreal radius(frameRadius(stroked ? PenWidth::Frame : PenWidth::NoPen));
         if (!(sides & SideTop)) {
             copy.adjust(0, -radius, 0, 0);
         }

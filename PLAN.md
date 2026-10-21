@@ -300,8 +300,10 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 | Views: lists, text fields, editors | `[Colors:View] BackgroundNormal` | `#1a1a1b` |
 | Striped list rows | `[Colors:View] BackgroundAlternate` | `#282829` |
 | Tooltips | `[Colors:Tooltip] BackgroundNormal` | `#1a1a1b` |
+| Borders and separators inside apps | `[KDE] frameContrast` | `0.093`, giving `#414142` on the window color |
 
 - **Sidebars** have no key of their own. Qt apps draw them with the window color.
+- **Frame contrast** is how far borders are mixed from the background toward the text color (Breeze: 0.2, `#575758`). Applying the color scheme copies it into kdeglobals. It draws every 1 px line in apps, in the Breeze and Protea app styles and in Kirigami alike: frames, text field borders, menu borders and separators, splitters, the line under toolbars, Dolphin's status bar line and column header lines, and System Settings' dividers (Kirigami's light separators use half of it: `#373739`). It also tones down what Breeze mixes the same way: button outlines go from `#535659` to `#3d3f43`, and the stock Breeze decoration's window outline too. A changed value only reaches kdeglobals when the scheme is applied again, and apps pick it up when restarted.
 - **Plasma's tooltips:** the panel's tooltips use the window colors (`DefaultToolTip.qml` in libplasma 6.8 sets the Window color set). So the Plasma Style's tooltip SVGs, `widgets/tooltip.svg` and its `translucent/`, `opaque/` and `solid/` versions, fill their background with `ColorScheme-TooltipBackground` instead of `ColorScheme-Background`.
 - **Accent:** over the new view color, the Teal selection is `#487e82` with black text, because white on it falls just short of 4.5:1. Secondary text on a selection is `#a1a1a2` for every accent (1.6 to 1.9:1 on the selections; Breeze's was 1.05:1).
 - **Links on window and header backgrounds** are `#73b5ba`, a lighter Teal: plain Teal on `#2e2e2f` falls just short of the 5:1 links need. Links everywhere else stay `#5ba9ae`.
@@ -309,7 +311,7 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 
 ### Window outline
 
-The thin line around each window is `#3a3a3b`, on focused and unfocused windows alike. This needs the Protea decoration: it's a fixed color, `Outline_Color` in [kdecoration/protea.h](cpp/kdecoration/protea.h), so change it by hand along with the title bar colors. Breeze mixes the outline from the title bar color toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
+The thin line around each window is `#3a3a3b`, on focused and unfocused windows alike. This needs the Protea decoration: it's a fixed color, `Outline_Color` in [kdecoration/protea.h](cpp/kdecoration/protea.h), so change it by hand along with the title bar colors. Breeze mixes the outline from the title bar color toward the text color by the color scheme's frame contrast, the same value that draws every frame in apps, so the color scheme alone can't give it a color of its own. With the stock Breeze decoration and Protea's frame contrast (0.093) the outline is `#414142`, or `#2f2f30` on unfocused windows.
 
 ### Corners
 
@@ -380,10 +382,23 @@ Inside Plasma's popups and widgets, there are no separator lines, headers and fo
 | List items under the pointer, like the launcher's apps | The accent at 20% (`HOVER_OPACITY`), no outline (Breeze: plus a 1 px accent outline) | `widgets/viewitem.svg` |
 
 - **Every Plasma text field** uses `lineedit.svg`: search bars, password and rename fields, editable combo boxes, spin boxes and text areas. Fields keep their size: their padding comes from the frame's hint margins, not its corners.
-- **Section lines** from `line.svg` are the ones in list section headings, expandable list items, and the Kickoff, Kicker and Konsole-profiles widgets. Lines drawn with Kirigami's separator (the Weather widget has two) come from the color scheme, appear inside apps too, and stay.
+- **Section lines** from `line.svg` are the ones in list section headings, expandable list items, and the Kickoff, Kicker and Konsole-profiles widgets. Lines drawn with Kirigami's separator (the Weather widget has two) come from the color scheme's frame contrast, appear inside apps too, and stay.
 - **Still with an outline:** pressed buttons (`pressed`, `toolbutton-pressed`: the selection color at 33% with a 1 px outline). Default list rows (`widgets/listitem.svg`) already hover with a plain 20% accent tint.
 - **Protea Launcher** draws its own pill-shaped search bar while its "Round search bar corners" option is on (the default), so it only gets this look with that option off.
 - **Placeholder text** ("Search…") is about 4.2:1 against the field at 10%, and typed text about 9:1.
+
+### Hover in app lists and menus
+
+This needs the Protea app style. Hovered and selected items are filled only, with the same 8 px rounded shape, and no outline (Breeze: a 1 px outline).
+
+| What | Look | Code |
+|---|---|---|
+| List and tree items: Dolphin's files and Places, System Settings' sidebar | Hover: the selection color at 30%. Selected: the solid selection color. Breeze added a 1 px outline at 80% on hover | `drawPanelItemViewItemPrimitive` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp) |
+| Right-click and drop-down menu items | Hover: the focus color at 30%. Pressed: the solid focus color. Breeze added a 1 px outline, the focus color mixed 15% toward the text color | `drawMenuItemControl` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp) |
+
+- **How:** passing a transparent outline to `Helper::renderFocusRect` fills the whole rect with the outlined shape's corners. An invalid outline still fills a square rect, which striped rows rely on.
+- **Still with an outline:** the keyboard focus frame on the current list item (the selection color lightened 10%), menu bar items, and buttons.
+- **QML menus** (System Settings' hamburger menu, right-click in QML text fields, Kirigami apps) come from qqc2-desktop-style's `MenuItem.qml`, which always draws a 1 px focus-color border. The theme can't change that.
 
 ### Task manager
 
