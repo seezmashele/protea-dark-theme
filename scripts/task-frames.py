@@ -64,15 +64,15 @@ STYLES = {
     },
     # A tint behind each open app, with no line until the pointer is over it.
     "background": {
-        "normal": (("Text", 0.10), ("Text", 0.10)),
+        "normal": (("Text", 0.08), ("Text", 0.08)),
         "focus": (("ButtonFocus", 0.45), ("ButtonFocus", 0.45)),
-        "minimized": (("Text", 0.10), ("Text", 0.10)),
+        "minimized": (("Text", 0.08), ("Text", 0.08)),
         "attention": (("NeutralText", 0.35), ("NeutralText", 0.35)),
         "focus-hover": (("ButtonFocus", 0.45), ("ButtonHover", 1)),
-        "normal-hover": (("Text", 0.10), ("Text", 0.40)),
-        "minimized-hover": (("Text", 0.10), ("Text", 0.40)),
+        "normal-hover": (("Text", 0.08), ("Text", 0.40)),
+        "minimized-hover": (("Text", 0.08), ("Text", 0.40)),
         "attention-hover": (("NeutralText", 0.35), ("NeutralText", 0.80)),
-        "hover": (("Text", 0.10), ("Text", 0.40)),
+        "hover": (("Text", 0.08), ("Text", 0.40)),
     },
 }
 

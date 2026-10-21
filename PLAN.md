@@ -372,7 +372,7 @@ There are two styles, chosen in the installer. Breeze tints every open app and d
 
 | App | At rest | Under the pointer |
 |---|---|---|
-| Running | grey tint (text color, 10%) | the tint, plus a grey line (40%) |
+| Running | grey tint (text color, 8%) | the tint, plus a grey line (40%) |
 | Minimized | the same as running | the same as running |
 | Focused | accent tint 45% | the tint, plus an accent line (100%) |
 | Needs attention | orange tint 35% | the tint, plus an orange line (80%) |
