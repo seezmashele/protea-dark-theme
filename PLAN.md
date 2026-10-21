@@ -365,17 +365,20 @@ The title bar, and the window borders when there are any, are drawn at **80% opa
 
 ### Widget popups
 
-Inside Plasma's popups and widgets, there are no separator lines, text fields are borderless and light, and the selected tab is marked by a grey background instead of an accent line. [scripts/widget-frames.py](scripts/widget-frames.py) draws all of it from the values at its top; change them there and rerun it (it needs Inkscape).
+Inside Plasma's popups and widgets, there are no separator lines, headers and footers blend into the popup, text fields are borderless and light, hover highlights have no outline, and the selected tab is marked by a grey background instead of an accent line. [scripts/widget-frames.py](scripts/widget-frames.py) draws all of it from the values at its top; change them there and rerun it (it needs Inkscape).
 
 | What | Look | File |
 |---|---|---|
 | Text fields, search bars included | 8 px corners, text color at 10%, no outline. Hover: 1 px outline in the hover color at 30%. Focus: 1 px outline in the focus color with a 2 px halo at 33% outside it (10 px corners) | `widgets/lineedit.svg` |
 | Selected tab, on all four sides | Text color at 10% with 8 px corners; no accent line (Breeze: a 3 px line along its outer edge) | `widgets/tabbar.svg` |
 | Lines between sections | Transparent, keeping their size | `widgets/line.svg` |
-| Lines under popup headers and over footers | Transparent, keeping their size; `scripts/frame-radius.py` keeps them that way | `widgets/plasmoidheading.svg` |
+| Popup headers and footers | Transparent, background and line, keeping their size; `scripts/frame-radius.py` keeps them that way (Breeze: the window color at 75% with a line) | `widgets/plasmoidheading.svg` |
+| Buttons and flat buttons under the pointer | The accent at 30%, no outline (Breeze: a 1 px selection-color outline). A raised button's hover is drawn over its resting frame, so it first covers the resting outline with an opaque ring in the button color | `widgets/button.svg` |
+| List items under the pointer, like the launcher's apps | The accent at 30%, no outline (Breeze: plus a 1 px accent outline) | `widgets/viewitem.svg` |
 
 - **Every Plasma text field** uses `lineedit.svg`: search bars, password and rename fields, editable combo boxes, spin boxes and text areas. Fields keep their size: their padding comes from the frame's hint margins, not its corners.
 - **Section lines** from `line.svg` are the ones in list section headings, expandable list items, and the Kickoff, Kicker and Konsole-profiles widgets. Lines drawn with Kirigami's separator (the Weather widget has two) come from the color scheme, appear inside apps too, and stay.
+- **Still with an outline:** pressed buttons (`pressed`, `toolbutton-pressed`: the selection color at 33% with a 1 px outline). Default list rows (`widgets/listitem.svg`) already hover with a plain 20% accent tint.
 - **Protea Launcher** draws its own pill-shaped search bar while its "Round search bar corners" option is on (the default), so it only gets this look with that option off.
 - **Placeholder text** ("Search…") is about 4.2:1 against the field at 10%, and typed text about 9:1.
 
@@ -429,7 +432,7 @@ protea-theme/
 │   ├── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
 │   ├── frame-radius.py         redraws the Plasma Style's panel, popup and tooltip corners at a radius
 │   ├── task-frames.py          redraws the task manager's frames for both styles
-│   └── widget-frames.py        redraws widget popups' text fields and selected tabs, and hides their separator lines
+│   └── widget-frames.py        redraws widget popups' text fields, selected tabs and hover highlights, and hides their separator lines, headers and footers
 ├── theme/                      core theme
 │   ├── color-schemes/
 │   ├── desktoptheme/

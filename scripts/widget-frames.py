@@ -13,15 +13,20 @@ Plasma Style's SVGs. This script redraws them from the values below:
   widgets/tabbar.svg    the selected tab, on all four sides: a grey
                         see-through background with rounded corners (TAB)
                         instead of the accent line along its edge
+  widgets/button.svg    buttons and flat buttons under the pointer: the
+                        accent at 30%, with no outline (BUTTON_HOVER)
+  widgets/viewitem.svg  list items under the pointer, like the launcher's
+                        apps: the accent at 30%, with no outline
+                        (VIEWITEM_HOVER)
   widgets/line.svg      the lines between sections, made transparent
   widgets/plasmoidheading.svg
-                        the lines under popup headers and over footers, made
+                        popup headers and footers, background and line, made
                         transparent
 
 Each frame keeps its hint margins, so the text, icons and tabs inside don't
-move, and each line keeps its size, so nothing shifts where it was.
-scripts/frame-radius.py redraws plasmoidheading.svg's corners and keeps the
-transparent lines.
+move, and each hidden piece keeps its size, so nothing shifts where it was.
+scripts/frame-radius.py redraws plasmoidheading.svg's corners and keeps
+them transparent.
 
 Needs Inkscape, to measure where the frames are in the files.
 """
@@ -52,6 +57,17 @@ FIELD = {
 TAB_RADIUS = 8
 TAB = [("fill", 0, ("Text", 0.10))]
 TAB_EDGES = ["north", "south", "east", "west"]
+
+# Plasma's buttons and list highlights keep Breeze's corners for now.
+CONTROL_RADIUS = 5
+
+BUTTON_HOVER = {
+    # A raised button's hover is drawn over its resting frame, so an opaque
+    # ring in the button's color covers the resting outline first.
+    "hover": [("ring", 0, 1, ("ButtonBackground", 1)), ("fill", 0, ("ButtonHover", 0.30))],
+    "toolbutton-hover": [("fill", 0, ("ButtonHover", 0.30))],
+}
+VIEWITEM_HOVER = [("fill", 0, ("ButtonFocus", 0.30))]
 
 CORNERS = {"topleft": (-1, -1), "topright": (1, -1), "bottomleft": (-1, 1), "bottomright": (1, 1)}
 PIECES = [*CORNERS, "top", "bottom", "left", "right", "center"]
@@ -239,10 +255,11 @@ def main():
     redraw(WIDGETS / "lineedit.svg",
            [(prefix, FIELD_RADIUS + (2 if prefix == "focusframe" else 0), layers) for prefix, layers in FIELD.items()])
     redraw(WIDGETS / "tabbar.svg", [(f"{edge}-active-tab", TAB_RADIUS, TAB) for edge in TAB_EDGES])
+    redraw(WIDGETS / "button.svg", [(prefix, CONTROL_RADIUS, layers) for prefix, layers in BUTTON_HOVER.items()])
+    redraw(WIDGETS / "viewitem.svg", [("hover", CONTROL_RADIUS, VIEWITEM_HOVER)])
     hide(WIDGETS / "line.svg", ["horizontal-line", "vertical-line"])
-    hide(WIDGETS / "plasmoidheading.svg",
-         [f"{kind}-{p}" for kind in ("header", "footer") for p in PIECES], only_class="ColorScheme-Frame")
-    print("redrew the text fields and selected tabs, and hid the separator lines")
+    hide(WIDGETS / "plasmoidheading.svg", [f"{kind}-{p}" for kind in ("header", "footer") for p in PIECES])
+    print("redrew the text fields, selected tabs and hover highlights, and hid the separator lines and popup headers and footers")
 
 
 if __name__ == "__main__":
