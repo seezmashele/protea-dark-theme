@@ -121,6 +121,7 @@ static int g_sDecoCount = 0;
 static int g_shadowSizeEnum = InternalSettings::ShadowLarge;
 static int g_shadowStrength = 255;
 static QColor g_shadowColor = Qt::black;
+static int g_titleBarOpacity = 100;
 static std::shared_ptr<KDecoration3::DecorationShadow> g_sShadow;
 static std::shared_ptr<KDecoration3::DecorationShadow> g_sShadowInactive;
 
@@ -833,12 +834,13 @@ void Decoration::updateShadow()
     }
 
     if (g_shadowSizeEnum != m_internalSettings->shadowSize() || g_shadowStrength != m_internalSettings->shadowStrength()
-        || g_shadowColor != m_internalSettings->shadowColor()) {
+        || g_shadowColor != m_internalSettings->shadowColor() || g_titleBarOpacity != m_internalSettings->titleBarOpacity()) {
         g_sShadow.reset();
         g_sShadowInactive.reset();
         g_shadowSizeEnum = m_internalSettings->shadowSize();
         g_shadowStrength = m_internalSettings->shadowStrength();
         g_shadowColor = m_internalSettings->shadowColor();
+        g_titleBarOpacity = m_internalSettings->titleBarOpacity();
     }
 
     auto &shadow = (window()->isActive()) ? g_sShadow : g_sShadowInactive;
@@ -891,14 +893,21 @@ std::shared_ptr<KDecoration3::DecorationShadow> Decoration::createShadowObject(c
                                         outerRect.right() - boxRect.right() - Metrics::Shadow_Overlap + params.offset.x(),
                                         outerRect.bottom() - boxRect.bottom() - Metrics::Shadow_Overlap + params.offset.y());
     QRectF innerRect = outerRect - padding;
-    // Push the shadow slightly under the window, which helps avoiding glitches with fractional scaling
-    // TODO fix this more properly
-    innerRect.adjust(2, 2, -2, -2);
+    qreal innerRadius = m_scaledCornerRadius;
+    // Protea: a see-through title bar would show the shadow left under the
+    // window as a dark band along its edges, so then it's cut out exactly
+    // at the window's edge
+    if (m_internalSettings->titleBarOpacity() >= 100) {
+        // Push the shadow slightly under the window, which helps avoiding glitches with fractional scaling
+        // TODO fix this more properly
+        innerRect.adjust(2, 2, -2, -2);
+        innerRadius += 0.5;
+    }
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(Qt::black);
     painter.setCompositionMode(QPainter::CompositionMode_DestinationOut);
-    painter.drawRoundedRect(innerRect, m_scaledCornerRadius + 0.5, m_scaledCornerRadius + 0.5);
+    painter.drawRoundedRect(innerRect, innerRadius, innerRadius);
 
     painter.end();
 
