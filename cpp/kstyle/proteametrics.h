@@ -54,11 +54,9 @@ struct Metrics {
 
     // menu items
     static constexpr int Menu_FrameWidth = 0;
-    // Protea: menus have a fixed dark background with a border in the window
-    // color (Breeze mixes the background from the window and view colors,
-    // and the border is the frame color)
-    static constexpr QColor Menu_BackgroundColor{0x0e, 0x0e, 0x0f};
-    static constexpr QColor Menu_OutlineColor{0x2e, 0x2e, 0x2f};
+    // Protea: menus have a fixed background, between the view and window
+    // colors (Breeze mixes the window color 30% toward the view color)
+    static constexpr QColor Menu_BackgroundColor{0x23, 0x23, 0x24};
     static constexpr int MenuItem_MarginWidth = 4;
     static constexpr int MenuItem_HighlightGap = 4;
     static constexpr int MenuItem_ExtraLeftMargin = 4;

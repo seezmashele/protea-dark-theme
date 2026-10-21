@@ -4710,7 +4710,7 @@ bool Style::drawPanelMenuPrimitive(const QStyleOption *option, QPainter *painter
     const bool hasAlpha(_helper->hasAlphaChannel(widget));
     const auto seamlessEdges = _helper->menuSeamlessEdges(widget);
     auto background(Metrics::Menu_BackgroundColor);
-    auto outline(Metrics::Menu_OutlineColor);
+    auto outline(_helper->frameOutlineColor(palette));
 
     painter->save();
 
