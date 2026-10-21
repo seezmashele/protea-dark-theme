@@ -108,7 +108,15 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
 
     switch (type()) {
     case KDecoration3::DecorationButtonType::Menu: {
-        const QRectF iconRect = geometry().marginsRemoved(m_padding);
+        QRectF iconRect = geometry().marginsRemoved(m_padding);
+        if (auto deco = qobject_cast<Decoration *>(decoration()); deco && deco->rectangularButtons()) {
+            // Protea: the window icon keeps a round button's size, centered
+            // in the rectangle
+            const qreal side = std::min<qreal>(iconRect.height(), deco->buttonSize());
+            QRectF square(0, 0, side, side);
+            square.moveCenter(iconRect.center());
+            iconRect = square;
+        }
         const auto c = decoration()->window();
         if (auto deco = qobject_cast<Decoration *>(decoration())) {
             const QPalette activePalette = KIconLoader::global()->customPalette();
@@ -147,19 +155,37 @@ void Button::drawIcon(QPainter *painter) const
     all further rendering is performed inside QRect( 0, 0, 18, 18 )
     */
     const QRectF rect = geometry().marginsRemoved(m_padding);
-    painter->translate(rect.topLeft());
-
     const qreal width(rect.width());
-    painter->scale(width / 20, width / 20);
-    painter->translate(1, 1);
 
-    // render background
+    // render background, filling the button
     const QColor backgroundColor(this->backgroundColor());
     if (backgroundColor.isValid()) {
+        painter->save();
         painter->setPen(Qt::NoPen);
         painter->setBrush(backgroundColor);
-        painter->drawEllipse(QRectF(0, 0, 18, 18));
+        auto d = qobject_cast<Decoration *>(decoration());
+        if (d && d->rectangularButtons()) {
+            // Protea: a rectangle, kept inside the window's rounded corners
+            // (a path, not a clip, so the curve stays antialiased)
+            QPainterPath button;
+            button.addRect(rect);
+            painter->drawPath(button.intersected(d->titleBarShape()));
+        } else {
+            painter->translate(rect.topLeft());
+            painter->scale(width / 20, width / 20);
+            painter->translate(1, 1);
+            painter->drawEllipse(QRectF(0, 0, 18, 18));
+        }
+        painter->restore();
     }
+
+    // Protea: the mark keeps the size it has in a Breeze button (2 grid
+    // units, or the button if it's smaller), centered, so bigger buttons
+    // don't mean bigger symbols
+    const qreal markWidth = std::min<qreal>(width, 2 * decoration()->settings()->gridUnit());
+    painter->translate(rect.center());
+    painter->scale(markWidth / 20, markWidth / 20);
+    painter->translate(-9, -9);
 
     // render mark
     const QColor foregroundColor(this->foregroundColor());
@@ -168,33 +194,45 @@ void Button::drawIcon(QPainter *painter) const
         QPen pen(foregroundColor);
         pen.setCapStyle(Qt::RoundCap);
         pen.setJoinStyle(Qt::MiterJoin);
-        pen.setWidthF(PenWidth::Symbol * qMax((qreal)1.0, 20 / width));
+        pen.setWidthF(PenWidth::Symbol * qMax((qreal)1.0, 20 / markWidth));
 
         painter->setPen(pen);
         painter->setBrush(Qt::NoBrush);
 
+        // Protea: minimize, maximize, restore and close are Windows-style,
+        // inside a 10x10 box (4..14), with lines on pixel centers so they
+        // stay sharp at 100% scale
         switch (type()) {
         case DecorationButtonType::Close: {
-            painter->drawLine(QPointF(5, 5), QPointF(13, 13));
-            painter->drawLine(13, 5, 5, 13);
+            painter->drawLine(QPointF(4.5, 4.5), QPointF(13.5, 13.5));
+            painter->drawLine(QPointF(13.5, 4.5), QPointF(4.5, 13.5));
             break;
         }
 
         case DecorationButtonType::Maximize: {
             if (isChecked()) {
-                pen.setJoinStyle(Qt::RoundJoin);
-                painter->setPen(pen);
+                // restore: two squares, the back one hidden behind the front
+                const QRectF front(4.5, 6.5, 7, 7);
+                const QRectF back(6.5, 4.5, 7, 7);
+                QPainterPath visible;
+                visible.addRect(QRectF(0, 0, 18, 18));
+                QPainterPath hidden;
+                hidden.addRect(front.adjusted(-0.5, -0.5, 0.5, 0.5));
 
-                painter->drawPolygon(QVector<QPointF>{QPointF(4, 9), QPointF(9, 4), QPointF(14, 9), QPointF(9, 14)});
+                painter->save();
+                painter->setClipPath(visible.subtracted(hidden), Qt::IntersectClip);
+                painter->drawRect(back);
+                painter->restore();
+                painter->drawRect(front);
 
             } else {
-                painter->drawPolyline(QVector<QPointF>{QPointF(4, 11), QPointF(9, 6), QPointF(14, 11)});
+                painter->drawRect(QRectF(4.5, 4.5, 9, 9));
             }
             break;
         }
 
         case DecorationButtonType::Minimize: {
-            painter->drawPolyline(QVector<QPointF>{QPointF(4, 7), QPointF(9, 12), QPointF(14, 7)});
+            painter->drawLine(QPointF(4.5, 9.5), QPointF(13.5, 9.5));
             break;
         }
 
@@ -310,7 +348,8 @@ QColor Button::foregroundColor() const
         return QColor();
 
     } else if (isPressed()) {
-        return d->titleBarColor();
+        // Protea: the symbol keeps its color on the translucent highlight
+        return d->fontColor();
 
     } else if (type() == DecorationButtonType::Close && d->internalSettings()->outlineCloseButton()) {
         return d->titleBarColor();
@@ -320,13 +359,9 @@ QColor Button::foregroundColor() const
                && isChecked()) {
         return d->titleBarColor();
 
-    } else if (m_animation->state() == QAbstractAnimation::Running) {
-        return KColorUtils::mix(d->fontColor(), d->titleBarColor(), m_opacity);
-
-    } else if (isHovered()) {
-        return d->titleBarColor();
-
     } else {
+        // Protea: hovering doesn't change the symbol's color, only the
+        // background behind it
         return d->fontColor();
     }
 }
@@ -342,11 +377,23 @@ QColor Button::backgroundColor() const
     auto c = d->window();
     QColor redColor(c->color(ColorGroup::Warning, ColorRole::Foreground));
 
+    // Protea: hovered and pressed buttons get translucent white behind them,
+    // fainter on the bigger rectangular ones, and Close turns the color
+    // scheme's red
+    auto highlight = [](qreal opacity) {
+        QColor color(Qt::white);
+        color.setAlphaF(opacity);
+        return color;
+    };
+    const bool rectangular = d->rectangularButtons();
+    const qreal hoverOpacity = rectangular ? Metrics::Button_RectangleHoverOpacity : Metrics::Button_HoverOpacity;
+    const qreal pressedOpacity = rectangular ? Metrics::Button_RectanglePressedOpacity : Metrics::Button_PressedOpacity;
+
     if (isPressed()) {
         if (type() == DecorationButtonType::Close) {
             return redColor.darker();
         } else {
-            return KColorUtils::mix(d->titleBarColor(), d->fontColor(), 0.3);
+            return highlight(pressedOpacity);
         }
 
     } else if ((type() == DecorationButtonType::KeepBelow || type() == DecorationButtonType::KeepAbove || type() == DecorationButtonType::Shade)
@@ -360,22 +407,20 @@ QColor Button::backgroundColor() const
                 return c->isActive() ? KColorUtils::mix(redColor, redColor.lighter(), m_opacity) : KColorUtils::mix(redColor.lighter(), redColor, m_opacity);
 
             } else {
-                QColor color(redColor.lighter());
+                QColor color(redColor);
                 color.setAlpha(color.alpha() * m_opacity);
                 return color;
             }
 
         } else {
-            QColor color(d->fontColor());
-            color.setAlpha(color.alpha() * m_opacity);
-            return color;
+            return highlight(hoverOpacity * m_opacity);
         }
 
     } else if (isHovered()) {
         if (type() == DecorationButtonType::Close) {
-            return c->isActive() ? redColor.lighter() : redColor;
+            return d->internalSettings()->outlineCloseButton() && c->isActive() ? redColor.lighter() : redColor;
         } else {
-            return d->fontColor();
+            return highlight(hoverOpacity);
         }
 
     } else if (type() == DecorationButtonType::Close && d->internalSettings()->outlineCloseButton()) {

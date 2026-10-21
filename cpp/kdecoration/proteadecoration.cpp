@@ -513,6 +513,26 @@ void Decoration::updateButtonsGeometry()
 {
     const auto s = settings();
 
+    // Protea: rectangular buttons fill the title bar's height, side by side,
+    // flush with its top and outer edges
+    if (rectangularButtons()) {
+        const auto buttonList = m_leftButtons->buttons() + m_rightButtons->buttons();
+        for (KDecoration3::DecorationButton *button : buttonList) {
+            auto btn = static_cast<Button *>(button);
+            const qreal width = btn->type() == KDecoration3::DecorationButtonType::Spacer ? btn->preferredSize().width() : rectangleButtonWidth();
+            btn->setGeometry(QRectF(QPointF(0, 0), QSizeF(width, borderTop())));
+            btn->setPadding(QMargins());
+        }
+
+        m_leftButtons->setSpacing(0);
+        m_leftButtons->setPos(QPointF(0, 0));
+        m_rightButtons->setSpacing(0);
+        m_rightButtons->setPos(QPointF(size().width() - m_rightButtons->geometry().width(), 0));
+
+        update();
+        return;
+    }
+
     // adjust button position
     const auto buttonList = m_leftButtons->buttons() + m_rightButtons->buttons();
     for (KDecoration3::DecorationButton *button : buttonList) {
@@ -710,12 +730,40 @@ int Decoration::buttonSize() const
         return baseSize * 1.5;
     default:
     case InternalSettings::ButtonDefault:
-        return baseSize * 2;
+        return qRound(baseSize * Metrics::Button_DefaultSize);
     case InternalSettings::ButtonLarge:
         return baseSize * 2.5;
     case InternalSettings::ButtonVeryLarge:
         return baseSize * 3.5;
     }
+}
+
+//________________________________________________________________
+bool Decoration::rectangularButtons() const
+{
+    return m_internalSettings && m_internalSettings->buttonShape() == InternalSettings::ButtonRectangle;
+}
+
+//________________________________________________________________
+int Decoration::rectangleButtonWidth() const
+{
+    return qRound(settings()->gridUnit() * Metrics::Button_RectangleWidth);
+}
+
+//________________________________________________________________
+QPainterPath Decoration::titleBarShape() const
+{
+    const QRectF rect(QPointF(0, 0), QSizeF(size().width(), borderTop()));
+    const bool isTiled = isTopEdge() || isLeftEdge() || isBottomEdge() || isRightEdge();
+
+    QPainterPath path;
+    if (isMaximized() || isTiled || !settings()->isAlphaChannelSupported()) {
+        path.addRect(rect);
+    } else {
+        // as in paintTitleBar: only the top corners are rounded
+        path.addRoundedRect(rect.adjusted(0, 0, 0, m_scaledCornerRadius), m_scaledCornerRadius, m_scaledCornerRadius);
+    }
+    return path;
 }
 
 //________________________________________________________________

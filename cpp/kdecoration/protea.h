@@ -32,10 +32,13 @@ namespace Metrics
 static constexpr qreal Frame_FrameRadius = 5;
 
 //* titlebar metrics, in units of small spacing
-static constexpr int TitleBar_TopMargin = 2;
-static constexpr int TitleBar_BottomMargin = 2;
-static constexpr int TitleBar_SideMargin = 2;
-static constexpr int TitleBar_ButtonSpacing = 2;
+// Protea: 2 px margins around 24 px buttons keep Breeze's 28 px title bar,
+// and the outermost buttons' symbols where Breeze has them; 8 px between
+// buttons. Rectangular buttons have no margins or spacing.
+static constexpr int TitleBar_TopMargin = 1;
+static constexpr int TitleBar_BottomMargin = 1;
+static constexpr int TitleBar_SideMargin = 1;
+static constexpr int TitleBar_ButtonSpacing = 4;
 
 // shadow dimensions (pixels)
 static constexpr int Shadow_Overlap = 3;
@@ -49,6 +52,24 @@ static constexpr qreal Bias_Default = 0.20;
 // so change it along with the title bar colors (Header in the color scheme);
 // Breeze mixes it from the title bar color instead.
 static constexpr QColor Outline_Color(0x34, 0x34, 0x35);
+
+// title bar buttons: the opacity of the white behind a hovered or pressed
+// button (Close turns red instead)
+static constexpr qreal Button_HoverOpacity = 0.3;
+static constexpr qreal Button_PressedOpacity = 0.2;
+
+// title bar buttons at the default "Button size", in grid units (the title
+// font's "M" height): 24 px with a 10 px grid unit, where Breeze's are 20 px.
+// The symbols keep Breeze's size (Button::drawIcon).
+static constexpr qreal Button_DefaultSize = 2.4;
+
+// rectangular title bar buttons (the "Button shape" setting): as tall as the
+// title bar and this wide, in grid units (36 px with a 10 px grid unit; keep
+// it even in pixels so the centered symbols stay sharp), with a fainter
+// highlight than the round ones because they're bigger
+static constexpr qreal Button_RectangleWidth = 3.6;
+static constexpr qreal Button_RectangleHoverOpacity = 0.1;
+static constexpr qreal Button_RectanglePressedOpacity = 0.07;
 }
 
 //* standard pen widths

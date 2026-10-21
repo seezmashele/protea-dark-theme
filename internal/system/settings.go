@@ -48,7 +48,33 @@ var (
 		// KWin's own tool: checks the theme exists, saves it and reloads KWin.
 		apply: func(r *Runner, v string) error { return r.change(libexec("kwin-applywindowdecoration"), v) },
 	}
+	// buttonShape is the Protea window decoration's own "Button shape"
+	// setting (cpp/kdecoration/proteasettingsdata.kcfg).
+	buttonShape = setting{
+		file: "protearc", group: "Windeco", key: "ButtonShape",
+		unset: ButtonsRound, fallback: ButtonsRound,
+		apply: func(r *Runner, v string) error {
+			if err := r.writeConfig("protearc", "Windeco", "ButtonShape", v); err != nil {
+				return err
+			}
+			// What System Settings sends after a decoration's settings
+			// change: KWin reloads them, so a running Protea decoration
+			// switches straight away.
+			return r.change("dbus-send", "--session", "--type=signal", "/KWin", "org.kde.KWin.reloadConfig")
+		},
+	}
 )
+
+// The window decoration's button shapes, as its "Button shape" setting
+// stores them.
+const (
+	ButtonsRound     = "ButtonRound"
+	ButtonsRectangle = "ButtonRectangle"
+)
+
+// SetButtonShape sets the Protea window decoration's button shape,
+// ButtonsRound or ButtonsRectangle.
+func (r *Runner) SetButtonShape(shape string) error { return buttonShape.apply(r, shape) }
 
 func (r *Runner) writeConfig(file, group, key, value string) error {
 	return r.change("kwriteconfig6", "--file", file, "--group", group, "--key", key, value)

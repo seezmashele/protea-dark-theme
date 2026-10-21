@@ -20,6 +20,7 @@ type Status struct {
 	Build            map[string]string // the package's build-info
 	StyleActive      bool
 	DecorationActive bool
+	ButtonShape      string // the window decoration's button shape, ButtonsRound or ButtonsRectangle
 
 	MissingTools []string
 
@@ -95,6 +96,7 @@ func ReadStatus() Status {
 	s.PlasmaStyleActive = plasmaStyle.read() == PlasmaStyleID
 	s.StyleActive = widgetStyle.read() == WidgetStyleID
 	s.DecorationActive = decoration.read() == DecorationID
+	s.ButtonShape = buttonShape.read()
 
 	s.Package = pacmanVersion(PackageName)
 	if data, err := os.ReadFile(BuildInfoPath); err == nil && s.Package != "" {

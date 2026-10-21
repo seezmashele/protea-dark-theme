@@ -45,6 +45,7 @@ type plan struct {
 	accent     string // accent color for the theme, #rrggbb
 	components bool   // have the C++ components installed
 	rebuild    bool   // build again even if the installed package is current
+	buttons    string // the window decoration's button shape, system.ButtonsRound or ButtonsRectangle
 
 	removeTheme   bool
 	removePackage bool
@@ -53,10 +54,12 @@ type plan struct {
 // row is one line of a page's choices.
 type row struct {
 	label, hint string
-	detail      string         // shown faded after the label
-	swatch      string         // a color shown before the label, #rrggbb
-	radio       bool           // radio row: selected when the cursor is on it
-	check       *bool          // checkbox row
+	detail      string  // shown faded after the label
+	swatch      string  // a color shown before the label, #rrggbb
+	radio       bool    // radio row: selected when the cursor is on it
+	check       *bool   // checkbox row
+	choice      *string // option row: selected when *choice is value; space picks it
+	value       string
 	disabled    string         // why the row can't be chosen; grayed out and skipped
 	next        func() tea.Cmd // what enter does on this row, if not the page's default
 }
@@ -110,6 +113,7 @@ type Model struct {
 	steps   []step
 	failed  bool
 	reapply bool // the run changed the accent of a theme that's in use
+	rebuilt bool // the run built the C++ components
 	spinner spinner.Model
 }
 
@@ -197,6 +201,8 @@ func (m *Model) key(k string) tea.Cmd {
 	case "space":
 		if r := rows[m.cursor]; r.check != nil {
 			*r.check = !*r.check
+		} else if r.choice != nil {
+			*r.choice = r.value
 		}
 	case "esc", "backspace":
 		m.back()
@@ -270,7 +276,7 @@ func (m *Model) startInstall() tea.Cmd {
 	if installed := m.status.Accent; system.AccentName(installed) != installed {
 		accent = installed // a preset: keep it
 	}
-	m.plan = plan{mode: modeInstall, accent: accent, components: m.status.Package != ""}
+	m.plan = plan{mode: modeInstall, accent: accent, components: m.status.Package != "", buttons: buttonShape(m.status)}
 	m.open(pageColors)
 	return nil
 }
@@ -285,6 +291,14 @@ func (m *Model) startPrepare() tea.Cmd {
 	m.plan = plan{mode: modePrepare}
 	m.open(pageReview)
 	return nil
+}
+
+// buttonShape is the window decoration's button shape, round if it isn't set.
+func buttonShape(st system.Status) string {
+	if st.ButtonShape == "" {
+		return system.ButtonsRound
+	}
+	return st.ButtonShape
 }
 
 func (m *Model) themePresent() bool {
@@ -325,6 +339,15 @@ func (m *Model) rows() []row {
 	case pageOptions:
 		rows := []row{{label: "C++ components", check: &m.plan.components,
 			hint: "Protea's application style and window decoration, compiled from source with makepkg. Takes about a minute and asks for your sudo password."}}
+		off := ""
+		if !m.plan.components {
+			off = "needs the C++ components"
+		}
+		rows = append(rows,
+			row{label: "Round window buttons", detail: "like Breeze", choice: &m.plan.buttons, value: system.ButtonsRound, disabled: off,
+				hint: "Title bar buttons with a circle behind the symbol when you point at them."},
+			row{label: "Rectangular window buttons", detail: "like Windows", choice: &m.plan.buttons, value: system.ButtonsRectangle, disabled: off,
+				hint: "Wide title bar buttons side by side, flush with the top of the title bar, with Close in the corner."})
 		if st.Package != "" {
 			rows = append(rows, row{label: "Build again", check: &m.plan.rebuild,
 				hint: "Rebuilds even if the installed C++ components are current, for example after changing the C++ code."})
@@ -449,6 +472,10 @@ func (m *Model) installSteps() []step {
 	case !p.components && st.Package != "":
 		steps = append(steps, m.removePackageSteps()...)
 	}
+	if p.components && p.buttons != buttonShape(st) {
+		shape := map[string]string{system.ButtonsRound: "round", system.ButtonsRectangle: "rectangular"}[p.buttons]
+		steps = append(steps, step{name: "Set the window buttons to " + shape, run: func() error { return m.runner.SetButtonShape(p.buttons) }})
+	}
 	return steps
 }
 
@@ -494,6 +521,7 @@ func (m *Model) accentNeedsReapply() bool {
 // run starts the plan's steps.
 func (m *Model) run() tea.Cmd {
 	m.reapply = m.accentNeedsReapply()
+	m.rebuilt = m.plan.mode == modeInstall && m.plan.needsBuild(m.status)
 	m.steps, m.failed = m.planSteps(), false
 	m.page = pageRun
 	return tea.Batch(m.spinner.Tick, m.runStep(0))
@@ -648,9 +676,9 @@ func (m *Model) viewRows(b *strings.Builder, help string, notes ...string) {
 				box = text.Render("[") + accent.Render("x") + text.Render("] ")
 			}
 		}
-		if r.radio {
+		if r.radio || r.choice != nil {
 			box = text.Render("( ) ")
-			if i == m.cursor {
+			if (r.radio && i == m.cursor) || (r.choice != nil && *r.choice == r.value) {
 				box = text.Render("(") + accent.Render("•") + text.Render(") ")
 			}
 		}
@@ -781,7 +809,7 @@ func (m *Model) viewOptions(b *strings.Builder) {
 		notes = append(notes, m.wrap(fmt.Sprintf("The window decoration is pinned to Plasma %s: pacman won't upgrade Plasma to the next feature release until the C++ components are removed. This installer walks you through that.",
 			system.Feature(st.Kdecoration)), dim))
 	}
-	m.viewRows(b, "↑/↓ move · space tick · enter next · esc back · q quit", notes...)
+	m.viewRows(b, "↑/↓ move · space tick or pick · enter next · esc back · q quit", notes...)
 }
 
 func (m *Model) viewReview(b *strings.Builder) {
@@ -853,6 +881,9 @@ func (m *Model) viewDone(b *strings.Builder) {
 		}
 		if m.reapply {
 			b.WriteString("\n" + m.wrap("Protea Dark is already in use: apply it again to see the new accent.", warning) + "\n")
+		}
+		if m.rebuilt {
+			b.WriteString("\n" + m.wrap("Log out and back in to load the new window decoration. KWin keeps the one it started with until then.", warning) + "\n")
 		}
 		b.WriteString("\n")
 	}

@@ -180,6 +180,23 @@ func TestRevertComponents(t *testing.T) {
 		"kwin-applywindowdecoration Breeze")
 }
 
+func TestButtonShape(t *testing.T) {
+	r, ran := fakeSetup(t, map[string]string{"protearc": "[Windeco]\nButtonShape=ButtonRectangle\n"})
+	if got := buttonShape.read(); got != ButtonsRectangle {
+		t.Errorf("read %q, want %q", got, ButtonsRectangle)
+	}
+	writeConfigs(t, map[string]string{"protearc": "[Common]\nShadowStrength=153\n"})
+	if got := buttonShape.read(); got != ButtonsRound {
+		t.Errorf("read %q with no setting, want the default %q", got, ButtonsRound)
+	}
+	if err := r.SetButtonShape(ButtonsRectangle); err != nil {
+		t.Fatal(err)
+	}
+	check(t, ran,
+		"kwriteconfig6 --file protearc --group Windeco --key ButtonShape ButtonRectangle",
+		"dbus-send --session --type=signal /KWin org.kde.KWin.reloadConfig")
+}
+
 func TestInteractiveCommands(t *testing.T) {
 	dir := t.TempDir()
 	cmd := (&Runner{DryRun: true}).BuildCommand(dir)

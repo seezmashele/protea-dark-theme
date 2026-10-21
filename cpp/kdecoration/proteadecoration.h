@@ -14,6 +14,7 @@
 #include <KDecoration3/Decoration>
 #include <KDecoration3/DecorationSettings>
 
+#include <QPainterPath>
 #include <QPalette>
 #include <QVariant>
 #include <QVariantAnimation>
@@ -52,6 +53,16 @@ public:
 
     //* button size
     int buttonSize() const;
+
+    //* Protea: Windows-style rectangular title bar buttons, flush with the
+    // title bar's top and outer edges, instead of Breeze's round ones
+    bool rectangularButtons() const;
+
+    //* width of a rectangular title bar button
+    int rectangleButtonWidth() const;
+
+    //* the title bar's shape, with the window's rounded top corners when it has them
+    QPainterPath titleBarShape() const;
 
     //*@name active state change animation
     //@{

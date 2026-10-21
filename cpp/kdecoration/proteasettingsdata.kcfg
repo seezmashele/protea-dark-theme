@@ -89,6 +89,15 @@
       <default>ButtonDefault</default>
     </entry>
 
+    <!-- Protea: button shape, round like Breeze's or rectangular like Windows' -->
+    <entry name="ButtonShape" type="Enum">
+      <choices>
+          <choice name="ButtonRound" />
+          <choice name="ButtonRectangle" />
+      </choices>
+      <default>ButtonRound</default>
+    </entry>
+
     <!-- maximized windows -->
     <entry name="DrawBorderOnMaximizedWindows" type = "Bool">
         <default>false</default>

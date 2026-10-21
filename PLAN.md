@@ -230,6 +230,7 @@ Upgrade:    Welcome → Review → Prepare
    - If Protea Dark is in use and the accent changes, it notes that the theme must be applied again to show it. Plasma copies a color scheme's colors when it's applied.
 3. **Options.** The theme files (Global Theme, Plasma Style, color scheme) always go into `~/.local/share/` (or `$XDG_DATA_HOME`). Optionally:
    - **C++ components**: a single option, unticked by default, that installs both the application style and the window decoration. For an existing install it starts as installed or not.
+   - **Round** or **Rectangular window buttons**: the window decoration's button shape, preselected with the current setting and grayed out without the C++ components. Installing writes it to `~/.config/protearc` and sends KWin the `reloadConfig` signal System Settings sends. Changing only the shape doesn't rebuild anything.
    - **Build again**: only shown when the C++ components are installed, for rebuilding after changing the C++.
    - Notes explain the pin, and say that missing build tools will be installed first.
 4. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
@@ -244,6 +245,8 @@ Upgrade:    Welcome → Review → Prepare
    - **Global Theme** → Protea Dark
    - or, to keep icons and title bars, only **Colors** and **Plasma Style** → Protea Dark
    - **Window Decorations** and **Application Style** → Protea, when the C++ components are installed. A reminder in the warning color says to do this after applying the Global Theme, and again whenever it's reapplied, because the Global Theme sets Breeze's.
+
+   After a build, a reminder in the warning color says to log out and back in: KWin keeps the decoration it started with until then.
 
    Enter starts over.
 
@@ -321,6 +324,24 @@ Windows and everything Plasma draws on top of them round their corners at **10 p
 - **Still smaller:** menus and buttons inside apps (5 px, `Frame_FrameRadius` in `kstyle/proteametrics.h`), desktop widget backgrounds (4 px), and Kirigami's cards in System Settings and Discover (5 px, set by Kirigami itself).
 - **Bottom border:** the decoration's radius also sets the bottom border with the "No side borders" setting, which grew from 4.5 to 7 px, as in upstream's formula.
 
+### Title bar buttons
+
+Minimize, maximize, restore and close use Windows-style symbols, in [kdecoration/proteabutton.cpp](cpp/kdecoration/proteabutton.cpp) (`Button::drawIcon`). They sit in a 10 × 10 px box like Windows 11's, drawn with 1 px lines on pixel centers so they stay sharp at 100% scale.
+
+| Button | Symbol |
+|---|---|
+| Minimize | a 10 px line |
+| Maximize | a 10 × 10 px square with sharp corners |
+| Restore (maximized window) | two 8 × 8 px squares with sharp corners, offset by 2 px, the back one hidden behind the front |
+| Close | a 10 × 10 px X |
+
+- **Hover:** white at 30% opacity behind the button, in Breeze's round shape, fading in and out like Breeze's. The symbol keeps its color. Close turns the color scheme's red (`ForegroundNegative`, `#da4453`) with the white X kept.
+- **Pressed:** white at 20%, or a darker red for Close. The opacities are `Button_HoverOpacity` and `Button_PressedOpacity` in [kdecoration/protea.h](cpp/kdecoration/protea.h).
+- **Size and spacing:** buttons are 24 px with the default font, 8 px apart (Breeze: 20 px, 4 px apart), from `Button_DefaultSize` (2.4 grid units, the title font's "M" height) and `TitleBar_ButtonSpacing` in [kdecoration/protea.h](cpp/kdecoration/protea.h). The symbols keep Breeze's 10 px size, centered; only the button and its hover circle grow. The margins above, below and beside the buttons are 2 px (Breeze: 4 px), so the title bar stays 28 px and the outermost buttons' symbols, like Close's X, sit exactly where Breeze has them.
+- **Shapes:** the decoration's own "Button shape" setting (`ButtonShape` in `~/.config/protearc`, in the decoration's settings window and in the installer). **Round** (default) is the above. **Rectangular** is Windows-like: 36 × 28 px buttons (`Button_RectangleWidth`, 3.6 grid units, kept even in pixels so the symbols stay sharp, and the full title bar height), side by side with no gaps, flush with the title bar's top and outer edges, so Close sits in the corner. The highlight is fainter on the bigger rectangles (white at 10% hover, 7% pressed), Close still turns red, and its red follows the window's rounded corner. The buttons on the left get the same treatment.
+- **Previewing:** KWin's decoration preview module (`org.kde.kwin.private.kdecoration`, what System Settings uses) can draw a local build offscreen, with `QT_PLUGIN_PATH` pointing at it and a temporary `XDG_CONFIG_HOME`. That's how the shapes were checked before installing.
+- **Unchanged from Breeze:** the other buttons' symbols (keep above, on all desktops and so on), and the decoration's "outline close button" option.
+
 ## Distribution
 
 - **Now:** source only. Users run the installer, which builds the C++ part on their machine if they choose it.
@@ -367,7 +388,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline and 10 px corners on windows, panels, popups and tooltips are done (see Design). |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 10 px corners on windows, panels, popups and tooltips, and Windows-style title bar buttons are done (see Design). |
 
 Commit after each step.
 
