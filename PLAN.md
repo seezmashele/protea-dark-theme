@@ -233,6 +233,7 @@ Upgrade:    Welcome → Review → Prepare
    - **Selected tab: no indicator** (the default) or **Selected tab: underline**: how tabs in widgets mark the selected one (see Design → Widget popups). Like the task manager style, it only picks which `widgets/tabbar.svg` is installed, starts on the installed style, and is named in the install step ("unmarked tabs" or "underlined tabs").
    - **C++ components**: a single option, unticked by default, that installs both the application style and the window decoration. For an existing install it starts as installed or not.
    - **Rectangular** (the default) or **Round window buttons**: the window decoration's button shape, preselected with the current setting and grayed out without the C++ components. Installing writes it to `~/.config/protearc` and sends KWin the `reloadConfig` signal System Settings sends. Changing only the shape doesn't rebuild anything.
+   - **Section dividers: shown** (the default) or **hidden**: the application style's `DrawSectionSeparators` setting (see Design → Section dividers), preselected and grayed out the same way. Installing writes it to `~/.config/protearc` and sends the `reparseConfiguration` signal the style's own settings send, so running apps reload it. No rebuild.
    - **Build again**: only shown when the C++ components are installed, for rebuilding after changing the C++.
    - Notes explain the pin, and say that missing build tools will be installed first.
 4. **Review.** A numbered list of the steps, with sudo steps marked, then **Install** (or **Uninstall** / **Prepare**) and **Back**.
@@ -298,7 +299,7 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 | Title bars and header bars | `[Colors:Header] BackgroundNormal`, `[WM] activeBackground` | `#2e2e2f` |
 | Title bars and header bars of unfocused windows | `[Colors:Header][Inactive] BackgroundNormal`, `[WM] inactiveBackground` | `#1a1a1b` |
 | Views: lists, text fields, editors | `[Colors:View] BackgroundNormal` | `#1a1a1b` |
-| Buttons, combo boxes, checkboxes, column headers | `[Colors:Button] BackgroundNormal` | `#3a3a3b` |
+| Buttons, combo boxes, checkboxes, column headers | `[Colors:Button] BackgroundNormal` | `#424243` |
 | Striped list rows | `[Colors:View] BackgroundAlternate` | `#282829` |
 | Tooltips | `[Colors:Tooltip] BackgroundNormal` | `#1a1a1b` |
 | Borders and separators inside apps | `[KDE] frameContrast` | `0.093`, giving `#414142` on the window color |
@@ -308,7 +309,7 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 - **Plasma's tooltips:** the panel's tooltips use the window colors (`DefaultToolTip.qml` in libplasma 6.8 sets the Window color set). So the Plasma Style's tooltip SVGs, `widgets/tooltip.svg` and its `translucent/`, `opaque/` and `solid/` versions, fill their background with `ColorScheme-TooltipBackground` instead of `ColorScheme-Background`.
 - **Accent:** over the new view color, the Teal selection is `#487e82` with black text, because white on it falls just short of 4.5:1. Secondary text on a selection is `#a1a1a2` for every accent (1.6 to 1.9:1 on the selections; Breeze's was 1.05:1).
 - **Links on window and header backgrounds** are `#73b5ba`, a lighter Teal: plain Teal on `#2e2e2f` falls just short of the 5:1 links need. Links everywhere else stay `#5ba9ae`.
-- **Buttons** are lighter than the window because the Protea app style draws them without an outline: in Breeze's `#292c30` they all but vanished on `#2e2e2f`. The same color fills combo boxes, checkboxes and radio buttons, Dolphin's column headers, and Plasma's buttons (which keep their outline). Links on it follow the accent's 5:1 rule (Teal: `#88c0c4`).
+- **Buttons** are lighter than the window because the Protea app style draws them without an outline: in Breeze's `#292c30` they all but vanished on `#2e2e2f`. `#424243` gives 1.35:1 against the window, about what GNOME's flat buttons have (it was `#3a3a3b`, 1.19:1). The same color fills combo boxes, checkboxes and radio buttons, Dolphin's column headers, and Plasma's buttons (which keep their outline). Links on it follow the accent's 5:1 rule (Teal: `#99c9cc`).
 - **Not changed yet:** Complementary (`#202326`), the other alternate backgrounds, and secondary text (`#a1a9b1`) are still Breeze's blue-tinted values.
 
 ### Window outline
@@ -389,21 +390,39 @@ Inside Plasma's popups and widgets, there are no separator lines, headers and fo
 - **Protea Launcher** draws its own pill-shaped search bar while its "Round search bar corners" option is on (the default), so it only gets this look with that option off.
 - **Placeholder text** ("Search…") is about 4.2:1 against the field at 10%, and typed text about 9:1.
 
-### Outlines inside apps
+### Controls inside apps
 
-This needs the Protea app style. Buttons, and hovered or selected items, are filled only, with the same 8 px rounded shape, and no outline (Breeze: a 1 px outline).
+This needs the Protea app style. Nothing has an outline: buttons, text fields, checkboxes, sliders and hovered or selected items show their state through their fill, with the same rounded shapes (Breeze: 1 px outlines). Anything on or chosen (a checked box, the default button, a slider's fill, a selected row) is the solid selection color, with the selected text color on it (black with Teal and Camel).
 
 | What | Look | Code |
 |---|---|---|
-| Buttons: raised ones (OK, Apply), combo boxes, and flat ones (toolbar buttons like back/forward, search, ☰ and ⋮, and flat buttons anywhere else) | Hover and keyboard focus lay the hover color over the resting fill at 20% (`Button_HoverOpacity`, the same as Plasma's buttons), a press at 30% (`Button_PressedOpacity`); both fade like Breeze's outline did. Resting fills are unchanged: raised `#3a3a3b`, flat none, toggled on the text color at 12.5%, the default button the selection color at 20%. Breeze outlined every raised button and turned the outline to the selection color on hover; flat ones got that outline only on hover. Raised buttons keep Breeze's 1 px drop shadow | `Helper::renderButtonFrame` in [kstyle/proteahelper.cpp](cpp/kstyle/proteahelper.cpp), values in [kstyle/proteametrics.h](cpp/kstyle/proteametrics.h) |
+| Buttons: raised ones (OK, Apply), combo boxes, and flat ones (toolbar buttons like back/forward, search, ☰ and ⋮, and flat buttons anywhere else) | Hover and keyboard focus lay the hover color over the resting fill at 20% (`Button_HoverOpacity`, the same as Plasma's buttons), a press at 30% (`Button_PressedOpacity`); both fade like Breeze's outline did. Resting fills: raised `#424243` (the button color), flat none, toggled on the text color at 12.5%, and the default button (the one Enter presses) the solid selection color with its text in the selected text color (Breeze: a 20% tint, hard to tell from hover). Breeze outlined every raised button and turned the outline to the selection color on hover; flat ones got that outline only on hover. Raised buttons keep Breeze's 1 px drop shadow | `Helper::renderButtonFrame` in [kstyle/proteahelper.cpp](cpp/kstyle/proteahelper.cpp), values in [kstyle/proteametrics.h](cpp/kstyle/proteametrics.h) |
 | Scrollbars | No line along their inner edge (Breeze: the text color at the frame contrast, on the left of vertical scrollbars and the top of horizontal ones), in Qt and QML apps alike | `drawScrollBarComplexControl` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp) |
 | List and tree items: Dolphin's files and Places, System Settings' sidebar | Hover: the selection color at 30%. Selected: the solid selection color. Breeze added a 1 px outline at 80% on hover | `drawPanelItemViewItemPrimitive` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp) |
-| Right-click and drop-down menu items | Hover: the focus color at 30%. Pressed: the solid focus color. Breeze added a 1 px outline, the focus color mixed 15% toward the text color | `drawMenuItemControl` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp) |
+| Right-click and drop-down menu items | Hover: the focus color at 35% (`MenuItem_HoverOpacity`; Breeze: 30%, which turns muddy on the dark menu). Pressed: the solid focus color. Breeze added a 1 px outline, the focus color mixed 15% toward the text color | `drawMenuItemControl` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp) |
+| Menus | A fixed `#0e0e0f` background with a 1 px `#2e2e2f` border, the window color (`Menu_BackgroundColor`, `Menu_OutlineColor`; Breeze: the window color mixed 30% toward the view color, `#282829`, with the frame color). Every Qt menu, Plasma's right-click menus included. Change them by hand along with the window color | `drawPanelMenuPrimitive` in [kstyle/proteastyle.cpp](cpp/kstyle/proteastyle.cpp), values in [kstyle/proteametrics.h](cpp/kstyle/proteametrics.h) |
+| Text fields, editable combo boxes, spin boxes | The view color with no border at rest; under the pointer a 1 px border in the hover color at 50%, and the solid focus color while typing, like Plasma's text fields (Breeze: a frame-color border at rest) | `Helper::fieldOutlineColor` in [kstyle/proteahelper.cpp](cpp/kstyle/proteahelper.cpp) |
+| Checkboxes and radio buttons | The button color with no border; on, the solid selection color with a check or dot in the selected text color; hover tints them with the hover color at 20%, like buttons (Breeze: a border, a 30% tint when on, and a focus-color ring on hover) | `Helper::renderCheckBoxBackground`, `renderCheckBox`, `renderRadioButtonBackground`, `renderRadioButton` |
+| Sliders and progress bars | A solid track in the frame color and a solid selection-color fill, with no outline; the slider handle is the hover color, 10% lighter when hovered or focused (Breeze: the text color at 20% with an outline, the fill at 70%, and an outlined handle in the button color) | `Helper::renderSliderGroove`, `renderProgressBarGroove`, `drawSliderComplexControl` |
 
 - **How:** passing a transparent outline to `Helper::renderFocusRect` fills the whole rect with the outlined shape's corners. An invalid outline still fills a square rect, which striped rows rely on.
-- **Still with an outline:** the keyboard focus frame on the current list item (the selection color lightened 10%), menu bar items, and buttons marked with the neutral highlight (System Settings' "Highlight changed settings"). Keyboard focus also keeps its 2 px ring at 30% around buttons, fields and checkboxes.
+- **Still with an outline:** the keyboard focus frame on the current list item (the selection color lightened 10%), menu bar items, and controls marked with the neutral highlight (System Settings' "Highlight changed settings"). Keyboard focus also keeps its 2 px ring at 30% around buttons, fields and checkboxes.
+- **Preview:** https://claude.ai/artifact/Hwx9cYfuPWBxjvLzpT5ZT2 shows these controls before and after, rendered offscreen from the app style.
 - **Split buttons** (a button with its own ▾ part) lose the line between the two parts, which Breeze draws in the outline color.
 - **QML menus** (System Settings' hamburger menu, right-click in QML text fields, Kirigami apps) come from qqc2-desktop-style's `MenuItem.qml`, which always draws a 1 px focus-color border. The theme can't change that.
+
+### Section dividers
+
+The application style's own setting `DrawSectionSeparators` (`[Style]` in `~/.config/protearc`, default on; the installer's "Section dividers" option) hides the lines between groups. Their space stays, so groups still read as separate. Needs the Protea app style.
+
+| Hidden when off | Code |
+|---|---|
+| Menu separators; a titled section keeps its title | `drawMenuItemControl` |
+| Separators in combo box lists and between groups of toolbar buttons (Breeze's own `ToolBarDrawItemSeparator` can still hide just the toolbar ones) | `drawIndicatorToolBarSeparatorPrimitive` |
+| Horizontal and vertical divider lines (`QFrame::HLine`/`VLine`, KSeparator) in dialogs and panels | `drawShapedFrameControl` |
+
+- **Stay:** borders, splitters, the line under the toolbar, the status bar line, column header lines and the line above dialog buttons.
+- **Not reachable from the theme:** QML apps' lines, System Settings' included (sidebar sections, settings pages, QML menus, and the line by the page title in its header). Kirigami draws them all with one color from the scheme's frame contrast, so they can only go all together, borders and the header line included (Kirigami's `Separator.qml`; System Settings' header line is its own `Kirigami.Separator` with Header colors). Dolphin draws the line under its "Show in Groups" titles itself (`KStandardItemListGroupHeader::paintSeparator`). Dolphin's Places sidebar has section titles but no lines.
 
 ### Task manager
 

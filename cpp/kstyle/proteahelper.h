@@ -120,6 +120,9 @@ public:
     //* hover outline color, using animations
     QColor hoverOutlineColor(const QPalette &) const;
 
+    //* text field outline color, using animations; transparent at rest
+    QColor fieldOutlineColor(const QPalette &, bool mouseOver, bool hasFocus, qreal opacity = AnimationData::OpacityInvalid, AnimationMode = AnimationNone) const;
+
     //* side panel outline color, using animations
     QColor sidePanelOutlineColor(const QPalette &, bool hasFocus = false, qreal opacity = AnimationData::OpacityInvalid, AnimationMode = AnimationNone) const;
 

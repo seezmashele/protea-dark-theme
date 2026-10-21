@@ -19,10 +19,10 @@ IntensityAmount=0
 IntensityEffect=0
 
 [Colors:Button]
-BackgroundAlternate=81,136,140
-BackgroundNormal=58,58,59
+BackgroundAlternate=84,138,142
+BackgroundNormal=66,66,67
 ForegroundInactive=161,169,177
-ForegroundLink=136,192,196
+ForegroundLink=153,201,204
 ForegroundNegative=218,68,83
 ForegroundNeutral=246,116,0
 ForegroundNormal=252,252,252

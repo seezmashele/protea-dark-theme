@@ -93,6 +93,12 @@
       <default>true</default>
     </entry>
 
+    <!-- Protea: lines between groups of items in menus, combo box lists and
+    toolbars, and divider lines in dialogs; the space around them stays -->
+    <entry name="DrawSectionSeparators" type="Bool">
+      <default>true</default>
+    </entry>
+
     <!-- views -->
     <entry name="ViewDrawFocusIndicator" type="Bool">
       <default>true</default>

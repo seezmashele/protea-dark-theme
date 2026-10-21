@@ -314,6 +314,40 @@ func TestWindowButtons(t *testing.T) {
 	expectNot(t, m, "window buttons")
 }
 
+func TestSectionDividers(t *testing.T) {
+	// The setting belongs to the application style, so it needs the C++
+	// components.
+	m := start(t, fresh)
+	press(m, "enter", "enter")
+	expect(t, m, "Section dividers: shown · needs the C++ components", "Section dividers: hidden · needs the C++ components")
+	tick(t, m, "C++ components")
+	expect(t, m, "(•) Section dividers: shown lines between groups", "( ) Section dividers: hidden space only")
+
+	// Already built, so hiding them only changes the setting.
+	m = start(t, everything)
+	press(m, "enter", "enter")
+	moveTo(t, m, "Section dividers: hidden")
+	expect(t, m, "Apps built with QML, like System Settings, keep theirs.")
+	press(m, "space")
+	expect(t, m, "( ) Section dividers: shown", "(•) Section dividers: hidden")
+	press(m, "enter")
+	expect(t, m, "1 Update Protea Dark in", "2 Hide section dividers in apps")
+	expectNot(t, m, "makepkg")
+	choose(t, m, "Install")
+	expect(t, m, "✓ Hide section dividers in apps",
+		"would run: kwriteconfig6 --file protearc --group Style --key DrawSectionSeparators false",
+		"would run: dbus-send --session --type=signal /ProteaStyle org.proteadesktop.Protea.Style.reparseConfiguration")
+
+	// Keeping what's set changes nothing.
+	st := everything
+	st.SectionDividers = system.DividersHidden
+	m = start(t, st)
+	press(m, "enter", "enter")
+	expect(t, m, "(•) Section dividers: hidden")
+	press(m, "enter")
+	expectNot(t, m, "section dividers")
+}
+
 func TestTaskManagerStyle(t *testing.T) {
 	// The style only picks which tasks.svg is installed, so it doesn't need
 	// the C++ components.

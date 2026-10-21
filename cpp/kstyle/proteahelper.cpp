@@ -169,6 +169,28 @@ QColor Helper::frameOutlineColor(const QPalette &palette, bool mouseOver, bool h
 }
 
 //____________________________________________________________________
+QColor Helper::fieldOutlineColor(const QPalette &palette, bool mouseOver, bool hasFocus, qreal opacity, AnimationMode mode) const
+{
+    // Protea: no border at rest, the hover color at 50% under the pointer and
+    // the focus color while typing (Breeze: the frame color at rest)
+    const QColor rest(Qt::transparent);
+    const QColor hover(alphaColor(hoverColor(palette), 0.5));
+    const QColor focus(focusColor(palette));
+
+    // focus takes precedence over hover
+    if (mode == AnimationFocus) {
+        return KColorUtils::mix(mouseOver ? hover : rest, focus, opacity);
+    } else if (hasFocus) {
+        return focus;
+    } else if (mode == AnimationHover) {
+        return KColorUtils::mix(rest, hover, opacity);
+    } else if (mouseOver) {
+        return hover;
+    }
+    return rest;
+}
+
+//____________________________________________________________________
 QColor Helper::focusOutlineColor(const QPalette &palette) const
 {
     return KColorUtils::mix(focusColor(palette), palette.color(QPalette::WindowText), 0.15);
@@ -691,7 +713,9 @@ void Helper::renderButtonFrame(QPainter *painter,
             bgBrush = hasNeutralHighlight ? KColorUtils::mix(palette.button().color(), neutralText(palette), Metrics::Blend_Value)
                                           : KColorUtils::mix(palette.button().color(), palette.buttonText().color(), 0.125);
         } else if (isActiveWindow && defaultButton) {
-            bgBrush = KColorUtils::mix(palette.button().color(), highlightColor, 0.2);
+            // Protea: the solid selection color, with its text in the selected
+            // text color (drawPushButtonLabelControl); Breeze: a 20% tint
+            bgBrush = highlightColor;
         } else {
             bgBrush = palette.button().color();
         }
@@ -835,20 +859,15 @@ void Helper::renderCheckBoxBackground(QPainter *painter,
     // copy rect
     QRectF frameRect(rect);
     frameRect.adjust(2, 2, -2, -2);
-    frameRect = strokedRect(frameRect);
 
-    auto transparent = neutalHighlight ? neutralText(palette) : palette.highlight().color();
-    transparent.setAlphaF(highlightBackgroundAlpha);
-
-    QBrush penBrush;
+    // Protea: no border, except the neutral highlight's; a checked box is the
+    // solid selection color (Breeze: a border, and a 30% tint when checked)
     if (neutalHighlight) {
-        penBrush = neutralText(palette);
-    } else if (state == CheckOn || state == CheckPartial) {
-        penBrush = palette.highlight().color();
+        frameRect = strokedRect(frameRect);
+        painter->setPen(QPen(neutralText(palette), PenWidth::Frame));
     } else {
-        penBrush = separatorColor(palette);
+        painter->setPen(Qt::NoPen);
     }
-    painter->setPen(QPen(penBrush, PenWidth::Frame));
 
     const auto radius = Metrics::CheckBox_Radius;
 
@@ -859,7 +878,7 @@ void Helper::renderCheckBoxBackground(QPainter *painter,
         return;
     }
 
-    painter->setBrush(transparent);
+    painter->setBrush(neutalHighlight ? neutralText(palette) : palette.highlight().color());
     if (state == CheckAnimated) {
         painter->setOpacity(animation);
     }
@@ -894,10 +913,11 @@ void Helper::renderCheckBox(QPainter *painter,
             painter->setOpacity(hoverAnimation);
         }
 
-        painter->setPen(QPen(neutalHighlight ? neutralText(palette).lighter() : focusColor(palette), PenWidth::Frame));
-        painter->setBrush(Qt::NoBrush);
+        // Protea: hover tints the box like a button (Breeze: a focus-color ring)
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(alphaColor(neutalHighlight ? neutralText(palette) : hoverColor(palette), Metrics::Button_HoverOpacity));
 
-        painter->drawRoundedRect(frameRect.adjusted(0.5, 0.5, -0.5, -0.5), Metrics::CheckBox_Radius, Metrics::CheckBox_Radius);
+        painter->drawRoundedRect(frameRect, Metrics::CheckBox_Radius, Metrics::CheckBox_Radius);
 
         painter->restore();
     }
@@ -928,7 +948,8 @@ void Helper::renderCheckBox(QPainter *painter,
     painter->setPen(Qt::transparent);
     painter->setBrush(Qt::transparent);
 
-    auto checkPen = QPen(palette.text(), PenWidth::Frame * 2);
+    // Protea: the mark sits on the selection color
+    auto checkPen = QPen(palette.highlightedText(), PenWidth::Frame * 2);
     checkPen.setJoinStyle(Qt::MiterJoin);
 
     switch (state) {
@@ -939,7 +960,7 @@ void Helper::renderCheckBox(QPainter *painter,
         painter->drawPath(path);
         break;
     case CheckPartial:
-        painter->setBrush(palette.text());
+        painter->setBrush(palette.highlightedText());
         painter->drawRect(leftDot);
         painter->drawRect(centerDot);
         painter->drawRect(rightDot);
@@ -989,18 +1010,8 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
     frameRect.adjust(2, 2, -2, -2);
     frameRect.adjust(0.5, 0.5, -0.5, -0.5);
 
-    auto transparent = neutalHighlight ? neutralText(palette) : palette.highlight().color();
-    transparent.setAlphaF(highlightBackgroundAlpha);
-
-    QBrush penBrush;
-    if (neutalHighlight) {
-        penBrush = neutralText(palette);
-    } else if (state == RadioOn) {
-        penBrush = palette.highlight().color();
-    } else {
-        penBrush = separatorColor(palette);
-    }
-    painter->setPen(QPen(penBrush, PenWidth::Frame));
+    // Protea: like checkboxes, no border and the solid selection color when on
+    painter->setPen(neutalHighlight ? QPen(neutralText(palette), PenWidth::Frame) : QPen(Qt::NoPen));
 
     painter->setBrush(palette.button().color().darker(sunken ? radioCheckSunkenDarkeningFactor : 100));
     painter->drawEllipse(frameRect);
@@ -1009,7 +1020,7 @@ void Helper::renderRadioButtonBackground(QPainter *painter,
         return;
     }
 
-    painter->setBrush(transparent);
+    painter->setBrush(neutalHighlight ? neutralText(palette) : palette.highlight().color());
     if (state == RadioAnimated) {
         painter->setOpacity(animation);
     }
@@ -1040,16 +1051,18 @@ void Helper::renderRadioButton(QPainter *painter,
             painter->setOpacity(animationHover);
         }
 
-        painter->setPen(QPen(neutralHighlight ? neutralText(palette).lighter() : focusColor(palette), PenWidth::Frame));
-        painter->setBrush(Qt::NoBrush);
+        // Protea: hover tints the circle like a button
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(alphaColor(neutralHighlight ? neutralText(palette) : hoverColor(palette), Metrics::Button_HoverOpacity));
 
-        const QRectF contentRect(frameRect.adjusted(1, 1, -1, -1).adjusted(0.5, 0.5, -0.5, -0.5));
+        const QRectF contentRect(frameRect.adjusted(1, 1, -1, -1));
         painter->drawEllipse(contentRect);
 
         painter->restore();
     }
 
-    painter->setBrush(palette.text());
+    // Protea: the dot sits on the selection color
+    painter->setBrush(palette.highlightedText());
     painter->setPen(Qt::NoPen);
 
     const int radius = (std::min(frameRect.width(), frameRect.height()) - 12) / 2;
@@ -1071,21 +1084,19 @@ void Helper::renderRadioButton(QPainter *painter,
 }
 
 //______________________________________________________________________________
-void Helper::renderSliderGroove(QPainter *painter, const QRectF &rect, const QColor &fg, const QColor &bg) const
+void Helper::renderSliderGroove(QPainter *painter, const QRectF &rect, const QColor &fg, [[maybe_unused]] const QColor &bg) const
 {
     // setup painter
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-    QRectF baseRect(rect);
-    baseRect.adjust(0.5, 0.5, -0.5, -0.5);
     const qreal radius(0.5 * Metrics::Slider_GrooveThickness);
 
     // content
-    // content
+    // Protea: solid, with no outline (Breeze: fg at 70% over bg, outlined)
     if (fg.isValid()) {
-        painter->setPen(QPen(transparentize(fg, frameIntensityBias()), PenWidth::Frame));
-        painter->setBrush(KColorUtils::overlayColors(bg, alphaColor(fg, 0.7)));
-        painter->drawRoundedRect(baseRect, radius, radius);
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(fg);
+        painter->drawRoundedRect(rect, radius, radius);
     }
 }
 
@@ -1194,20 +1205,19 @@ void Helper::renderSliderHandle(QPainter *painter, const QRectF &rect, const QCo
 }
 
 //______________________________________________________________________________
-void Helper::renderProgressBarGroove(QPainter *painter, const QRectF &rect, const QColor &fg, const QColor &bg) const
+void Helper::renderProgressBarGroove(QPainter *painter, const QRectF &rect, const QColor &fg, [[maybe_unused]] const QColor &bg) const
 {
     // setup painter
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-    QRectF baseRect(rect);
-    baseRect.adjust(0.5, 0.5, -0.5, -0.5);
     const qreal radius(0.5 * Metrics::ProgressBar_Thickness);
 
     // content
+    // Protea: solid, with no outline (Breeze: fg at 70% over bg, outlined)
     if (fg.isValid()) {
-        painter->setPen(QPen(transparentize(fg, frameIntensityBias()), PenWidth::Frame));
-        painter->setBrush(KColorUtils::overlayColors(bg, alphaColor(fg, 0.7)));
-        painter->drawRoundedRect(baseRect, radius, radius);
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(fg);
+        painter->drawRoundedRect(rect, radius, radius);
     }
 }
 

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <QColor>
 #include <QtGlobal>
 
 namespace Protea
@@ -53,6 +54,11 @@ struct Metrics {
 
     // menu items
     static constexpr int Menu_FrameWidth = 0;
+    // Protea: menus have a fixed dark background with a border in the window
+    // color (Breeze mixes the background from the window and view colors,
+    // and the border is the frame color)
+    static constexpr QColor Menu_BackgroundColor{0x0e, 0x0e, 0x0f};
+    static constexpr QColor Menu_OutlineColor{0x2e, 0x2e, 0x2f};
     static constexpr int MenuItem_MarginWidth = 4;
     static constexpr int MenuItem_HighlightGap = 4;
     static constexpr int MenuItem_ExtraLeftMargin = 4;
@@ -60,6 +66,9 @@ struct Metrics {
     static constexpr int MenuItem_ItemSpacing = 2;
     static constexpr int MenuItem_AcceleratorSpace = 16;
     static constexpr int MenuItem_TextLeftMargin = 8;
+    // Protea: the opacity of the focus color behind a hovered menu item
+    // (Breeze: Blend_Value, 30%), stronger to show on the dark background
+    static constexpr qreal MenuItem_HoverOpacity = 0.35;
 
     // combobox
     static constexpr int ComboBox_FrameWidth = 6;

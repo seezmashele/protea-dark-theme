@@ -63,6 +63,19 @@ var (
 			return r.change("dbus-send", "--session", "--type=signal", "/KWin", "org.kde.KWin.reloadConfig")
 		},
 	}
+	// sectionDividers is the Protea application style's own "Draw section
+	// separators" setting (cpp/kstyle/protea.kcfg).
+	sectionDividers = setting{
+		file: "protearc", group: "Style", key: "DrawSectionSeparators",
+		unset: DividersShown, fallback: DividersShown,
+		apply: func(r *Runner, v string) error {
+			if err := r.writeConfig("protearc", "Style", "DrawSectionSeparators", v); err != nil {
+				return err
+			}
+			// What the style's own settings send: running apps reload them.
+			return r.change("dbus-send", "--session", "--type=signal", "/ProteaStyle", "org.proteadesktop.Protea.Style.reparseConfiguration")
+		},
+	}
 )
 
 // The window decoration's button shapes, as its "Button shape" setting
@@ -75,6 +88,17 @@ const (
 // SetButtonShape sets the Protea window decoration's button shape,
 // ButtonsRound or ButtonsRectangle.
 func (r *Runner) SetButtonShape(shape string) error { return buttonShape.apply(r, shape) }
+
+// The application style's section dividers, as its "Draw section
+// separators" setting stores them.
+const (
+	DividersShown  = "true"
+	DividersHidden = "false"
+)
+
+// SetSectionDividers shows or hides the lines the Protea application style
+// draws between sections, DividersShown or DividersHidden.
+func (r *Runner) SetSectionDividers(v string) error { return sectionDividers.apply(r, v) }
 
 func (r *Runner) writeConfig(file, group, key, value string) error {
 	return r.change("kwriteconfig6", "--file", file, "--group", group, "--key", key, value)

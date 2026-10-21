@@ -4075,8 +4075,12 @@ bool Style::drawFrameLineEditPrimitive(const QStyleOption *option, QPainter *pai
 
         // render
         const auto &background = palette.color(QPalette::Base);
-        const auto outline(hasHighlightNeutral(widget, option, mouseOver, hasFocus) ? _helper->neutralText(palette).lighter(mouseOver || hasFocus ? 150 : 100)
-                                                                                    : _helper->frameOutlineColor(palette, mouseOver, hasFocus, opacity, mode));
+        auto outline(hasHighlightNeutral(widget, option, mouseOver, hasFocus) ? _helper->neutralText(palette).lighter(mouseOver || hasFocus ? 150 : 100)
+                                                                              : _helper->fieldOutlineColor(palette, mouseOver, hasFocus, opacity, mode));
+        // no border at rest: fill the whole rect
+        if (outline.alpha() == 0) {
+            outline = QColor();
+        }
         _helper->renderFrame(painter, rect, background, outline);
     }
 
@@ -4705,8 +4709,8 @@ bool Style::drawPanelMenuPrimitive(const QStyleOption *option, QPainter *painter
     const auto &palette(option->palette);
     const bool hasAlpha(_helper->hasAlphaChannel(widget));
     const auto seamlessEdges = _helper->menuSeamlessEdges(widget);
-    auto background(_helper->frameBackgroundColor(palette));
-    auto outline(_helper->frameOutlineColor(palette));
+    auto background(Metrics::Menu_BackgroundColor);
+    auto outline(Metrics::Menu_OutlineColor);
 
     painter->save();
 
@@ -5206,6 +5210,11 @@ bool Style::drawIndicatorToolBarSeparatorPrimitive(const QStyleOption *option, Q
         return true;
     }
 
+    // Protea: hidden with the other section separators, combo boxes' included
+    if (!StyleConfigData::drawSectionSeparators()) {
+        return true;
+    }
+
     // store rect and palette
     const auto &rect(option->rect);
     const auto &palette(option->palette);
@@ -5356,8 +5365,9 @@ bool Style::drawPushButtonLabelControl(const QStyleOption *option, QPainter *pai
             textRole = QPalette::WindowText;
         }
 
-    } else if (hasFocus) {
-        textRole = QPalette::ButtonText;
+    } else if ((buttonOption->features & QStyleOptionButton::DefaultButton) && (state & State_Enabled) && (!widget || widget->isActiveWindow())) {
+        // Protea: the default button is the solid selection color (renderButtonFrame)
+        textRole = QPalette::HighlightedText;
     } else {
         textRole = QPalette::ButtonText;
     }
@@ -6014,7 +6024,10 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
             }
         }
 
-        _helper->renderSeparator(painter, contentsRect, separatorColor);
+        // Protea: a section's title stays when its line is hidden
+        if (StyleConfigData::drawSectionSeparators()) {
+            _helper->renderSeparator(painter, contentsRect, separatorColor);
+        }
         return true;
     }
 
@@ -6025,7 +6038,7 @@ bool Style::drawMenuItemControl(const QStyleOption *option, QPainter *painter, c
         const QColor outlineColor(Qt::transparent);
         if (!sunken) {
             // If not clicking, use the alphaColor
-            color = _helper->alphaColor(color, Metrics::Blend_Value);
+            color = _helper->alphaColor(color, Metrics::MenuItem_HoverOpacity);
         }
 
         Sides sides;
@@ -6299,7 +6312,8 @@ bool Style::drawProgressBarContentsControl(const QStyleOption *option, QPainter 
 bool Style::drawProgressBarGrooveControl(const QStyleOption *option, QPainter *painter, const QWidget *) const
 {
     const auto &palette(option->palette);
-    const auto color(_helper->alphaColor(palette.color(QPalette::WindowText), 0.2));
+    // Protea: the frame color, like borders (Breeze: the text color at 20%)
+    const auto color(_helper->separatorColor(palette));
     _helper->renderProgressBarGroove(painter, option->rect, color, palette.color(QPalette::Window));
     return true;
 }
@@ -6584,6 +6598,10 @@ bool Style::drawShapedFrameControl(const QStyleOption *option, QPainter *painter
 
     case QFrame::HLine:
     case QFrame::VLine: {
+        // Protea: divider lines are section separators
+        if (!StyleConfigData::drawSectionSeparators()) {
+            return true;
+        }
         const auto &rect(option->rect);
         const auto color(_helper->separatorColor(option->palette));
         const bool isVertical(frameOpt->frameShape == QFrame::VLine);
@@ -8066,7 +8084,8 @@ bool Style::drawSliderComplexControl(const QStyleOptionComplex *option, QPainter
     // groove
     if (sliderOption->subControls & SC_SliderGroove) {
         // base color
-        const auto grooveColor(_helper->alphaColor(palette.color(QPalette::WindowText), 0.2));
+        // Protea: the frame color, like borders (Breeze: the text color at 20%)
+        const auto grooveColor(_helper->separatorColor(palette));
 
         if (!enabled) {
             _helper->renderSliderGroove(painter, grooveRect, grooveColor, palette.color(QPalette::Window));
@@ -8115,12 +8134,16 @@ bool Style::drawSliderComplexControl(const QStyleOptionComplex *option, QPainter
         // animation state
         _animations->widgetStateEngine().updateState(widget, AnimationHover, handleActive && mouseOver);
         _animations->widgetStateEngine().updateState(widget, AnimationFocus, hasFocus);
-        const AnimationMode mode(_animations->widgetStateEngine().buttonAnimationMode(widget));
-        const qreal opacity(_animations->widgetStateEngine().buttonOpacity(widget));
 
         // define colors
-        const auto &background = palette.color(QPalette::Button);
-        auto outline(_helper->sliderOutlineColor(palette, handleActive && mouseOver, hasFocus, opacity, mode));
+        // Protea: the handle is the hover color, lighter when hovered or
+        // focused, with no outline except the neutral highlight's (Breeze: the
+        // button color, outlined)
+        QColor background(palette.color(QPalette::Button));
+        if (enabled) {
+            background = (handleActive && mouseOver) || hasFocus ? _helper->hoverColor(palette).lighter(110) : _helper->hoverColor(palette);
+        }
+        QColor outline;
         if (hasFocus || (handleActive && mouseOver)) {
             outline = hasHighlightNeutral(widget, option, handleActive && mouseOver, hasFocus)
                 ? _helper->neutralText(palette).lighter(mouseOver || hasFocus ? 150 : 100)

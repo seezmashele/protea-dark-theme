@@ -197,6 +197,23 @@ func TestButtonShape(t *testing.T) {
 		"dbus-send --session --type=signal /KWin org.kde.KWin.reloadConfig")
 }
 
+func TestSectionDividers(t *testing.T) {
+	r, ran := fakeSetup(t, map[string]string{"protearc": "[Style]\nDrawSectionSeparators=false\n"})
+	if got := sectionDividers.read(); got != DividersHidden {
+		t.Errorf("read %q, want %q", got, DividersHidden)
+	}
+	writeConfigs(t, map[string]string{"protearc": "[Common]\nShadowStrength=153\n"})
+	if got := sectionDividers.read(); got != DividersShown {
+		t.Errorf("read %q with no setting, want the default %q", got, DividersShown)
+	}
+	if err := r.SetSectionDividers(DividersHidden); err != nil {
+		t.Fatal(err)
+	}
+	check(t, ran,
+		"kwriteconfig6 --file protearc --group Style --key DrawSectionSeparators false",
+		"dbus-send --session --type=signal /ProteaStyle org.proteadesktop.Protea.Style.reparseConfiguration")
+}
+
 func TestInteractiveCommands(t *testing.T) {
 	dir := t.TempDir()
 	cmd := (&Runner{DryRun: true}).BuildCommand(dir)

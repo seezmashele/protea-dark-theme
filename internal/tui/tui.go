@@ -48,6 +48,7 @@ type plan struct {
 	components bool   // have the C++ components installed
 	rebuild    bool   // build again even if the installed package is current
 	buttons    string // the window decoration's button shape, system.ButtonsRound or ButtonsRectangle
+	dividers   string // the application style's section dividers, system.DividersShown or DividersHidden
 
 	removeTheme   bool
 	removePackage bool
@@ -280,7 +281,8 @@ func (m *Model) startInstall() tea.Cmd {
 		accent = installed // a preset: keep it
 	}
 	m.plan = plan{mode: modeInstall, accent: accent, components: m.status.Package != "", buttons: buttonShape(m.status),
-		tasks: installedStyle(system.TaskStyles, m.status.TaskStyle), tabs: installedStyle(system.TabStyles, m.status.TabStyle)}
+		dividers: sectionDividers(m.status),
+		tasks:    installedStyle(system.TaskStyles, m.status.TaskStyle), tabs: installedStyle(system.TabStyles, m.status.TabStyle)}
 	m.open(pageColors)
 	return nil
 }
@@ -304,6 +306,15 @@ func buttonShape(st system.Status) string {
 		return system.ButtonsRectangle
 	}
 	return st.ButtonShape
+}
+
+// sectionDividers is the application style's section dividers, shown (its
+// default) unless they're set to hidden.
+func sectionDividers(st system.Status) string {
+	if st.SectionDividers == system.DividersHidden {
+		return system.DividersHidden
+	}
+	return system.DividersShown
 }
 
 // installedStyle is the installed style of v, or v's default if there's
@@ -371,7 +382,11 @@ func (m *Model) rows() []row {
 			row{label: "Rectangular window buttons", detail: "like Windows", choice: &m.plan.buttons, value: system.ButtonsRectangle, disabled: off,
 				hint: "Wide title bar buttons side by side, flush with the top of the title bar, with Close in the corner."},
 			row{label: "Round window buttons", detail: "like Breeze", choice: &m.plan.buttons, value: system.ButtonsRound, disabled: off,
-				hint: "Title bar buttons with a circle behind the symbol when you point at them."})
+				hint: "Title bar buttons with a circle behind the symbol when you point at them."},
+			row{label: "Section dividers: shown", detail: "lines between groups", choice: &m.plan.dividers, value: system.DividersShown, disabled: off,
+				hint: "Lines between groups of items in menus, combo box lists and toolbars, and between sections of dialogs, in apps that use Protea's application style."},
+			row{label: "Section dividers: hidden", detail: "space only", choice: &m.plan.dividers, value: system.DividersHidden, disabled: off,
+				hint: "No lines between groups of items in menus, combo box lists and toolbars, or between sections of dialogs; the space between them stays. Apps built with QML, like System Settings, keep theirs."})
 		if st.Package != "" {
 			rows = append(rows, row{label: "Build again", check: &m.plan.rebuild,
 				hint: "Rebuilds even if the installed C++ components are current, for example after changing the C++ code."})
@@ -500,6 +515,10 @@ func (m *Model) installSteps() []step {
 	if p.components && p.buttons != buttonShape(st) {
 		shape := map[string]string{system.ButtonsRound: "round", system.ButtonsRectangle: "rectangular"}[p.buttons]
 		steps = append(steps, step{name: "Set the window buttons to " + shape, run: func() error { return m.runner.SetButtonShape(p.buttons) }})
+	}
+	if p.components && p.dividers != sectionDividers(st) {
+		name := map[string]string{system.DividersShown: "Show", system.DividersHidden: "Hide"}[p.dividers] + " section dividers in apps"
+		steps = append(steps, step{name: name, run: func() error { return m.runner.SetSectionDividers(p.dividers) }})
 	}
 	return steps
 }

@@ -23,6 +23,7 @@ type Status struct {
 	StyleActive      bool
 	DecorationActive bool
 	ButtonShape      string // the window decoration's button shape, ButtonsRound or ButtonsRectangle
+	SectionDividers  string // the application style's section dividers, DividersShown or DividersHidden
 
 	MissingTools []string
 
@@ -158,6 +159,7 @@ func ReadStatus() Status {
 	s.StyleActive = widgetStyle.read() == WidgetStyleID
 	s.DecorationActive = decoration.read() == DecorationID
 	s.ButtonShape = buttonShape.read()
+	s.SectionDividers = sectionDividers.read()
 
 	s.Package = pacmanVersion(PackageName)
 	if data, err := os.ReadFile(BuildInfoPath); err == nil && s.Package != "" {
