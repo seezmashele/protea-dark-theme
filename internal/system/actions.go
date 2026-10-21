@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -9,8 +10,9 @@ import (
 )
 
 // InstallCore copies the core theme into DataHome, replacing any older
-// copy, and writes the accent color (#rrggbb) into its color files.
-func (r *Runner) InstallCore(files fs.FS, accent string) error {
+// copy, puts the task manager style (TasksUnderline or TasksBackground) in
+// place, and writes the accent color (#rrggbb) into its color files.
+func (r *Runner) InstallCore(files fs.FS, accent, tasks string) error {
 	for _, c := range coreFiles {
 		dest := filepath.Join(DataHome(), c.dest)
 		if r.DryRun {
@@ -30,7 +32,28 @@ func (r *Runner) InstallCore(files fs.FS, accent string) error {
 			return err
 		}
 	}
+	if err := r.writeTaskStyle(files, tasks); err != nil {
+		return err
+	}
 	return r.writeAccent(accent)
+}
+
+// writeTaskStyle puts the style's tasks.svg in place of the Plasma Style's
+// own, which is the underline style.
+func (r *Runner) writeTaskStyle(files fs.FS, style string) error {
+	if style == TasksUnderline {
+		return nil
+	}
+	src, ok := taskStyleFiles[style]
+	if !ok {
+		return fmt.Errorf("unknown task manager style %q", style)
+	}
+	dest := filepath.Join(DataHome(), tasksSVG)
+	if r.DryRun {
+		r.logf("would copy %s to %s", src, dest)
+		return nil
+	}
+	return copyFile(files, src, dest)
 }
 
 // UninstallCore removes the core theme files. Call RevertCore first.

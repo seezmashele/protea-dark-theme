@@ -123,7 +123,8 @@ var (
 	// the C++ components built for Plasma 6.8 and in use.
 	everything = system.Status{
 		Plasma: "6.8.0", Kdecoration: "6.8.0-1",
-		CoreInstalled: true, Accent: "#5ba9ae", GlobalThemeActive: true, ColorsActive: true, PlasmaStyleActive: true,
+		CoreInstalled: true, Accent: "#5ba9ae", TaskStyle: system.TasksUnderline,
+		GlobalThemeActive: true, ColorsActive: true, PlasmaStyleActive: true,
 		Package:     "0.1.0-1",
 		Build:       map[string]string{"WITH_STYLE": "ON", "WITH_DECORATIONS": "ON", "KDECORATION_VERSION": "6.8.0", "QT_VERSION": "6.12.0"},
 		StyleActive: true, DecorationActive: true,
@@ -177,11 +178,11 @@ func TestInstallDefaults(t *testing.T) {
 	press(m, "enter")
 	expect(t, m, "✓ Colors", "● Options", "▍Choose what to install",
 		"Protea Dark's Global Theme, Plasma Style and color scheme are always installed into", "The C++ components are optional.",
-		"› [ ] C++ components")
+		"› (•) Task manager: underline a line under open apps ( ) Task manager: background a tint behind open apps [ ] C++ components")
 	expectNot(t, m, "Build again", "pinned", "Application style", "Use them")
 	press(m, "enter")
 	expect(t, m, "● Review", "▍Review the plan", "Nothing has changed yet. These steps run when you choose Install.",
-		"1 Install Protea Dark into ~/.local/share, with the Teal accent", "› Install",
+		"1 Install Protea Dark into ~/.local/share, with the Teal accent and the underline task manager", "› Install",
 		"Your current look doesn't change. Apply Protea Dark yourself in System Settings afterwards.")
 	expectNot(t, m, "2 ", "makepkg", "needs sudo", "Apply the")
 }
@@ -310,6 +311,38 @@ func TestWindowButtons(t *testing.T) {
 	expect(t, m, "(•) Round window buttons")
 	press(m, "enter")
 	expectNot(t, m, "window buttons")
+}
+
+func TestTaskManagerStyle(t *testing.T) {
+	// The style only picks which tasks.svg is installed, so it doesn't need
+	// the C++ components.
+	m := start(t, fresh)
+	press(m, "enter", "enter")
+	expect(t, m, "› (•) Task manager: underline a line under open apps", "( ) Task manager: background a tint behind open apps",
+		"Each open app in the panel gets a line along its bottom edge")
+	moveTo(t, m, "Task manager: background")
+	expect(t, m, "Pointing at an app adds a line along its bottom edge.")
+	press(m, "space")
+	expect(t, m, "( ) Task manager: underline", "(•) Task manager: background")
+	press(m, "enter")
+	expect(t, m, "1 Install Protea Dark into ~/.local/share, with the Teal accent and the background task manager")
+	choose(t, m, "Install")
+	expect(t, m, "would copy theme/variants/tasks-background.svg to")
+	expectNot(t, m, "The task manager may keep its old look")
+
+	// The installed style is kept. Changing it while the Plasma Style is in
+	// use may need logging out.
+	st := everything
+	st.TaskStyle = system.TasksBackground
+	m = start(t, st)
+	press(m, "enter", "enter")
+	expect(t, m, "( ) Task manager: underline", "(•) Task manager: background")
+	moveTo(t, m, "Task manager: underline")
+	press(m, "space", "enter")
+	expect(t, m, "with the Teal accent and the underline task manager")
+	choose(t, m, "Install")
+	expect(t, m, "The task manager may keep its old look until you log out and back in.")
+	expectNot(t, m, "would copy theme/variants")
 }
 
 func TestLogOutAfterBuilding(t *testing.T) {

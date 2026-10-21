@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Redraw how the task manager marks each app in a bottom panel.
 
-Usage: scripts/task-frames.py [SVG]
+Usage: scripts/task-frames.py [UNDERLINE_SVG BACKGROUND_SVG]
 
 The task manager draws a frame from widgets/tasks.svg behind each app in the
 panel, picked by the app's state: normal (running), focus (its window is
@@ -11,10 +11,18 @@ first looks for "<state>-hover", then the shared "hover". For a bottom panel
 it uses these plain names; panels on other edges look for north-, east- or
 west- versions first.
 
-This script redraws the plain frames from STATES below: a tint behind the
-app, and a 2 px line along the bottom edge. Each frame keeps its size and the
-1 px it leaves clear on each side, so the icons stay where they are and
-neighbouring apps sit 2 px apart.
+This script redraws the plain frames for each style in STYLES below, each a
+tint behind the app and a 2 px line along the bottom edge:
+
+  underline   the Plasma Style's own widgets/tasks.svg
+  background  theme/variants/tasks-background.svg, which the installer puts
+              in its place when chosen
+
+The background one starts as a copy of the underline one. Each frame keeps
+its size and the 1 px it leaves clear on each side, so the icons stay where
+they are and neighbouring apps sit 2 px apart. Each file is marked with its
+style (<desc id="protea-task-style">), which is how the installer tells
+which one is installed.
 
 It also gives top and side panels a copy of their own hover frame for each
 "<state>-hover". Plasma tries the plain "<state>-hover" before
@@ -26,28 +34,46 @@ Needs Inkscape, to measure where the frames are in the file.
 
 import copy
 import math
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-SVG_FILE = Path(__file__).resolve().parent.parent / "theme/desktoptheme/protea-dark/widgets/tasks.svg"
+REPO = Path(__file__).resolve().parent.parent
+UNDERLINE_FILE = REPO / "theme/desktoptheme/protea-dark/widgets/tasks.svg"
+BACKGROUND_FILE = REPO / "theme/variants/tasks-background.svg"
 
-# Each frame: (tint, line), each a color scheme color (by its ColorScheme-
-# class) and an opacity. The line runs along the bottom edge.
-STATES = {
-    "normal": (("Text", 0), ("Text", 0.35)),
-    "focus": (("ButtonFocus", 0.45), ("ButtonFocus", 0.90)),
-    "minimized": (("Text", 0), ("Text", 0.35)),
-    "attention": (("NeutralText", 0), ("NeutralText", 0.80)),
-    # The hover frames keep the state's line, with a grey tint behind it; only
-    # the focused app gets the accent.
-    "focus-hover": (("ButtonHover", 0.34), ("ButtonHover", 1)),
-    "normal-hover": (("Text", 0.15), ("Text", 0.35)),
-    "minimized-hover": (("Text", 0.15), ("Text", 0.35)),
-    "attention-hover": (("Text", 0.15), ("NeutralText", 0.80)),
-    # Only used if a state above has no hover frame of its own.
-    "hover": (("Text", 0.15), ("Text", 0.35)),
+# Each style's frames: (tint, line), each a color scheme color (by its
+# ColorScheme- class) and an opacity. The line runs along the bottom edge.
+STYLES = {
+    # A line under each open app; only the focused app is tinted.
+    "underline": {
+        "normal": (("Text", 0), ("Text", 0.35)),
+        "focus": (("ButtonFocus", 0.45), ("ButtonFocus", 0.90)),
+        "minimized": (("Text", 0), ("Text", 0.35)),
+        "attention": (("NeutralText", 0), ("NeutralText", 0.80)),
+        # The hover frames keep the state's line, with a grey tint behind
+        # it; only the focused app gets the accent.
+        "focus-hover": (("ButtonHover", 0.34), ("ButtonHover", 1)),
+        "normal-hover": (("Text", 0.15), ("Text", 0.35)),
+        "minimized-hover": (("Text", 0.15), ("Text", 0.35)),
+        "attention-hover": (("Text", 0.15), ("NeutralText", 0.80)),
+        # Only used if a state above has no hover frame of its own.
+        "hover": (("Text", 0.15), ("Text", 0.35)),
+    },
+    # A tint behind each open app, with no line until the pointer is over it.
+    "background": {
+        "normal": (("Text", 0.15), ("Text", 0.15)),
+        "focus": (("ButtonFocus", 0.45), ("ButtonFocus", 0.45)),
+        "minimized": (("Text", 0.15), ("Text", 0.15)),
+        "attention": (("NeutralText", 0.35), ("NeutralText", 0.35)),
+        "focus-hover": (("ButtonFocus", 0.45), ("ButtonHover", 1)),
+        "normal-hover": (("Text", 0.15), ("Text", 0.40)),
+        "minimized-hover": (("Text", 0.15), ("Text", 0.40)),
+        "attention-hover": (("NeutralText", 0.35), ("NeutralText", 0.80)),
+        "hover": (("Text", 0.15), ("Text", 0.40)),
+    },
 }
 
 LINE = 2   # px, the line's height
@@ -59,6 +85,8 @@ SHIPPED = ["focus", "normal", "hover", "attention", "minimized"]
 EDGES = ["north", "east", "west"]
 
 PIECES = ["topleft", "top", "topright", "left", "center", "right", "bottomleft", "bottom", "bottomright"]
+
+MARK = "protea-task-style"
 
 SVG = "http://www.w3.org/2000/svg"
 INDENT = "    "
@@ -125,17 +153,18 @@ def piece(prefix, name, box, tint, line):
     return g
 
 
-def place(root, el, old):
-    """Put el where old was, or at the end of the file."""
+def place(root, el, old, at=None):
+    """Put el where old was, or at index at, or at the end of the file."""
     if old is not None:
-        i = list(root).index(old)
+        at = list(root).index(old)
         el.tail = old.tail
         root.remove(old)
-        root.insert(i, el)
+    elif at is not None:
+        el.tail = "\n" + INDENT
     else:
         root[-1].tail = "\n" + INDENT
         el.tail = "\n"
-        root.append(el)
+    root.insert(len(root) if at is None else at, el)
     ET.indent(el, space=INDENT, level=1)
 
 
@@ -145,7 +174,8 @@ def translate(el, dx, dy):
         el.set("transform", f"translate({num(dx)},{num(dy)})" + (f" {t}" if t else ""))
 
 
-def redraw(svg):
+def redraw(svg, style):
+    states = STYLES[style]
     boxes = query(svg)
     tree = load(svg)
     root = tree.getroot()
@@ -153,17 +183,22 @@ def redraw(svg):
         sys.exit(f"{svg}: expected a viewBox at 0,0, got {root.get('viewBox')}")
     by_id = {e.get("id"): e for e in root if e.get("id")}
 
+    # The style's mark, after the stylesheet.
+    mark = ET.Element(q("desc"), {"id": MARK})
+    mark.text = style
+    place(root, mark, by_id.get(MARK), at=list(root).index(by_id["current-color-scheme"]) + 1)
+
     def frame_box(prefix):
         return {p: boxes[f"{prefix}-{p}"] for p in PIECES}
 
     # New frames go in rows below Breeze's, spaced like them.
     tops = sorted(boxes[f"{s}-top"][1] for s in SHIPPED)
     pitch = tops[1] - tops[0]
-    added = [s for s in STATES if s not in SHIPPED]
+    added = [s for s in states if s not in SHIPPED]
     row = {s: tops[-1] + pitch * (i + 1) for i, s in enumerate(added)}
 
     normal = frame_box("normal")
-    for state, (tint, line) in STATES.items():
+    for state, (tint, line) in states.items():
         if state in SHIPPED:
             pieces = frame_box(state)
         else:
@@ -195,11 +230,15 @@ def redraw(svg):
 
 
 def main():
-    if len(sys.argv) > 2:
+    if len(sys.argv) not in (1, 3):
         sys.exit(__doc__)
-    svg = Path(sys.argv[1]) if len(sys.argv) == 2 else SVG_FILE
-    redraw(svg)
-    print(f"redrew the task frames in {svg}")
+    underline, background = (Path(p) for p in sys.argv[1:]) if len(sys.argv) == 3 else (UNDERLINE_FILE, BACKGROUND_FILE)
+    redraw(underline, "underline")
+    print(f"redrew the underline task frames in {underline}")
+    background.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(underline, background)
+    redraw(background, "background")
+    print(f"redrew the background task frames in {background}")
 
 
 if __name__ == "__main__":

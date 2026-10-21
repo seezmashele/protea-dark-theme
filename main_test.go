@@ -20,6 +20,7 @@ func TestEmbeddedFiles(t *testing.T) {
 		"theme/look-and-feel/" + system.GlobalThemeID + "/metadata.json",
 		"theme/desktoptheme/" + system.PlasmaStyleID + "/metadata.json",
 		"theme/color-schemes/" + system.ColorSchemeID + ".colors",
+		"theme/variants/tasks-background.svg",
 		"cpp/CMakeLists.txt",
 		"cpp/build-info.in",
 		"cpp/kstyle/proteastyle.cpp",
@@ -84,32 +85,44 @@ func TestCornerRadiusMatches(t *testing.T) {
 	}
 }
 
+// The task manager styles' frames, drawn by scripts/task-frames.py.
+var taskStyles = map[string]string{
+	"underline":  "theme/desktoptheme/" + system.PlasmaStyleID + "/widgets/tasks.svg",
+	"background": "theme/variants/tasks-background.svg",
+}
+
 // When the pointer is over an app, the task manager looks for
 // "<state>-hover" before "<edge>-hover" (taskPrefixHovered in TaskTools.js),
 // so each plain "<state>-hover" frame drawn for bottom panels needs a copy
 // for every edge with its own hover frame, or top and side panels get the
 // bottom panel's hover.
 func TestTaskHoverFramesPerEdge(t *testing.T) {
-	data, err := fs.ReadFile(os.DirFS("."), "theme/desktoptheme/"+system.PlasmaStyleID+"/widgets/tasks.svg")
-	if err != nil {
-		t.Fatal(err)
-	}
-	ids := map[string]bool{}
-	for _, m := range regexp.MustCompile(` id="([^"]+)"`).FindAllSubmatch(data, -1) {
-		ids[string(m[1])] = true
-	}
-	pieces := []string{"topleft", "top", "topright", "left", "center", "right", "bottomleft", "bottom", "bottomright"}
-	for _, state := range []string{"normal", "focus", "minimized", "attention", "launcher"} {
-		if !ids[state+"-hover-center"] {
-			continue
+	for style, f := range taskStyles {
+		data, err := fs.ReadFile(os.DirFS("."), f)
+		if err != nil {
+			t.Fatal(err)
 		}
-		for _, edge := range []string{"north", "east", "west"} {
-			if !ids[edge+"-hover-center"] {
+		// The installer tells the styles apart by this mark.
+		if mark := `<desc id="protea-task-style">` + style + `</desc>`; !bytes.Contains(data, []byte(mark)) {
+			t.Errorf("%s: no %s; run scripts/task-frames.py", f, mark)
+		}
+		ids := map[string]bool{}
+		for _, m := range regexp.MustCompile(` id="([^"]+)"`).FindAllSubmatch(data, -1) {
+			ids[string(m[1])] = true
+		}
+		pieces := []string{"topleft", "top", "topright", "left", "center", "right", "bottomleft", "bottom", "bottomright"}
+		for _, state := range []string{"normal", "focus", "minimized", "attention", "launcher"} {
+			if !ids[state+"-hover-center"] {
 				continue
 			}
-			for _, p := range pieces {
-				if id := edge + "-" + state + "-hover-" + p; !ids[id] {
-					t.Errorf("tasks.svg has %s-hover but no %s; run scripts/task-frames.py", state, id)
+			for _, edge := range []string{"north", "east", "west"} {
+				if !ids[edge+"-hover-center"] {
+					continue
+				}
+				for _, p := range pieces {
+					if id := edge + "-" + state + "-hover-" + p; !ids[id] {
+						t.Errorf("%s has %s-hover but no %s; run scripts/task-frames.py", f, state, id)
+					}
 				}
 			}
 		}

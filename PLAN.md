@@ -229,6 +229,7 @@ Upgrade:    Welcome → Review → Prepare
    - For an existing install, it starts on the installed accent.
    - If Protea Dark is in use and the accent changes, it notes that the theme must be applied again to show it. Plasma copies a color scheme's colors when it's applied.
 3. **Options.** The theme files (Global Theme, Plasma Style, color scheme) always go into `~/.local/share/` (or `$XDG_DATA_HOME`). Optionally:
+   - **Task manager: underline** (the default) or **Task manager: background**: how the task manager marks open apps (see Design → Task manager). It only picks which `widgets/tasks.svg` is installed, so it needs no C++ and no rebuild. For an existing install it starts on the installed style, read from the mark in the installed file. The Review page names the style in the install step.
    - **C++ components**: a single option, unticked by default, that installs both the application style and the window decoration. For an existing install it starts as installed or not.
    - **Rectangular** (the default) or **Round window buttons**: the window decoration's button shape, preselected with the current setting and grayed out without the C++ components. Installing writes it to `~/.config/protearc` and sends KWin the `reloadConfig` signal System Settings sends. Changing only the shape doesn't rebuild anything.
    - **Build again**: only shown when the C++ components are installed, for rebuilding after changing the C++.
@@ -246,7 +247,7 @@ Upgrade:    Welcome → Review → Prepare
    - or, to keep icons and title bars, only **Colors** and **Plasma Style** → Protea Dark
    - **Window Decorations** and **Application Style** → Protea, when the C++ components are installed. A reminder in the warning color says to do this after applying the Global Theme, and again whenever it's reapplied, because the Global Theme sets Breeze's.
 
-   After a build, a reminder in the warning color says to log out and back in: KWin keeps the decoration it started with until then.
+   After a build, a reminder in the warning color says to log out and back in: KWin keeps the decoration it started with until then. After changing the task manager style while Protea's Plasma Style is in use, one says the task manager may keep its old look until then.
 
    Enter starts over.
 
@@ -355,7 +356,9 @@ The title bar, and the window borders when there are any, are drawn at **80% opa
 
 ### Task manager
 
-In a bottom panel, each open app is marked by a **2 px line along the bottom edge**. Only the focused app, and an app under the pointer, get a tint behind them. Breeze tints every open app and draws a 3 px line along the top.
+There are two styles, chosen in the installer. Breeze tints every open app and draws a 3 px line along the top.
+
+**Underline** (the default): in a bottom panel, each open app is marked by a **2 px line along the bottom edge**. Only the focused app, and an app under the pointer, get a tint behind them.
 
 | App | At rest | Under the pointer |
 |---|---|---|
@@ -365,7 +368,18 @@ In a bottom panel, each open app is marked by a **2 px line along the bottom edg
 | Needs attention | orange line (`ForegroundNeutral`, 80%) | grey tint behind the orange line |
 | Pinned, not running | nothing | nothing; the icon brightens |
 
-- **Where:** the frames in `widgets/tasks.svg`, drawn by [scripts/task-frames.py](scripts/task-frames.py) from its `STATES` table. Change a color or opacity there and rerun it; it needs Inkscape to measure the file.
+**Background:** each open app gets a **see-through tint** behind it, with square corners. The 2 px line along the bottom only appears under the pointer.
+
+| App | At rest | Under the pointer |
+|---|---|---|
+| Running | grey tint (text color, 15%) | the tint, plus a grey line (40%) |
+| Minimized | the same as running | the same as running |
+| Focused | accent tint 45% | the tint, plus an accent line (100%) |
+| Needs attention | orange tint 35% | the tint, plus an orange line (80%) |
+| Pinned, not running | nothing | nothing; the icon brightens |
+
+- **Where:** the underline style is the Plasma Style's own `widgets/tasks.svg`; the background style is `theme/variants/tasks-background.svg`, which the installer copies over it when chosen. [scripts/task-frames.py](scripts/task-frames.py) draws both from its `STYLES` table, starting the background file as a copy of the underline one. Change a color or opacity there and rerun it; it needs Inkscape to measure the files.
+- **Telling them apart:** the script marks each file with its style (`<desc id="protea-task-style">`). The installer reads the mark from the installed file to start on the installed style.
 - **Each state has its own hover frame** (`focus-hover`, `normal-hover`, `minimized-hover`, `attention-hover`), so an app keeps its line under the pointer. The task manager looks for `<state>-hover` before the shared `hover`, which is now only a fallback.
 - **Top and side panels keep Breeze's look**, from their `north-`, `east-` and `west-` frames. The task manager tries the plain `<state>-hover` before `<edge>-hover`, so the script gives each edge a copy of its own hover frame under each new name. `TestTaskHoverFramesPerEdge` fails if one is missing.
 - **2 px between apps.** The task manager puts apps right next to each other, and each frame leaves 1 px clear on each side. A 1 px gap would need the clear column on one side only, which leaves the frame half a pixel off the icon, since Plasma always centers the icon in its slot.
@@ -389,11 +403,12 @@ protea-theme/
 │   ├── import-upstream.sh      imports pristine Breeze sources at a given tag
 │   ├── rebrand-cpp.py          renames an imported Breeze C++ tree to Protea
 │   ├── frame-radius.py         redraws the Plasma Style's panel, popup and tooltip corners at a radius
-│   └── task-frames.py          redraws the task manager's lines and hover tints in widgets/tasks.svg
+│   └── task-frames.py          redraws the task manager's frames for both styles
 ├── theme/                      core theme
 │   ├── color-schemes/
 │   ├── desktoptheme/
 │   ├── look-and-feel/
+│   ├── variants/               files the installer swaps into the Plasma Style by choice (the background task manager)
 │   └── LICENSES/               license texts from libplasma + plasma-workspace
 ├── cpp/                        forked breeze repo (kstyle, kdecoration, libproteacommon)
 ├── packaging/arch/             PKGBUILD for the C++ part
@@ -438,7 +453,7 @@ When Plasma ships a new feature release:
 Protea keeps Breeze's licenses and copyright headers.
 
 - `cpp/`: GPL-2.0-or-later and others (see `cpp/LICENSES/`).
-- Plasma Style: LGPL.
+- Plasma Style, and its variants in `theme/variants/`: LGPL.
 - Global Theme: GPL-2.0-or-later.
 - Color scheme: per its SPDX headers.
 

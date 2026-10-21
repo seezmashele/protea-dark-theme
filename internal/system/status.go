@@ -12,6 +12,7 @@ type Status struct {
 
 	CoreInstalled     bool
 	Accent            string // the installed color scheme's accent, #rrggbb
+	TaskStyle         string // the installed task manager style, TasksUnderline or TasksBackground; "" if unknown
 	GlobalThemeActive bool
 	ColorsActive      bool
 	PlasmaStyleActive bool
@@ -62,6 +63,36 @@ var coreFiles = []struct{ src, dest string }{
 	{"theme/color-schemes/" + ColorSchemeID + ".colors", "color-schemes/" + ColorSchemeID + ".colors"},
 }
 
+// How the task manager marks open apps: a line under each one, or a tint
+// behind each one. The Plasma Style's own widgets/tasks.svg is the underline
+// style.
+const (
+	TasksUnderline  = "underline"
+	TasksBackground = "background"
+)
+
+// taskStyleFiles are the embedded tasks.svg that replace the Plasma Style's
+// own for the other styles, drawn by scripts/task-frames.py.
+var taskStyleFiles = map[string]string{TasksBackground: "theme/variants/tasks-background.svg"}
+
+// tasksSVG is the installed task manager frames, relative to DataHome.
+var tasksSVG = "plasma/desktoptheme/" + PlasmaStyleID + "/widgets/tasks.svg"
+
+// installedTaskStyle is the style scripts/task-frames.py marked the
+// installed tasks.svg with, or "" if it isn't installed or has no mark.
+func installedTaskStyle() string {
+	data, err := os.ReadFile(filepath.Join(DataHome(), tasksSVG))
+	if err != nil {
+		return ""
+	}
+	_, after, ok := strings.Cut(string(data), `<desc id="protea-task-style">`)
+	if !ok {
+		return ""
+	}
+	style, _, _ := strings.Cut(after, "<")
+	return style
+}
+
 func coreInstalled() bool {
 	for _, c := range coreFiles {
 		if _, err := os.Stat(filepath.Join(DataHome(), c.dest)); err != nil {
@@ -85,7 +116,7 @@ func pacmanVersion(pkg string) string {
 
 // ReadStatus inspects the system. It only reads.
 func ReadStatus() Status {
-	s := Status{CoreInstalled: coreInstalled(), Accent: installedAccent()}
+	s := Status{CoreInstalled: coreInstalled(), Accent: installedAccent(), TaskStyle: installedTaskStyle()}
 
 	if out, err := query("plasmashell", "--version"); err == nil {
 		s.Plasma = strings.TrimPrefix(out, "plasmashell ")
