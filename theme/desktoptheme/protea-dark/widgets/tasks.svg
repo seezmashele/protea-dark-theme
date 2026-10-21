@@ -476,41 +476,41 @@
     </g>
     <g id="hover-left">
         <rect x="1" y="67" width="4" height="13" fill="none"/>
-        <rect x="2" y="67" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="67" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="hover-right">
         <rect x="31" y="67" width="4" height="13" fill="none"/>
-        <rect x="31" y="67" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="67" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="hover-center">
         <rect x="5" y="67" width="26" height="13" fill="none"/>
-        <rect x="5" y="67" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="67" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="hover-top">
         <rect x="5" y="64" width="26" height="3" fill="none"/>
-        <rect x="5" y="64" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="64" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="hover-topleft">
         <rect x="1" y="64" width="4" height="3" fill="none"/>
-        <rect x="2" y="64" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="64" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="hover-topright">
         <rect x="31" y="64" width="4" height="3" fill="none"/>
-        <rect x="31" y="64" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="64" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="hover-bottom">
         <rect x="5" y="80" width="26" height="3" fill="none"/>
-        <rect x="5" y="80" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="80" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="5" y="81" width="26" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="hover-bottomleft">
         <rect x="1" y="80" width="4" height="3" fill="none"/>
-        <rect x="2" y="80" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="80" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="2" y="81" width="3" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="hover-bottomright">
         <rect x="31" y="80" width="4" height="3" fill="none"/>
-        <rect x="31" y="80" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="80" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="31" y="81" width="3" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="north-hover-left" transform="matrix(-1 0 0 1 72 54.999993)" opacity=".34">
@@ -993,119 +993,119 @@
     </g>
     <g id="normal-hover-topleft">
         <rect x="1" y="148" width="4" height="3" fill="none"/>
-        <rect x="2" y="148" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="148" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="normal-hover-top">
         <rect x="5" y="148" width="26" height="3" fill="none"/>
-        <rect x="5" y="148" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="148" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="normal-hover-topright">
         <rect x="31" y="148" width="4" height="3" fill="none"/>
-        <rect x="31" y="148" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="148" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="normal-hover-left">
         <rect x="1" y="151" width="4" height="13" fill="none"/>
-        <rect x="2" y="151" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="151" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="normal-hover-center">
         <rect x="5" y="151" width="26" height="13" fill="none"/>
-        <rect x="5" y="151" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="151" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="normal-hover-right">
         <rect x="31" y="151" width="4" height="13" fill="none"/>
-        <rect x="31" y="151" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="151" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="normal-hover-bottomleft">
         <rect x="1" y="164" width="4" height="3" fill="none"/>
-        <rect x="2" y="164" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="164" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="2" y="165" width="3" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="normal-hover-bottom">
         <rect x="5" y="164" width="26" height="3" fill="none"/>
-        <rect x="5" y="164" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="164" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="5" y="165" width="26" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="normal-hover-bottomright">
         <rect x="31" y="164" width="4" height="3" fill="none"/>
-        <rect x="31" y="164" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="164" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="31" y="165" width="3" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="minimized-hover-topleft">
         <rect x="1" y="169" width="4" height="3" fill="none"/>
-        <rect x="2" y="169" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="169" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="minimized-hover-top">
         <rect x="5" y="169" width="26" height="3" fill="none"/>
-        <rect x="5" y="169" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="169" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="minimized-hover-topright">
         <rect x="31" y="169" width="4" height="3" fill="none"/>
-        <rect x="31" y="169" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="169" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="minimized-hover-left">
         <rect x="1" y="172" width="4" height="13" fill="none"/>
-        <rect x="2" y="172" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="172" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="minimized-hover-center">
         <rect x="5" y="172" width="26" height="13" fill="none"/>
-        <rect x="5" y="172" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="172" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="minimized-hover-right">
         <rect x="31" y="172" width="4" height="13" fill="none"/>
-        <rect x="31" y="172" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="172" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="minimized-hover-bottomleft">
         <rect x="1" y="185" width="4" height="3" fill="none"/>
-        <rect x="2" y="185" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="185" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="2" y="186" width="3" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="minimized-hover-bottom">
         <rect x="5" y="185" width="26" height="3" fill="none"/>
-        <rect x="5" y="185" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="185" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="5" y="186" width="26" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="minimized-hover-bottomright">
         <rect x="31" y="185" width="4" height="3" fill="none"/>
-        <rect x="31" y="185" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="185" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="31" y="186" width="3" height="2" class="ColorScheme-Text" fill="currentColor" opacity="0.35"/>
     </g>
     <g id="attention-hover-topleft">
         <rect x="1" y="190" width="4" height="3" fill="none"/>
-        <rect x="2" y="190" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="190" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="attention-hover-top">
         <rect x="5" y="190" width="26" height="3" fill="none"/>
-        <rect x="5" y="190" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="190" width="26" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="attention-hover-topright">
         <rect x="31" y="190" width="4" height="3" fill="none"/>
-        <rect x="31" y="190" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="190" width="3" height="3" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="attention-hover-left">
         <rect x="1" y="193" width="4" height="13" fill="none"/>
-        <rect x="2" y="193" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="193" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="attention-hover-center">
         <rect x="5" y="193" width="26" height="13" fill="none"/>
-        <rect x="5" y="193" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="193" width="26" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="attention-hover-right">
         <rect x="31" y="193" width="4" height="13" fill="none"/>
-        <rect x="31" y="193" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="193" width="3" height="13" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
     </g>
     <g id="attention-hover-bottomleft">
         <rect x="1" y="206" width="4" height="3" fill="none"/>
-        <rect x="2" y="206" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="2" y="206" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="2" y="207" width="3" height="2" class="ColorScheme-NeutralText" fill="currentColor" opacity="0.8"/>
     </g>
     <g id="attention-hover-bottom">
         <rect x="5" y="206" width="26" height="3" fill="none"/>
-        <rect x="5" y="206" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="5" y="206" width="26" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="5" y="207" width="26" height="2" class="ColorScheme-NeutralText" fill="currentColor" opacity="0.8"/>
     </g>
     <g id="attention-hover-bottomright">
         <rect x="31" y="206" width="4" height="3" fill="none"/>
-        <rect x="31" y="206" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.15"/>
+        <rect x="31" y="206" width="3" height="1" class="ColorScheme-Text" fill="currentColor" opacity="0.1"/>
         <rect x="31" y="207" width="3" height="2" class="ColorScheme-NeutralText" fill="currentColor" opacity="0.8"/>
     </g>
     <g transform="translate(0,63) matrix(-1 0 0 -1 72 84.999994)" opacity=".34" id="north-focus-hover-topleft">

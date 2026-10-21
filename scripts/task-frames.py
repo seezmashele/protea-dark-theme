@@ -56,23 +56,23 @@ STYLES = {
         # The hover frames keep the state's line, with a grey tint behind
         # it; only the focused app gets the accent.
         "focus-hover": (("ButtonHover", 0.34), ("ButtonHover", 1)),
-        "normal-hover": (("Text", 0.15), ("Text", 0.35)),
-        "minimized-hover": (("Text", 0.15), ("Text", 0.35)),
-        "attention-hover": (("Text", 0.15), ("NeutralText", 0.80)),
+        "normal-hover": (("Text", 0.10), ("Text", 0.35)),
+        "minimized-hover": (("Text", 0.10), ("Text", 0.35)),
+        "attention-hover": (("Text", 0.10), ("NeutralText", 0.80)),
         # Only used if a state above has no hover frame of its own.
-        "hover": (("Text", 0.15), ("Text", 0.35)),
+        "hover": (("Text", 0.10), ("Text", 0.35)),
     },
     # A tint behind each open app, with no line until the pointer is over it.
     "background": {
-        "normal": (("Text", 0.15), ("Text", 0.15)),
+        "normal": (("Text", 0.10), ("Text", 0.10)),
         "focus": (("ButtonFocus", 0.45), ("ButtonFocus", 0.45)),
-        "minimized": (("Text", 0.15), ("Text", 0.15)),
+        "minimized": (("Text", 0.10), ("Text", 0.10)),
         "attention": (("NeutralText", 0.35), ("NeutralText", 0.35)),
         "focus-hover": (("ButtonFocus", 0.45), ("ButtonHover", 1)),
-        "normal-hover": (("Text", 0.15), ("Text", 0.40)),
-        "minimized-hover": (("Text", 0.15), ("Text", 0.40)),
+        "normal-hover": (("Text", 0.10), ("Text", 0.40)),
+        "minimized-hover": (("Text", 0.10), ("Text", 0.40)),
         "attention-hover": (("NeutralText", 0.35), ("NeutralText", 0.80)),
-        "hover": (("Text", 0.15), ("Text", 0.40)),
+        "hover": (("Text", 0.10), ("Text", 0.40)),
     },
 }
 
