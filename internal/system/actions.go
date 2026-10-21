@@ -10,9 +10,10 @@ import (
 )
 
 // InstallCore copies the core theme into DataHome, replacing any older
-// copy, puts the task manager style (TasksUnderline or TasksBackground) in
-// place, and writes the accent color (#rrggbb) into its color files.
-func (r *Runner) InstallCore(files fs.FS, accent, tasks string) error {
+// copy, puts the task manager style (one of TaskStyles) and tab style (one of
+// TabStyles) in place, and writes the accent color (#rrggbb) into its color
+// files.
+func (r *Runner) InstallCore(files fs.FS, accent, tasks, tabs string) error {
 	for _, c := range coreFiles {
 		dest := filepath.Join(DataHome(), c.dest)
 		if r.DryRun {
@@ -32,23 +33,26 @@ func (r *Runner) InstallCore(files fs.FS, accent, tasks string) error {
 			return err
 		}
 	}
-	if err := r.writeTaskStyle(files, tasks); err != nil {
+	if err := r.writeVariant(files, TaskStyles, tasks); err != nil {
+		return err
+	}
+	if err := r.writeVariant(files, TabStyles, tabs); err != nil {
 		return err
 	}
 	return r.writeAccent(accent)
 }
 
-// writeTaskStyle puts the style's tasks.svg in place of the Plasma Style's
-// own, which is the underline style.
-func (r *Runner) writeTaskStyle(files fs.FS, style string) error {
-	if style == TasksUnderline {
+// writeVariant puts the style's file in place of the Plasma Style's own,
+// which is v's default style.
+func (r *Runner) writeVariant(files fs.FS, v Variant, style string) error {
+	if style == v.Default {
 		return nil
 	}
-	src, ok := taskStyleFiles[style]
+	src, ok := v.others[style]
 	if !ok {
-		return fmt.Errorf("unknown task manager style %q", style)
+		return fmt.Errorf("unknown style %q for %s", style, v.file)
 	}
-	dest := filepath.Join(DataHome(), tasksSVG)
+	dest := v.path()
 	if r.DryRun {
 		r.logf("would copy %s to %s", src, dest)
 		return nil

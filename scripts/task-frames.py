@@ -50,12 +50,12 @@ STYLES = {
     # A line under each open app; only the focused app is tinted.
     "underline": {
         "normal": (("Text", 0), ("Text", 0.35)),
-        "focus": (("ButtonFocus", 0.45), ("ButtonFocus", 0.90)),
+        "focus": (("ButtonFocus", 0.25), ("ButtonFocus", 0.90)),
         "minimized": (("Text", 0), ("Text", 0.35)),
         "attention": (("NeutralText", 0), ("NeutralText", 0.80)),
         # The hover frames keep the state's line, with a grey tint behind
         # it; only the focused app gets the accent.
-        "focus-hover": (("ButtonHover", 0.34), ("ButtonHover", 1)),
+        "focus-hover": (("ButtonHover", 0.30), ("ButtonHover", 1)),
         "normal-hover": (("Text", 0.10), ("Text", 0.35)),
         "minimized-hover": (("Text", 0.10), ("Text", 0.35)),
         "attention-hover": (("Text", 0.10), ("NeutralText", 0.80)),

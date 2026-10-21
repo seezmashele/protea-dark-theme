@@ -13,6 +13,7 @@ type Status struct {
 	CoreInstalled     bool
 	Accent            string // the installed color scheme's accent, #rrggbb
 	TaskStyle         string // the installed task manager style, TasksUnderline or TasksBackground; "" if unknown
+	TabStyle          string // how installed widgets mark the selected tab, TabsNone or TabsUnderline; "" if unknown
 	GlobalThemeActive bool
 	ColorsActive      bool
 	PlasmaStyleActive bool
@@ -63,29 +64,57 @@ var coreFiles = []struct{ src, dest string }{
 	{"theme/color-schemes/" + ColorSchemeID + ".colors", "color-schemes/" + ColorSchemeID + ".colors"},
 }
 
+// A Variant is a Plasma Style file that comes in more than one style, chosen
+// in the installer. The Plasma Style's own copy is the default style, and
+// the others replace it. The script that draws them marks each file with its
+// style in a <desc> element, which is how the installed style is told apart.
+type Variant struct {
+	file    string            // relative to the Plasma Style's folder
+	mark    string            // id of the <desc> holding the style
+	Default string            // the style of the Plasma Style's own copy
+	others  map[string]string // the other styles' embedded files
+}
+
 // How the task manager marks open apps: a line under each one, or a tint
-// behind each one. The Plasma Style's own widgets/tasks.svg is the underline
-// style.
+// behind each one. Drawn by scripts/task-frames.py.
 const (
 	TasksUnderline  = "underline"
 	TasksBackground = "background"
 )
 
-// taskStyleFiles are the embedded tasks.svg that replace the Plasma Style's
-// own for the other styles, drawn by scripts/task-frames.py.
-var taskStyleFiles = map[string]string{TasksBackground: "theme/variants/tasks-background.svg"}
+// How widgets mark the selected tab: not at all, or a short line under it.
+// Drawn by scripts/widget-frames.py.
+const (
+	TabsNone      = "none"
+	TabsUnderline = "underline"
+)
 
-// tasksSVG is the installed task manager frames, relative to DataHome.
-var tasksSVG = "plasma/desktoptheme/" + PlasmaStyleID + "/widgets/tasks.svg"
+var (
+	TaskStyles = Variant{file: "widgets/tasks.svg", mark: "protea-task-style", Default: TasksUnderline,
+		others: map[string]string{TasksBackground: "theme/variants/tasks-background.svg"}}
+	TabStyles = Variant{file: "widgets/tabbar.svg", mark: "protea-tab-style", Default: TabsNone,
+		others: map[string]string{TabsUnderline: "theme/variants/tabbar-underline.svg"}}
+)
 
-// installedTaskStyle is the style scripts/task-frames.py marked the
-// installed tasks.svg with, or "" if it isn't installed or has no mark.
-func installedTaskStyle() string {
-	data, err := os.ReadFile(filepath.Join(DataHome(), tasksSVG))
+// Known reports whether style is one of v's styles.
+func (v Variant) Known(style string) bool {
+	_, ok := v.others[style]
+	return style == v.Default || ok
+}
+
+// path is where the file is installed.
+func (v Variant) path() string {
+	return filepath.Join(DataHome(), "plasma/desktoptheme", PlasmaStyleID, v.file)
+}
+
+// installed is the style the installed file is marked with, or "" if it
+// isn't installed or has no mark.
+func (v Variant) installed() string {
+	data, err := os.ReadFile(v.path())
 	if err != nil {
 		return ""
 	}
-	_, after, ok := strings.Cut(string(data), `<desc id="protea-task-style">`)
+	_, after, ok := strings.Cut(string(data), `<desc id="`+v.mark+`">`)
 	if !ok {
 		return ""
 	}
@@ -116,7 +145,8 @@ func pacmanVersion(pkg string) string {
 
 // ReadStatus inspects the system. It only reads.
 func ReadStatus() Status {
-	s := Status{CoreInstalled: coreInstalled(), Accent: installedAccent(), TaskStyle: installedTaskStyle()}
+	s := Status{CoreInstalled: coreInstalled(), Accent: installedAccent(),
+		TaskStyle: TaskStyles.installed(), TabStyle: TabStyles.installed()}
 
 	if out, err := query("plasmashell", "--version"); err == nil {
 		s.Plasma = strings.TrimPrefix(out, "plasmashell ")

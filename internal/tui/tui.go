@@ -43,7 +43,8 @@ type plan struct {
 	mode mode
 
 	accent     string // accent color for the theme, #rrggbb
-	tasks      string // how the task manager marks open apps, system.TasksUnderline or TasksBackground
+	tasks      string // how the task manager marks open apps, one of system.TaskStyles
+	tabs       string // how widgets mark the selected tab, one of system.TabStyles
 	components bool   // have the C++ components installed
 	rebuild    bool   // build again even if the installed package is current
 	buttons    string // the window decoration's button shape, system.ButtonsRound or ButtonsRectangle
@@ -114,7 +115,7 @@ type Model struct {
 	steps    []step
 	failed   bool
 	reapply  bool // the run changed the accent of a theme that's in use
-	restyled bool // the run changed the task manager style of a Plasma Style that's in use
+	restyled bool // the run changed the task manager or tab style of a Plasma Style that's in use
 	rebuilt  bool // the run built the C++ components
 	spinner  spinner.Model
 }
@@ -278,7 +279,8 @@ func (m *Model) startInstall() tea.Cmd {
 	if installed := m.status.Accent; system.AccentName(installed) != installed {
 		accent = installed // a preset: keep it
 	}
-	m.plan = plan{mode: modeInstall, accent: accent, tasks: taskStyle(m.status), components: m.status.Package != "", buttons: buttonShape(m.status)}
+	m.plan = plan{mode: modeInstall, accent: accent, components: m.status.Package != "", buttons: buttonShape(m.status),
+		tasks: installedStyle(system.TaskStyles, m.status.TaskStyle), tabs: installedStyle(system.TabStyles, m.status.TabStyle)}
 	m.open(pageColors)
 	return nil
 }
@@ -304,13 +306,13 @@ func buttonShape(st system.Status) string {
 	return st.ButtonShape
 }
 
-// taskStyle is the installed task manager style, underline (the theme's
-// own) if there's none or it's unknown.
-func taskStyle(st system.Status) string {
-	if st.TaskStyle == system.TasksBackground {
-		return system.TasksBackground
+// installedStyle is the installed style of v, or v's default if there's
+// none or it's unknown.
+func installedStyle(v system.Variant, installed string) string {
+	if v.Known(installed) {
+		return installed
 	}
-	return system.TasksUnderline
+	return v.Default
 }
 
 func (m *Model) themePresent() bool {
@@ -354,6 +356,10 @@ func (m *Model) rows() []row {
 				hint: "Each open app in the panel gets a line along its bottom edge, and the focused app is tinted with the accent. Pointing at an app tints it."},
 			{label: "Task manager: background", detail: "a tint behind open apps", choice: &m.plan.tasks, value: system.TasksBackground,
 				hint: "Each open app in the panel gets a see-through grey box behind it, and the focused app's is tinted with the accent. Pointing at an app adds a line along its bottom edge."},
+			{label: "Selected tab: no indicator", detail: "nothing marks it", choice: &m.plan.tabs, value: system.TabsNone,
+				hint: "Tabs in widgets don't mark the selected one: no line and no background. Plasma still underlines it while you move between tabs with the keyboard."},
+			{label: "Selected tab: underline", detail: "an accent line under it", choice: &m.plan.tabs, value: system.TabsUnderline,
+				hint: "A 2 px line along the bottom of the selected tab in widgets, the tab's full width, in the accent color at 50%."},
 			{label: "C++ components", check: &m.plan.components,
 				hint: "Protea's application style and window decoration, compiled from source with makepkg. Takes about a minute and asks for your sudo password."},
 		}
@@ -466,8 +472,9 @@ func (m *Model) installSteps() []step {
 	if st.CoreInstalled {
 		copyName = "Update Protea Dark in " + tildePath(system.DataHome())
 	}
-	copyName += ", with the " + system.AccentName(p.accent) + " accent and the " + p.tasks + " task manager"
-	steps = append(steps, step{name: copyName, run: func() error { return m.runner.InstallCore(m.files, p.accent, p.tasks) }})
+	tabs := map[string]string{system.TabsNone: "unmarked", system.TabsUnderline: "underlined"}[p.tabs]
+	copyName += ", with the " + system.AccentName(p.accent) + " accent, the " + p.tasks + " task manager and " + tabs + " tabs"
+	steps = append(steps, step{name: copyName, run: func() error { return m.runner.InstallCore(m.files, p.accent, p.tasks, p.tabs) }})
 
 	switch {
 	case build:
@@ -539,7 +546,8 @@ func (m *Model) accentNeedsReapply() bool {
 // run starts the plan's steps.
 func (m *Model) run() tea.Cmd {
 	m.reapply = m.accentNeedsReapply()
-	m.restyled = m.plan.mode == modeInstall && m.status.CoreInstalled && m.status.PlasmaStyleActive && m.plan.tasks != m.status.TaskStyle
+	m.restyled = m.plan.mode == modeInstall && m.status.CoreInstalled && m.status.PlasmaStyleActive &&
+		(m.plan.tasks != m.status.TaskStyle || m.plan.tabs != m.status.TabStyle)
 	m.rebuilt = m.plan.mode == modeInstall && m.plan.needsBuild(m.status)
 	m.steps, m.failed = m.planSteps(), false
 	m.page = pageRun
@@ -902,7 +910,7 @@ func (m *Model) viewDone(b *strings.Builder) {
 			b.WriteString("\n" + m.wrap("Protea Dark is already in use: apply it again to see the new accent.", warning) + "\n")
 		}
 		if m.restyled {
-			b.WriteString("\n" + m.wrap("The task manager may keep its old look until you log out and back in.", warning) + "\n")
+			b.WriteString("\n" + m.wrap("The task manager and widgets may keep their old look until you log out and back in.", warning) + "\n")
 		}
 		if m.rebuilt {
 			b.WriteString("\n" + m.wrap("Log out and back in to load the new window decoration. KWin keeps the one it started with until then.", warning) + "\n")

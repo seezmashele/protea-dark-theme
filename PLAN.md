@@ -230,6 +230,7 @@ Upgrade:    Welcome → Review → Prepare
    - If Protea Dark is in use and the accent changes, it notes that the theme must be applied again to show it. Plasma copies a color scheme's colors when it's applied.
 3. **Options.** The theme files (Global Theme, Plasma Style, color scheme) always go into `~/.local/share/` (or `$XDG_DATA_HOME`). Optionally:
    - **Task manager: underline** (the default) or **Task manager: background**: how the task manager marks open apps (see Design → Task manager). It only picks which `widgets/tasks.svg` is installed, so it needs no C++ and no rebuild. For an existing install it starts on the installed style, read from the mark in the installed file. The Review page names the style in the install step.
+   - **Selected tab: no indicator** (the default) or **Selected tab: underline**: how tabs in widgets mark the selected one (see Design → Widget popups). Like the task manager style, it only picks which `widgets/tabbar.svg` is installed, starts on the installed style, and is named in the install step ("unmarked tabs" or "underlined tabs").
    - **C++ components**: a single option, unticked by default, that installs both the application style and the window decoration. For an existing install it starts as installed or not.
    - **Rectangular** (the default) or **Round window buttons**: the window decoration's button shape, preselected with the current setting and grayed out without the C++ components. Installing writes it to `~/.config/protearc` and sends KWin the `reloadConfig` signal System Settings sends. Changing only the shape doesn't rebuild anything.
    - **Build again**: only shown when the C++ components are installed, for rebuilding after changing the C++.
@@ -247,7 +248,7 @@ Upgrade:    Welcome → Review → Prepare
    - or, to keep icons and title bars, only **Colors** and **Plasma Style** → Protea Dark
    - **Window Decorations** and **Application Style** → Protea, when the C++ components are installed. A reminder in the warning color says to do this after applying the Global Theme, and again whenever it's reapplied, because the Global Theme sets Breeze's.
 
-   After a build, a reminder in the warning color says to log out and back in: KWin keeps the decoration it started with until then. After changing the task manager style while Protea's Plasma Style is in use, one says the task manager may keep its old look until then.
+   After a build, a reminder in the warning color says to log out and back in: KWin keeps the decoration it started with until then. After changing the task manager or tab style while Protea's Plasma Style is in use, one says the task manager and widgets may keep their old look until then.
 
    Enter starts over.
 
@@ -365,12 +366,13 @@ The title bar, and the window borders when there are any, are drawn at **80% opa
 
 ### Widget popups
 
-Inside Plasma's popups and widgets, there are no separator lines, headers and footers blend into the popup, text fields are borderless and light, hover highlights have no outline, and the selected tab is marked by a grey background instead of an accent line. [scripts/widget-frames.py](scripts/widget-frames.py) draws all of it from the values at its top; change them there and rerun it (it needs Inkscape).
+Inside Plasma's popups and widgets, there are no separator lines, headers and footers blend into the popup, text fields are borderless and light, hover highlights have no outline, and the selected tab isn't marked, unless the installer's underline option is chosen. [scripts/widget-frames.py](scripts/widget-frames.py) draws all of it from the values at its top; change them there and rerun it (it needs Inkscape).
 
 | What | Look | File |
 |---|---|---|
 | Text fields, search bars included | 8 px corners, text color at 10%, no outline. Hover: 1 px outline in the hover color at 50%. Focus: 1 px outline in the focus color with a 2 px halo at 33% outside it (10 px corners) | `widgets/lineedit.svg` |
-| Selected tab, on all four sides | Text color at 10% with 8 px corners; no accent line (Breeze: a 3 px line along its outer edge) | `widgets/tabbar.svg` |
+| Selected tab, on all four sides | Nothing (the default): the frame is empty but keeps its size and hint margins, which are the tab's padding (Breeze: a 3 px accent line along its outer edge). The theme can't recolor tab text or icons: Plasma's `TabButton.qml` draws every label in the text color | `widgets/tabbar.svg` |
+| Selected tab, with the installer's underline option | A 2 px line along the bottom of the tab, its full width with square ends, in the accent color at 50% (`UNDERLINE`). Nothing on a tab is rounded: both tab files use square 1 px corner pieces. The script draws this file from the default one and marks both (`<desc id="protea-tab-style">`) | `theme/variants/tabbar-underline.svg` |
 | Lines between sections | Transparent, keeping their size | `widgets/line.svg` |
 | Line on the left of scrollbars | Not drawn. Plasma's `ScrollBar.qml` draws it itself (1 px, text color at 10%) only when the Plasma Style has a `private-hint-show-separator` element, so that element is removed by hand; the theme can't recolor the line | `widgets/scrollbar.svg` |
 | Popup headers and footers | Transparent, background and line, keeping their size; `scripts/frame-radius.py` keeps them that way (Breeze: the window color at 75% with a line) | `widgets/plasmoidheading.svg` |
@@ -393,7 +395,7 @@ There are two styles, chosen in the installer. Breeze tints every open app and d
 |---|---|---|
 | Running | grey line (text color, 35%) | grey tint (text color, 10%) behind the line |
 | Minimized | the same as running | the same as running |
-| Focused | accent tint 45%, accent line 90% | accent tint 34%, accent line 100% |
+| Focused | accent tint 25%, accent line 90% | accent tint 30%, accent line 100% |
 | Needs attention | orange line (`ForegroundNeutral`, 80%) | grey tint behind the orange line |
 | Pinned, not running | nothing | nothing; the icon brightens |
 
@@ -438,7 +440,7 @@ protea-theme/
 │   ├── color-schemes/
 │   ├── desktoptheme/
 │   ├── look-and-feel/
-│   ├── variants/               files the installer swaps into the Plasma Style by choice (the background task manager)
+│   ├── variants/               files the installer swaps into the Plasma Style by choice (the background task manager, the tab underline)
 │   └── LICENSES/               license texts from libplasma + plasma-workspace
 ├── cpp/                        forked breeze repo (kstyle, kdecoration, libproteacommon)
 ├── packaging/arch/             PKGBUILD for the C++ part
@@ -463,7 +465,7 @@ protea-theme/
 | 7 | Rename the C++ to Protea: all IDs above, the C++ namespace, installed file names and translations; remove unused upstream pieces. Verified: builds clean, no installed file collides with any file on the system, Qt loads the `Protea` style, and the decoration reports ID `org.proteadesktop.protea`. | Done |
 | 8 | Add the `WITH_STYLE` CMake option and write the PKGBUILD. Install the package, verify Breeze and Protea both appear under Application Style and Window Decorations, and test reverting to Breeze. | Option, PKGBUILD and version pin done; all component combinations build, the package has no file conflicts, and the pin was checked in a simulated pacman database. Installing and testing it is up to the repo owner. |
 | 9 | Build the Go installer | Done. Tests cover the switching logic against temporary configs, every page, dry-run mode, and building the package from the embedded sources. Running it for real on the desktop is up to the repo owner. |
-| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 8 px corners on windows, panels, popups, tooltips and inside apps, Windows-style title bar buttons, a see-through, blurred title bar, the task manager's bottom lines, and quieter widget popups (no separator lines, light text fields, grey selected tabs) are done (see Design). |
+| 10 | Design work: colors, SVGs, style metrics (`kstyle/proteametrics.h`), decoration drawing (corner radius in `kdecoration/protea.h`) | In progress. Neutral greys, tooltips, the window outline, 8 px corners on windows, panels, popups, tooltips and inside apps, Windows-style title bar buttons, a see-through, blurred title bar, the task manager's bottom lines, and quieter widget popups (no separator lines, light text fields, unmarked selected tabs) are done (see Design). |
 
 Commit after each step.
 

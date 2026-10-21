@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="744.09448819" height="1052.3622047" id="svg2" version="1.1" inkscape:version="1.2-dev (942b66973d, 2021-09-28, custom)" sodipodi:docname="tabbar.svg">
+    <desc id="protea-tab-style">underline</desc>
+    <sodipodi:namedview id="base" pagecolor="#eff0f1" bordercolor="#666666" borderopacity="1.0" inkscape:pageopacity="1" inkscape:pageshadow="2" inkscape:zoom="2.3790753" inkscape:cx="263.63345" inkscape:cy="693.05746" inkscape:document-units="px" inkscape:current-layer="layer1" showgrid="true" inkscape:snap-global="true" inkscape:window-width="1651" inkscape:window-height="990" inkscape:window-x="25" inkscape:window-y="0" inkscape:window-maximized="0" inkscape:pagecheckerboard="0" inkscape:blackoutopacity="0.0">
+        <inkscape:grid type="xygrid" id="grid2985" empspacing="5" visible="true" enabled="true" snapvisiblegridlinesonly="true" color="#0000ff" opacity="0.01960784" empcolor="#0000ff" empopacity="0.03921569" />
+    </sodipodi:namedview>
+    <defs id="defs4">
+        <style id="current-color-scheme" type="text/css">
+      .ColorScheme-Text {
+        color:#31363b;
+      }
+      .ColorScheme-Background{
+        color:#eff0f1;
+      }
+      .ColorScheme-ViewText {
+        color:#31363b;
+      }
+      .ColorScheme-ViewBackground{
+        color:#fcfcfc;
+      }
+      .ColorScheme-ViewHover {
+        color:#3daee9;
+      }
+      .ColorScheme-ViewFocus{
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#31363b;
+      }
+      .ColorScheme-ButtonBackground{
+        color:#eff0f1;
+      }
+      .ColorScheme-ButtonHover {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonFocus{
+        color:#3daee9;
+      }
+</style>
+    </defs>
+    <metadata id="metadata7">
+        <rdf:RDF>
+            <cc:Work rdf:about="">
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+                <dc:title />
+            </cc:Work>
+        </rdf:RDF>
+    </metadata>
+    <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1">
+        <rect y="467.12659" x="-233.82362" height="41.12067" width="41.362885" id="hint-tile-center" style="opacity:0.875;fill:#008000;fill-opacity:1;stroke:none" />
+        <rect y="437.36215" x="266" height="5" width="6" id="south-active-tab-hint-left-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" id="south-active-tab-hint-right-margin" width="6" height="5" x="360" y="437.36215" />
+        <rect y="431.3621521" x="320.241241455" height="10" width="5" id="south-active-tab-hint-top-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1" id="south-active-tab-hint-bottom-margin" width="5" height="10" x="320.241241455" y="446.3621521" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" id="east-active-tab-hint-bottom-margin" width="6" height="5" x="-366.06082" y="411.41531" transform="matrix(0,-1,1,0,0,0)" />
+        <rect y="411.41531" x="-272.06082" height="5" width="6" id="east-active-tab-hint-top-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" transform="matrix(0,-1,1,0,0,0)" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" id="east-active-tab-hint-left-margin" width="5" height="8" x="-311.81958" y="404.41531" transform="matrix(0,-1,1,0,0,0)" />
+        <rect y="420.41531" x="-311.81958" height="4" width="5" id="east-active-tab-hint-right-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" transform="matrix(0,-1,1,0,0,0)" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" id="west-active-tab-hint-top-margin" width="6" height="5" x="266.36218" y="-213.00003" transform="matrix(0,1,-1,0,0,0)" />
+        <rect y="-213.00003" x="360.36218" height="5" width="6" id="west-active-tab-hint-bottom-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" transform="matrix(0,1,-1,0,0,0)" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" id="west-active-tab-hint-right-margin" width="5" height="8" x="320.60342" y="-220.00003" transform="matrix(0,1,-1,0,0,0)" />
+        <rect y="-204.00003" x="320.60342" height="4" width="5" id="west-active-tab-hint-left-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" transform="matrix(0,1,-1,0,0,0)" />
+        <rect y="-223.36218" x="-373" height="5" width="6" id="north-active-tab-hint-right-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" transform="scale(-1,-1)" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none" id="north-active-tab-hint-left-margin" width="6" height="5" x="-279" y="-223.36218" transform="scale(-1,-1)" />
+        <rect y="-230.362182617" x="-318.758758545" height="10" width="5" id="north-active-tab-hint-bottom-margin" style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1" transform="scale(-1)" />
+        <rect style="fill:#4e9a06;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1" id="north-active-tab-hint-top-margin" width="5" height="10" x="-318.758758545" y="-220.362182617" transform="scale(-1)" />
+        </g>
+  <g id="protea-north-active-tab-frame">
+    <g id="north-active-tab-topleft">
+      <rect x="273" y="210" width="1" height="2" fill="none" />
+    </g>
+    <g id="north-active-tab-topright">
+      <rect x="372" y="210" width="1" height="2" fill="none" />
+    </g>
+    <g id="north-active-tab-bottomleft">
+      <rect x="273" y="232" width="1" height="2" fill="none" />
+      <rect x="273" y="232" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="north-active-tab-bottomright">
+      <rect x="372" y="232" width="1" height="2" fill="none" />
+      <rect x="372" y="232" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="north-active-tab-top">
+      <rect x="274" y="210" width="98" height="2" fill="none" />
+    </g>
+    <g id="north-active-tab-bottom">
+      <rect x="274" y="232" width="98" height="2" fill="none" />
+      <rect x="274" y="232" width="98" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="north-active-tab-left">
+      <rect x="273" y="212" width="1" height="20" fill="none" />
+    </g>
+    <g id="north-active-tab-right">
+      <rect x="372" y="212" width="1" height="20" fill="none" />
+    </g>
+    <g id="north-active-tab-center">
+      <rect x="274" y="212" width="98" height="20" fill="none" />
+    </g>
+  </g>
+  <g id="protea-south-active-tab-frame">
+    <g id="south-active-tab-topleft">
+      <rect x="266" y="431" width="1" height="2" fill="none" />
+    </g>
+    <g id="south-active-tab-topright">
+      <rect x="365" y="431" width="1" height="2" fill="none" />
+    </g>
+    <g id="south-active-tab-bottomleft">
+      <rect x="266" y="448" width="1" height="2" fill="none" />
+      <rect x="266" y="448" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="south-active-tab-bottomright">
+      <rect x="365" y="448" width="1" height="2" fill="none" />
+      <rect x="365" y="448" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="south-active-tab-top">
+      <rect x="267" y="431" width="98" height="2" fill="none" />
+    </g>
+    <g id="south-active-tab-bottom">
+      <rect x="267" y="448" width="98" height="2" fill="none" />
+      <rect x="267" y="448" width="98" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="south-active-tab-left">
+      <rect x="266" y="433" width="1" height="15" fill="none" />
+    </g>
+    <g id="south-active-tab-right">
+      <rect x="365" y="433" width="1" height="15" fill="none" />
+    </g>
+    <g id="south-active-tab-center">
+      <rect x="267" y="433" width="98" height="15" fill="none" />
+    </g>
+  </g>
+  <g id="protea-east-active-tab-frame">
+    <g id="east-active-tab-topleft">
+      <rect x="404" y="266" width="1" height="2" fill="none" />
+    </g>
+    <g id="east-active-tab-topright">
+      <rect x="423" y="266" width="1" height="2" fill="none" />
+    </g>
+    <g id="east-active-tab-bottomleft">
+      <rect x="404" y="364" width="1" height="2" fill="none" />
+      <rect x="404" y="364" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="east-active-tab-bottomright">
+      <rect x="423" y="364" width="1" height="2" fill="none" />
+      <rect x="423" y="364" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="east-active-tab-top">
+      <rect x="405" y="266" width="18" height="2" fill="none" />
+    </g>
+    <g id="east-active-tab-bottom">
+      <rect x="405" y="364" width="18" height="2" fill="none" />
+      <rect x="405" y="364" width="18" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="east-active-tab-left">
+      <rect x="404" y="268" width="1" height="96" fill="none" />
+    </g>
+    <g id="east-active-tab-right">
+      <rect x="423" y="268" width="1" height="96" fill="none" />
+    </g>
+    <g id="east-active-tab-center">
+      <rect x="405" y="268" width="18" height="96" fill="none" />
+    </g>
+  </g>
+  <g id="protea-west-active-tab-frame">
+    <g id="west-active-tab-topleft">
+      <rect x="200" y="266" width="1" height="2" fill="none" />
+    </g>
+    <g id="west-active-tab-topright">
+      <rect x="219" y="266" width="1" height="2" fill="none" />
+    </g>
+    <g id="west-active-tab-bottomleft">
+      <rect x="200" y="364" width="1" height="2" fill="none" />
+      <rect x="200" y="364" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="west-active-tab-bottomright">
+      <rect x="219" y="364" width="1" height="2" fill="none" />
+      <rect x="219" y="364" width="1" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="west-active-tab-top">
+      <rect x="201" y="266" width="18" height="2" fill="none" />
+    </g>
+    <g id="west-active-tab-bottom">
+      <rect x="201" y="364" width="18" height="2" fill="none" />
+      <rect x="201" y="364" width="18" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.5" />
+    </g>
+    <g id="west-active-tab-left">
+      <rect x="200" y="268" width="1" height="96" fill="none" />
+    </g>
+    <g id="west-active-tab-right">
+      <rect x="219" y="268" width="1" height="96" fill="none" />
+    </g>
+    <g id="west-active-tab-center">
+      <rect x="201" y="268" width="18" height="96" fill="none" />
+    </g>
+  </g>
+</svg>

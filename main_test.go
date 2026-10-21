@@ -21,6 +21,7 @@ func TestEmbeddedFiles(t *testing.T) {
 		"theme/desktoptheme/" + system.PlasmaStyleID + "/metadata.json",
 		"theme/color-schemes/" + system.ColorSchemeID + ".colors",
 		"theme/variants/tasks-background.svg",
+		"theme/variants/tabbar-underline.svg",
 		"cpp/CMakeLists.txt",
 		"cpp/build-info.in",
 		"cpp/kstyle/proteastyle.cpp",
@@ -97,6 +98,23 @@ func TestCornerRadiusMatches(t *testing.T) {
 			t.Errorf("%s: %v (redraw it with scripts/frame-radius.py)", f, err)
 		} else if math.Abs(got-want) > 0.01 {
 			t.Errorf("%s: %g px corners, the window decoration has %g px; run scripts/frame-radius.py %g", f, got, want, want)
+		}
+	}
+}
+
+// The selected-tab styles, drawn by scripts/widget-frames.py; the installer
+// tells them apart by their mark.
+func TestTabStylesMarked(t *testing.T) {
+	for style, f := range map[string]string{
+		system.TabsNone:      "theme/desktoptheme/" + system.PlasmaStyleID + "/widgets/tabbar.svg",
+		system.TabsUnderline: "theme/variants/tabbar-underline.svg",
+	} {
+		data, err := fs.ReadFile(os.DirFS("."), f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if mark := `<desc id="protea-tab-style">` + style + `</desc>`; !bytes.Contains(data, []byte(mark)) {
+			t.Errorf("%s: no %s; run scripts/widget-frames.py", f, mark)
 		}
 	}
 }

@@ -173,41 +173,41 @@
     </g>
     <g id="focus-left">
         <rect x="1" y="25" width="4" height="13" fill="none"/>
-        <rect x="2" y="25" width="3" height="13" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="2" y="25" width="3" height="13" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
     </g>
     <g id="focus-right">
         <rect x="31" y="25" width="4" height="13" fill="none"/>
-        <rect x="31" y="25" width="3" height="13" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="31" y="25" width="3" height="13" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
     </g>
     <g id="focus-center">
         <rect x="5" y="25" width="26" height="13" fill="none"/>
-        <rect x="5" y="25" width="26" height="13" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="5" y="25" width="26" height="13" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
     </g>
     <g id="focus-top">
         <rect x="5" y="22" width="26" height="3" fill="none"/>
-        <rect x="5" y="22" width="26" height="3" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="5" y="22" width="26" height="3" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
     </g>
     <g id="focus-topleft">
         <rect x="1" y="22" width="4" height="3" fill="none"/>
-        <rect x="2" y="22" width="3" height="3" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="2" y="22" width="3" height="3" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
     </g>
     <g id="focus-topright">
         <rect x="31" y="22" width="4" height="3" fill="none"/>
-        <rect x="31" y="22" width="3" height="3" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="31" y="22" width="3" height="3" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
     </g>
     <g id="focus-bottom">
         <rect x="5" y="38" width="26" height="3" fill="none"/>
-        <rect x="5" y="38" width="26" height="1" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="5" y="38" width="26" height="1" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
         <rect x="5" y="39" width="26" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.9"/>
     </g>
     <g id="focus-bottomleft">
         <rect x="1" y="38" width="4" height="3" fill="none"/>
-        <rect x="2" y="38" width="3" height="1" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="2" y="38" width="3" height="1" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
         <rect x="2" y="39" width="3" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.9"/>
     </g>
     <g id="focus-bottomright">
         <rect x="31" y="38" width="4" height="3" fill="none"/>
-        <rect x="31" y="38" width="3" height="1" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.45"/>
+        <rect x="31" y="38" width="3" height="1" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.25"/>
         <rect x="31" y="39" width="3" height="2" class="ColorScheme-ButtonFocus" fill="currentColor" opacity="0.9"/>
     </g>
     <g id="north-focus-left" transform="matrix(-1 0 0 1 72 12.999998)" opacity=".45">
@@ -954,41 +954,41 @@
         <rect id="normal-hint-left-margin" x="16" y="58" width="4" height="4" fill="#f0f"/>
     <g id="focus-hover-topleft">
         <rect x="1" y="127" width="4" height="3" fill="none"/>
-        <rect x="2" y="127" width="3" height="3" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="2" y="127" width="3" height="3" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
     </g>
     <g id="focus-hover-top">
         <rect x="5" y="127" width="26" height="3" fill="none"/>
-        <rect x="5" y="127" width="26" height="3" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="5" y="127" width="26" height="3" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
     </g>
     <g id="focus-hover-topright">
         <rect x="31" y="127" width="4" height="3" fill="none"/>
-        <rect x="31" y="127" width="3" height="3" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="31" y="127" width="3" height="3" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
     </g>
     <g id="focus-hover-left">
         <rect x="1" y="130" width="4" height="13" fill="none"/>
-        <rect x="2" y="130" width="3" height="13" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="2" y="130" width="3" height="13" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
     </g>
     <g id="focus-hover-center">
         <rect x="5" y="130" width="26" height="13" fill="none"/>
-        <rect x="5" y="130" width="26" height="13" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="5" y="130" width="26" height="13" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
     </g>
     <g id="focus-hover-right">
         <rect x="31" y="130" width="4" height="13" fill="none"/>
-        <rect x="31" y="130" width="3" height="13" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="31" y="130" width="3" height="13" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
     </g>
     <g id="focus-hover-bottomleft">
         <rect x="1" y="143" width="4" height="3" fill="none"/>
-        <rect x="2" y="143" width="3" height="1" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="2" y="143" width="3" height="1" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
         <rect x="2" y="144" width="3" height="2" class="ColorScheme-ButtonHover" fill="currentColor" opacity="1"/>
     </g>
     <g id="focus-hover-bottom">
         <rect x="5" y="143" width="26" height="3" fill="none"/>
-        <rect x="5" y="143" width="26" height="1" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="5" y="143" width="26" height="1" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
         <rect x="5" y="144" width="26" height="2" class="ColorScheme-ButtonHover" fill="currentColor" opacity="1"/>
     </g>
     <g id="focus-hover-bottomright">
         <rect x="31" y="143" width="4" height="3" fill="none"/>
-        <rect x="31" y="143" width="3" height="1" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.34"/>
+        <rect x="31" y="143" width="3" height="1" class="ColorScheme-ButtonHover" fill="currentColor" opacity="0.3"/>
         <rect x="31" y="144" width="3" height="2" class="ColorScheme-ButtonHover" fill="currentColor" opacity="1"/>
     </g>
     <g id="normal-hover-topleft">

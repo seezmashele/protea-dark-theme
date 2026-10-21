@@ -48,7 +48,7 @@ func TestInstallAndUninstallCore(t *testing.T) {
 	if coreInstalled() {
 		t.Fatal("installed before installing")
 	}
-	if err := r.InstallCore(repoFiles, DefaultAccent, TasksUnderline); err != nil {
+	if err := r.InstallCore(repoFiles, DefaultAccent, TasksUnderline, TabsNone); err != nil {
 		t.Fatal(err)
 	}
 	if !coreInstalled() {
@@ -59,7 +59,7 @@ func TestInstallAndUninstallCore(t *testing.T) {
 		t.Errorf("Global Theme not copied: %v", err)
 	}
 	// Installing again replaces the files.
-	if err := r.InstallCore(repoFiles, DefaultAccent, TasksUnderline); err != nil {
+	if err := r.InstallCore(repoFiles, DefaultAccent, TasksUnderline, TabsNone); err != nil {
 		t.Fatal(err)
 	}
 	if err := r.UninstallCore(); err != nil {
@@ -227,7 +227,7 @@ func TestDryRunChangesNothing(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	_, _ = fakeSetup(t, map[string]string{"kdeglobals": "[General]\nColorScheme=ProteaDark\n"})
 	r := &Runner{DryRun: true}
-	if err := errors.Join(r.InstallCore(repoFiles, DefaultAccent, TasksUnderline), r.RevertCore()); err != nil {
+	if err := errors.Join(r.InstallCore(repoFiles, DefaultAccent, TasksUnderline, TabsNone), r.RevertCore()); err != nil {
 		t.Fatal(err)
 	}
 	if coreInstalled() {
@@ -381,13 +381,13 @@ func TestAccentPresetsAndPreview(t *testing.T) {
 func TestInstallWritesAccent(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	r := &Runner{}
-	if err := r.InstallCore(repoFiles, "#5ba9ae", TasksUnderline); err != nil {
+	if err := r.InstallCore(repoFiles, "#5ba9ae", TasksUnderline, TabsNone); err != nil {
 		t.Fatal(err)
 	}
 	if got := installedAccent(); got != "#5ba9ae" {
 		t.Errorf("installed accent %q, want #5ba9ae", got)
 	}
-	if err := r.InstallCore(repoFiles, "#e0577f", TasksUnderline); err != nil {
+	if err := r.InstallCore(repoFiles, "#e0577f", TasksUnderline, TabsNone); err != nil {
 		t.Fatal(err)
 	}
 	if got := installedAccent(); got != "#e0577f" {
@@ -398,18 +398,37 @@ func TestInstallWritesAccent(t *testing.T) {
 func TestInstallTaskStyle(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	r := &Runner{}
-	if got := installedTaskStyle(); got != "" {
+	if got := TaskStyles.installed(); got != "" {
 		t.Errorf("task manager style %q before installing", got)
 	}
 	for _, style := range []string{TasksBackground, TasksUnderline} {
-		if err := r.InstallCore(repoFiles, DefaultAccent, style); err != nil {
+		if err := r.InstallCore(repoFiles, DefaultAccent, style, TabsNone); err != nil {
 			t.Fatal(err)
 		}
-		if got := installedTaskStyle(); got != style {
+		if got := TaskStyles.installed(); got != style {
 			t.Errorf("installed task manager style %q, want %q", got, style)
 		}
 	}
-	if err := r.InstallCore(repoFiles, DefaultAccent, "dots"); err == nil {
+	if err := r.InstallCore(repoFiles, DefaultAccent, "dots", TabsNone); err == nil {
 		t.Error("an unknown task manager style was accepted")
+	}
+}
+
+func TestInstallTabStyle(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	r := &Runner{}
+	if got := TabStyles.installed(); got != "" {
+		t.Errorf("tab style %q before installing", got)
+	}
+	for _, style := range []string{TabsUnderline, TabsNone} {
+		if err := r.InstallCore(repoFiles, DefaultAccent, TasksUnderline, style); err != nil {
+			t.Fatal(err)
+		}
+		if got := TabStyles.installed(); got != style {
+			t.Errorf("installed tab style %q, want %q", got, style)
+		}
+	}
+	if err := r.InstallCore(repoFiles, DefaultAccent, TasksUnderline, "dots"); err == nil {
+		t.Error("an unknown tab style was accepted")
 	}
 }

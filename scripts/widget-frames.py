@@ -10,9 +10,12 @@ Plasma Style's SVGs. This script redraws them from the values below:
                         corners (FIELD_RADIUS) with a light see-through fill
                         and no outline (FIELD), an outline on hover and
                         focus, and the focus ring 2 px outside
-  widgets/tabbar.svg    the selected tab, on all four sides: a grey
-                        see-through background with rounded corners (TAB)
-                        instead of the accent line along its edge
+  widgets/tabbar.svg    the selected tab, on all four sides: nothing,
+                        instead of Breeze's accent line along its edge
+  theme/variants/tabbar-underline.svg
+                        the same with an accent line along the bottom of the
+                        selected tab, its full width (UNDERLINE); the
+                        installer puts it in place of tabbar.svg when chosen
   widgets/button.svg    buttons and flat buttons under the pointer: the
                         accent at HOVER_OPACITY, with no outline
   widgets/viewitem.svg  list items under the pointer, like the launcher's
@@ -24,6 +27,8 @@ Plasma Style's SVGs. This script redraws them from the values below:
 
 Each frame keeps its hint margins, so the text, icons and tabs inside don't
 move, and each hidden piece keeps its size, so nothing shifts where it was.
+The two tab files are marked with their style (<desc id="protea-tab-style">),
+which is how the installer tells which one is installed.
 scripts/frame-radius.py redraws plasmoidheading.svg's corners and keeps
 them transparent.
 
@@ -31,12 +36,15 @@ Needs Inkscape, to measure where the frames are in the files.
 """
 
 import math
+import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-WIDGETS = Path(__file__).resolve().parent.parent / "theme/desktoptheme/protea-dark/widgets"
+REPO = Path(__file__).resolve().parent.parent
+WIDGETS = REPO / "theme/desktoptheme/protea-dark/widgets"
+TAB_UNDERLINE_FILE = REPO / "theme/variants/tabbar-underline.svg"
 
 FIELD_RADIUS = 8
 
@@ -53,8 +61,11 @@ FIELD = {
     "focusframe": [("ring", 0, 2, ("ViewFocus", 0.33)), ("ring", 2, 3, ("ViewFocus", 1))],
 }
 
-TAB_RADIUS = 8
-TAB = [("fill", 0, ("Text", 0.10))]
+# The selected tab. By default it isn't marked: its frame is empty, keeping
+# its size and hint margins, which are the tab's padding. The installer's
+# other choice draws a line along its bottom, the tab's full width. Nothing
+# on a tab is rounded, so the line runs square to both ends.
+UNDERLINE = {"height": 2, "look": ("ButtonFocus", 0.50)}
 TAB_EDGES = ["north", "south", "east", "west"]
 
 # Plasma's buttons and list highlights keep Breeze's corners for now.
@@ -202,6 +213,36 @@ def frame(prefix, box, r, layers):
     return pieces
 
 
+def rounded(r, layers):
+    """A frame builder: corners of radius r, drawn with layers."""
+    return lambda prefix, box: frame(prefix, box, r, layers)
+
+
+def tab(line):
+    """A frame builder for the selected tab: square, with 1 px corner pieces,
+    and if line is given ({"height", "look"}), a line along the bottom, the
+    full width of the tab. Otherwise it's empty."""
+    def build(prefix, box):
+        x0, y0, w, h = box
+        x1, y1 = x0 + w, y0 + h
+        c = 1  # corner pieces
+        t = line["height"] if line else c
+        boxes = {
+            "topleft": (x0, y0, c, t), "top": (x0 + c, y0, w - 2 * c, t), "topright": (x1 - c, y0, c, t),
+            "left": (x0, y0 + t, c, h - 2 * t), "center": (x0 + c, y0 + t, w - 2 * c, h - 2 * t), "right": (x1 - c, y0 + t, c, h - 2 * t),
+            "bottomleft": (x0, y1 - t, c, t), "bottom": (x0 + c, y1 - t, w - 2 * c, t), "bottomright": (x1 - c, y1 - t, c, t),
+        }
+        pieces = []
+        for name in PIECES:
+            g = ET.Element(q("g"), {"id": f"{prefix}-{name}"})
+            g.append(rect(*boxes[name], {"fill": "none"}))
+            if line and name.startswith("bottom"):
+                g.append(rect(*boxes[name], look(line["look"])))
+            pieces.append(g)
+        return pieces
+    return build
+
+
 def append(root, el):
     """Add el as root's last child, indented like the rest."""
     ET.indent(el, space="  ", level=1)
@@ -212,7 +253,7 @@ def append(root, el):
 
 
 def redraw(svg, frames):
-    """Replace each frame (prefix, radius, layers) in svg, keeping its outer box and hints."""
+    """Replace each frame (prefix, builder) in svg, keeping its outer box and hints."""
     boxes = query(svg)
     tree = load(svg)
     root = tree.getroot()
@@ -220,7 +261,7 @@ def redraw(svg, frames):
         sys.exit(f"{svg}: expected a viewBox at 0,0, got {root.get('viewBox')}")
     parents = {c: p for p in root.iter() for c in p}
     by_id = {e.get("id"): e for e in root.iter() if e.get("id")}
-    for prefix, r, layers in frames:
+    for prefix, build in frames:
         ids = [f"{prefix}-{p}" for p in PIECES]
         x0 = min(boxes[i][0] for i in ids)
         y0 = min(boxes[i][1] for i in ids)
@@ -231,11 +272,26 @@ def redraw(svg, frames):
         for i in ids:
             parents[by_id[i]].remove(by_id[i])
         g = ET.Element(q("g"), {"id": f"protea-{prefix}-frame"})
-        g.extend(frame(prefix, box, r, layers))
+        g.extend(build(prefix, box))
         old = by_id.get(f"protea-{prefix}-frame")
         if old is not None:
             parents[old].remove(old)
         append(root, g)
+    save(tree, svg)
+
+
+def mark(svg, mark_id, style):
+    """Mark svg with its style in a <desc> element, first in the file."""
+    tree = load(svg)
+    root = tree.getroot()
+    old = next((e for e in root.iter() if e.get("id") == mark_id), None)
+    if old is not None:
+        old.text = style
+    else:
+        desc = ET.Element(q("desc"), {"id": mark_id})
+        desc.text = style
+        desc.tail = root.text
+        root.insert(0, desc)
     save(tree, svg)
 
 
@@ -256,10 +312,15 @@ def main():
         sys.exit(__doc__)
     # The focus ring sits 2 px outside the field, so its corners are 2 px rounder.
     redraw(WIDGETS / "lineedit.svg",
-           [(prefix, FIELD_RADIUS + (2 if prefix == "focusframe" else 0), layers) for prefix, layers in FIELD.items()])
-    redraw(WIDGETS / "tabbar.svg", [(f"{edge}-active-tab", TAB_RADIUS, TAB) for edge in TAB_EDGES])
-    redraw(WIDGETS / "button.svg", [(prefix, CONTROL_RADIUS, layers) for prefix, layers in BUTTON_HOVER.items()])
-    redraw(WIDGETS / "viewitem.svg", [("hover", CONTROL_RADIUS, VIEWITEM_HOVER)])
+           [(prefix, rounded(FIELD_RADIUS + (2 if prefix == "focusframe" else 0), layers)) for prefix, layers in FIELD.items()])
+    redraw(WIDGETS / "tabbar.svg", [(f"{edge}-active-tab", tab(None)) for edge in TAB_EDGES])
+    mark(WIDGETS / "tabbar.svg", "protea-tab-style", "none")
+    TAB_UNDERLINE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(WIDGETS / "tabbar.svg", TAB_UNDERLINE_FILE)
+    redraw(TAB_UNDERLINE_FILE, [(f"{edge}-active-tab", tab(UNDERLINE)) for edge in TAB_EDGES])
+    mark(TAB_UNDERLINE_FILE, "protea-tab-style", "underline")
+    redraw(WIDGETS / "button.svg", [(prefix, rounded(CONTROL_RADIUS, layers)) for prefix, layers in BUTTON_HOVER.items()])
+    redraw(WIDGETS / "viewitem.svg", [("hover", rounded(CONTROL_RADIUS, VIEWITEM_HOVER))])
     hide(WIDGETS / "line.svg", ["horizontal-line", "vertical-line"])
     hide(WIDGETS / "plasmoidheading.svg", [f"{kind}-{p}" for kind in ("header", "footer") for p in PIECES])
     print("redrew the text fields, selected tabs and hover highlights, and hid the separator lines and popup headers and footers")
