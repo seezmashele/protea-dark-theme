@@ -307,7 +307,7 @@ Protea Dark swaps Breeze's blue-tinted greys for neutral ones. Both color files,
 
 ### Window outline
 
-The thin line around each window is `#343435`, on focused and unfocused windows alike. This needs the Protea decoration: it's a fixed color, `Outline_Color` in [kdecoration/protea.h](cpp/kdecoration/protea.h), so change it by hand along with the title bar colors. Breeze mixes the outline from the title bar color toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
+The thin line around each window is `#3a3a3b`, on focused and unfocused windows alike. This needs the Protea decoration: it's a fixed color, `Outline_Color` in [kdecoration/protea.h](cpp/kdecoration/protea.h), so change it by hand along with the title bar colors. Breeze mixes the outline from the title bar color toward the text color by the color scheme's frame contrast (20%), the same value that draws every frame in apps, so the color scheme alone can't change it. With the stock Breeze decoration the outline is `#575758`, or `#474748` on unfocused windows.
 
 ### Corners
 
@@ -345,7 +345,7 @@ Minimize, maximize, restore and close use Windows-style symbols, in [kdecoration
 
 ### See-through title bar
 
-The title bar, and the window borders when there are any, are drawn at **80% opacity**, and KWin's Blur effect blurs what's behind them. The setting is "Title bar opacity" in the decoration's settings window (`TitleBarOpacity` in `~/.config/protearc`, 50 to 100%, where 100% is solid).
+The title bar, and the window borders when there are any, are drawn at **85% opacity**, and KWin's Blur effect blurs what's behind them. The setting is "Title bar opacity" in the decoration's settings window (`TitleBarOpacity` in `~/.config/protearc`, 50 to 100%, where 100% is solid).
 
 - **How:** the decoration fills the title bar in one pass with the see-through color (Breeze's overlapping layers would add up into darker bands), and gives KWin a blur region in the window's shape with its rounded corners (`Decoration::updateBlurRegion`). KWin only blurs the decoration, never the window's contents, so nothing changes inside apps.
 - **Solid when maximized:** there's nothing worth seeing behind a maximized window, and its title bar then meets the app's toolbar seamlessly. It's also solid without compositing.

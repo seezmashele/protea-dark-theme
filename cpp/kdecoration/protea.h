@@ -51,7 +51,7 @@ static constexpr qreal Bias_Default = 0.20;
 // window outline color, on focused and unfocused windows alike. It's fixed,
 // so change it along with the title bar colors (Header in the color scheme);
 // Breeze mixes it from the title bar color instead.
-static constexpr QColor Outline_Color(0x34, 0x34, 0x35);
+static constexpr QColor Outline_Color(0x3a, 0x3a, 0x3b);
 
 // title bar buttons: the opacity of the white behind a hovered or pressed
 // button (Close turns red instead)
