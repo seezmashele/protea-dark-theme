@@ -89,13 +89,20 @@
       <default>ButtonDefault</default>
     </entry>
 
-    <!-- Protea: button shape, round like Breeze's or rectangular like Windows' -->
+    <!-- Protea: button shape, rectangular like Windows' (the default) or round like Breeze's -->
     <entry name="ButtonShape" type="Enum">
       <choices>
           <choice name="ButtonRound" />
           <choice name="ButtonRectangle" />
       </choices>
-      <default>ButtonRound</default>
+      <default>ButtonRectangle</default>
+    </entry>
+
+    <!-- Protea: title bar opacity in percent; KWin's blur effect blurs what's behind it -->
+    <entry name="TitleBarOpacity" type="Int">
+      <default>80</default>
+      <min>50</min>
+      <max>100</max>
     </entry>
 
     <!-- maximized windows -->

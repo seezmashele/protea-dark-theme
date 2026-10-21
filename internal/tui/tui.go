@@ -293,10 +293,11 @@ func (m *Model) startPrepare() tea.Cmd {
 	return nil
 }
 
-// buttonShape is the window decoration's button shape, round if it isn't set.
+// buttonShape is the window decoration's button shape, rectangular (its
+// default) if it isn't set.
 func buttonShape(st system.Status) string {
 	if st.ButtonShape == "" {
-		return system.ButtonsRound
+		return system.ButtonsRectangle
 	}
 	return st.ButtonShape
 }
@@ -344,10 +345,10 @@ func (m *Model) rows() []row {
 			off = "needs the C++ components"
 		}
 		rows = append(rows,
-			row{label: "Round window buttons", detail: "like Breeze", choice: &m.plan.buttons, value: system.ButtonsRound, disabled: off,
-				hint: "Title bar buttons with a circle behind the symbol when you point at them."},
 			row{label: "Rectangular window buttons", detail: "like Windows", choice: &m.plan.buttons, value: system.ButtonsRectangle, disabled: off,
-				hint: "Wide title bar buttons side by side, flush with the top of the title bar, with Close in the corner."})
+				hint: "Wide title bar buttons side by side, flush with the top of the title bar, with Close in the corner."},
+			row{label: "Round window buttons", detail: "like Breeze", choice: &m.plan.buttons, value: system.ButtonsRound, disabled: off,
+				hint: "Title bar buttons with a circle behind the symbol when you point at them."})
 		if st.Package != "" {
 			rows = append(rows, row{label: "Build again", check: &m.plan.rebuild,
 				hint: "Rebuilds even if the installed C++ components are current, for example after changing the C++ code."})

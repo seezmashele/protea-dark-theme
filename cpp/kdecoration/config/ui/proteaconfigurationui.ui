@@ -136,21 +136,50 @@
          </item>
         </widget>
        </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="labelTitleBarOpacity">
+         <property name="text">
+          <string>Title bar &amp;opacity:</string>
+         </property>
+         <property name="buddy">
+          <cstring>titleBarOpacity</cstring>
+         </property>
+        </widget>
+       </item>
        <item row="3" column="1">
+        <widget class="QSpinBox" name="titleBarOpacity">
+         <property name="toolTip">
+          <string>Below 100%, what's behind the title bar shows through, blurred. Maximized windows always have a solid title bar.</string>
+         </property>
+         <property name="suffix">
+          <string>%</string>
+         </property>
+         <property name="minimum">
+          <number>50</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+         <property name="singleStep">
+          <number>5</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
         <widget class="QCheckBox" name="outlineCloseButton">
          <property name="text">
           <string>Draw a circle around close button</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <widget class="QCheckBox" name="drawBorderOnMaximizedWindows">
          <property name="text">
           <string>Draw border on maximized and tiled windows</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="6" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <spacer name="horizontalSpacer_2">
@@ -180,14 +209,14 @@
          </item>
         </layout>
        </item>
-       <item row="6" column="1">
+       <item row="7" column="1">
         <widget class="QCheckBox" name="drawBackgroundGradient">
          <property name="text">
           <string>Draw titlebar background gradient</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="8" column="1">
         <widget class="QCheckBox" name="roundedCorners">
          <property name="text">
           <string>Round bottom corners of windows with no borders</string>

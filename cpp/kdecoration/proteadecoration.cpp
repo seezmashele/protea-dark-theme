@@ -246,6 +246,13 @@ bool Decoration::init()
     connect(window(), &KDecoration3::DecoratedWindow::maximizedChanged, this, &Decoration::updateTitleBar);
     connect(window(), &KDecoration3::DecoratedWindow::maximizedChanged, this, &Decoration::setOpaque);
 
+    // Protea: what KWin blurs behind a see-through title bar
+    connect(window(), &KDecoration3::DecoratedWindow::sizeChanged, this, &Decoration::updateBlurRegion);
+    connect(window(), &KDecoration3::DecoratedWindow::maximizedChanged, this, &Decoration::updateBlurRegion);
+    connect(window(), &KDecoration3::DecoratedWindow::adjacentScreenEdgesChanged, this, &Decoration::updateBlurRegion);
+    connect(window(), &KDecoration3::DecoratedWindow::shadedChanged, this, &Decoration::updateBlurRegion);
+    connect(this, &KDecoration3::Decoration::bordersChanged, this, &Decoration::updateBlurRegion);
+
     connect(window(), &KDecoration3::DecoratedWindow::widthChanged, this, &Decoration::updateButtonsGeometry);
     connect(window(), &KDecoration3::DecoratedWindow::maximizedChanged, this, &Decoration::updateButtonsGeometry);
     connect(window(), &KDecoration3::DecoratedWindow::adjacentScreenEdgesChanged, this, &Decoration::updateButtonsGeometry);
@@ -393,6 +400,8 @@ void Decoration::reconfigure()
 
     // shadow
     updateShadow();
+
+    updateBlurRegion();
 }
 
 QMarginsF Decoration::bordersFor(qreal scale) const
@@ -610,7 +619,9 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing);
         painter->setPen(Qt::NoPen);
-        painter->setBrush(window()->color(window()->isActive() ? ColorGroup::Active : ColorGroup::Inactive, ColorRole::Frame));
+        QColor frameColor = window()->color(window()->isActive() ? ColorGroup::Active : ColorGroup::Inactive, ColorRole::Frame);
+        frameColor.setAlphaF(frameColor.alphaF() * titleBarOpacity());
+        painter->setBrush(frameColor);
 
         // clip away the top part
         if (!hideTitleBar()) {
@@ -651,58 +662,43 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
 void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 {
     QRectF rect(QPointF(0, 0), QSizeF(size().width(), borderTop()));
-    QBrush frontBrush;
-    QBrush backBrush(this->titleBarColor());
-    const bool isTiled = isTopEdge() || isLeftEdge() || isBottomEdge() || isRightEdge();
 
     if (!rect.intersects(repaintRegion)) {
         return;
     }
 
-    painter->save();
-    painter->setPen(Qt::NoPen);
+    // Protea: the title bar can be see-through (titleBarOpacity), with KWin
+    // blurring what's behind it, so it's filled in one pass: Breeze's
+    // overlapping layers would add up into darker bands
+    const qreal opacity = titleBarOpacity();
+    auto withOpacity = [opacity](QColor color) {
+        color.setAlphaF(color.alphaF() * opacity);
+        return color;
+    };
 
-    // render a linear gradient on title area
+    QBrush brush;
     if (window()->isActive() && m_internalSettings->drawBackgroundGradient()) {
+        // render a linear gradient on title area
         QLinearGradient gradient(0, 0, 0, rect.height());
-        gradient.setColorAt(0.0, titleBarColor().lighter(120));
-        gradient.setColorAt(0.8, titleBarColor());
-
-        frontBrush = gradient;
-
+        gradient.setColorAt(0.0, withOpacity(titleBarColor().lighter(120)));
+        gradient.setColorAt(0.8, withOpacity(titleBarColor()));
+        brush = gradient;
     } else {
-        frontBrush = titleBarColor();
-
-        painter->setBrush(titleBarColor());
+        brush = withOpacity(titleBarColor());
     }
 
-    if (isMaximized() || isTiled || !settings()->isAlphaChannelSupported()) {
-        painter->setBrush(backBrush);
-        painter->drawRect(rect);
+    painter->save();
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(brush);
+    painter->setRenderHint(QPainter::Antialiasing);
 
-        painter->setBrush(frontBrush);
-        painter->drawRect(rect);
-    } else if (window()->isShaded()) {
-        painter->setBrush(backBrush);
+    const bool isTiled = isTopEdge() || isLeftEdge() || isBottomEdge() || isRightEdge();
+    if (window()->isShaded() && !isMaximized() && !isTiled && settings()->isAlphaChannelSupported()) {
         painter->drawRoundedRect(rect, m_scaledCornerRadius, m_scaledCornerRadius);
-
-        painter->setBrush(frontBrush);
-        painter->drawRoundedRect(rect, m_scaledCornerRadius, m_scaledCornerRadius);
-
     } else {
+        // square when maximized or tiled, otherwise rounded at the top
         painter->setClipRect(rect, Qt::IntersectClip);
-
-        auto drawThe = [this, painter](const QRectF &r) {
-            painter->drawRoundedRect(r, m_scaledCornerRadius, m_scaledCornerRadius);
-            // remove the rounding on the bottom
-            painter->drawRect(QRectF(r.bottomLeft() - QPointF(0, m_scaledCornerRadius), r.bottomRight()));
-        };
-
-        painter->setBrush(backBrush);
-        drawThe(rect);
-
-        painter->setBrush(frontBrush);
-        drawThe(rect);
+        painter->drawPath(titleBarShape());
     }
 
     painter->restore();
@@ -925,6 +921,39 @@ void Decoration::updateScale()
 {
     setScaledCornerRadius();
     recalculateBorders();
+    updateBlurRegion();
+}
+
+//________________________________________________________________
+qreal Decoration::titleBarOpacity() const
+{
+    // solid when maximized, where there's nothing worth seeing behind it,
+    // and without compositing
+    if (!m_internalSettings || isMaximized() || !settings()->isAlphaChannelSupported()) {
+        return 1;
+    }
+    return m_internalSettings->titleBarOpacity() / 100.0;
+}
+
+//________________________________________________________________
+void Decoration::updateBlurRegion()
+{
+    // KWin's blur effect blurs behind this region, within the decoration
+    // (not the window's contents); a null region means no blur
+    if (titleBarOpacity() >= 1) {
+        setBlurRegion(QRegion());
+        return;
+    }
+
+    const bool isTiled = isTopEdge() || isLeftEdge() || isBottomEdge() || isRightEdge();
+    QPainterPath shape;
+    if (isTiled) {
+        shape.addRect(rect());
+    } else {
+        shape.addRoundedRect(rect(), m_scaledCornerRadius, m_scaledCornerRadius);
+    }
+    setBlurRegion(QRegion(shape.toFillPolygon().toPolygon()));
+    update();
 }
 } // namespace
 

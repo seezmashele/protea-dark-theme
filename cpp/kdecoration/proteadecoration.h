@@ -64,6 +64,9 @@ public:
     //* the title bar's shape, with the window's rounded top corners when it has them
     QPainterPath titleBarShape() const;
 
+    //* Protea: the title bar and borders' opacity, 1 for solid
+    qreal titleBarOpacity() const;
+
     //*@name active state change animation
     //@{
     void setOpacity(qreal);
@@ -106,6 +109,7 @@ private Q_SLOTS:
     void updateTitleBar();
     void updateAnimationState();
     void updateScale();
+    void updateBlurRegion();
 
 private:
     //* return the rect in which caption will be drawn

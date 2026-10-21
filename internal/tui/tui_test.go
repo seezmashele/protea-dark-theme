@@ -278,36 +278,36 @@ func TestWindowButtons(t *testing.T) {
 	// components.
 	m := start(t, fresh)
 	press(m, "enter", "enter")
-	expect(t, m, "Round window buttons · needs the C++ components", "Rectangular window buttons · needs the C++ components")
+	expect(t, m, "Rectangular window buttons · needs the C++ components", "Round window buttons · needs the C++ components")
 	tick(t, m, "C++ components")
-	expect(t, m, "(•) Round window buttons like Breeze", "( ) Rectangular window buttons like Windows")
+	expect(t, m, "(•) Rectangular window buttons like Windows", "( ) Round window buttons like Breeze")
 	expectNot(t, m, "needs the C++ components")
 
 	// Already built, so picking a shape only changes the setting.
 	m = start(t, everything)
 	press(m, "enter", "enter")
-	moveTo(t, m, "Rectangular window buttons")
-	expect(t, m, "Wide title bar buttons side by side")
+	moveTo(t, m, "Round window buttons")
+	expect(t, m, "Title bar buttons with a circle behind the symbol")
 	press(m, "down")
-	expect(t, m, "(•) Round window buttons", "( ) Rectangular window buttons")
-	moveTo(t, m, "Rectangular window buttons")
+	expect(t, m, "(•) Rectangular window buttons", "( ) Round window buttons")
+	moveTo(t, m, "Round window buttons")
 	press(m, "space")
-	expect(t, m, "( ) Round window buttons", "(•) Rectangular window buttons")
+	expect(t, m, "( ) Rectangular window buttons", "(•) Round window buttons")
 	press(m, "enter")
-	expect(t, m, "1 Update Protea Dark in", "2 Set the window buttons to rectangular")
+	expect(t, m, "1 Update Protea Dark in", "2 Set the window buttons to round")
 	expectNot(t, m, "makepkg")
 	choose(t, m, "Install")
-	expect(t, m, "✓ Set the window buttons to rectangular",
-		"would run: kwriteconfig6 --file protearc --group Windeco --key ButtonShape ButtonRectangle",
+	expect(t, m, "✓ Set the window buttons to round",
+		"would run: kwriteconfig6 --file protearc --group Windeco --key ButtonShape ButtonRound",
 		"would run: dbus-send --session --type=signal /KWin org.kde.KWin.reloadConfig")
 	expectNot(t, m, "Log out and back in")
 
 	// Keeping the shape that's set changes nothing.
 	st := everything
-	st.ButtonShape = system.ButtonsRectangle
+	st.ButtonShape = system.ButtonsRound
 	m = start(t, st)
 	press(m, "enter", "enter")
-	expect(t, m, "(•) Rectangular window buttons")
+	expect(t, m, "(•) Round window buttons")
 	press(m, "enter")
 	expectNot(t, m, "window buttons")
 }

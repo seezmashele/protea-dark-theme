@@ -52,7 +52,7 @@ var (
 	// setting (cpp/kdecoration/proteasettingsdata.kcfg).
 	buttonShape = setting{
 		file: "protearc", group: "Windeco", key: "ButtonShape",
-		unset: ButtonsRound, fallback: ButtonsRound,
+		unset: ButtonsRectangle, fallback: ButtonsRectangle,
 		apply: func(r *Runner, v string) error {
 			if err := r.writeConfig("protearc", "Windeco", "ButtonShape", v); err != nil {
 				return err
